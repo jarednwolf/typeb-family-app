@@ -233,9 +233,17 @@ export const removeFamilyMember = async (
       throw new Error('Family not found');
     }
 
+    // Check if this is the last parent
+    if (family.parentIds.includes(userId) && family.parentIds.length === 1 && family.memberIds.length > 1) {
+      throw new Error('Cannot remove the last parent while other members exist');
+    }
+
     // Determine user's role
     const role = family.parentIds.includes(userId) ? 'parent' : 'child';
     const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
+
+    // Handle orphaned tasks
+    await handleOrphanedTasks(familyId, userId, family.createdBy);
 
     // Remove user from family
     await updateDoc(doc(familiesCollection, familyId), {
@@ -249,9 +257,51 @@ export const removeFamilyMember = async (
       familyId: null,
       updatedAt: serverTimestamp(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error removing family member:', error);
-    throw new Error('Failed to remove family member');
+    throw new Error(error.message || 'Failed to remove family member');
+  }
+};
+
+/**
+ * Handle orphaned tasks when a user is removed from family
+ */
+const handleOrphanedTasks = async (
+  familyId: string,
+  removedUserId: string,
+  familyCreatorId: string
+): Promise<void> => {
+  try {
+    // Import here to avoid circular dependency
+    const { collection, query, where, getDocs, updateDoc, doc, serverTimestamp } = await import('firebase/firestore');
+    const { db } = await import('./firebase');
+    
+    const tasksCollection = collection(db, 'tasks');
+    
+    // Find all tasks assigned to the removed user
+    const q = query(
+      tasksCollection,
+      where('familyId', '==', familyId),
+      where('assignedTo', '==', removedUserId),
+      where('status', '!=', 'completed')
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    // Reassign incomplete tasks to family creator
+    const updatePromises = snapshot.docs.map(taskDoc =>
+      updateDoc(doc(tasksCollection, taskDoc.id), {
+        assignedTo: familyCreatorId,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    
+    await Promise.all(updatePromises);
+    
+    console.log(`Reassigned ${snapshot.size} tasks from ${removedUserId} to ${familyCreatorId}`);
+  } catch (error) {
+    console.error('Error handling orphaned tasks:', error);
+    // Don't throw - this is a cleanup operation that shouldn't block member removal
   }
 };
 

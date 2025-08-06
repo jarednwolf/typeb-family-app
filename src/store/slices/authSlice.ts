@@ -1,21 +1,39 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { User } from 'firebase/auth';
+import { User as FirebaseUser } from 'firebase/auth';
 import {
   signUp as firebaseSignUp,
   signIn as firebaseSignIn,
   logOut as firebaseLogOut,
   resetPassword as firebaseResetPassword,
   getUserProfile,
-  UserProfile,
   SignUpData,
   SignInData,
   formatAuthError,
 } from '../../services/auth';
+import { User } from '../../types/models';
+
+// Serializable version of User for Redux
+interface SerializedUser {
+  id: string;
+  email: string;
+  displayName: string;
+  familyId?: string;
+  role: 'parent' | 'child';
+  createdAt: string;
+  updatedAt: string;
+  isPremium: boolean;
+  subscriptionEndDate?: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  notificationsEnabled: boolean;
+  reminderTime?: string;
+  timezone: string;
+}
 
 // Types
 interface AuthState {
-  user: User | null;
-  userProfile: UserProfile | null;
+  user: FirebaseUser | null;
+  userProfile: SerializedUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
@@ -33,13 +51,14 @@ const initialState: AuthState = {
 };
 
 // Helper function to serialize timestamps
-const serializeUserProfile = (profile: UserProfile | null): UserProfile | null => {
+const serializeUserProfile = (profile: User | null): SerializedUser | null => {
   if (!profile) return null;
   
   return {
     ...profile,
-    createdAt: profile.createdAt?.toDate ? profile.createdAt.toDate().toISOString() : profile.createdAt,
-    updatedAt: profile.updatedAt?.toDate ? profile.updatedAt.toDate().toISOString() : profile.updatedAt,
+    createdAt: profile.createdAt instanceof Date ? profile.createdAt.toISOString() : String(profile.createdAt),
+    updatedAt: profile.updatedAt instanceof Date ? profile.updatedAt.toISOString() : String(profile.updatedAt),
+    subscriptionEndDate: profile.subscriptionEndDate instanceof Date ? profile.subscriptionEndDate.toISOString() : profile.subscriptionEndDate,
   };
 };
 
@@ -119,12 +138,12 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User | null>) => {
+    setUser: (state, action: PayloadAction<FirebaseUser | null>) => {
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
       state.isEmailVerified = action.payload?.emailVerified || false;
     },
-    setUserProfile: (state, action: PayloadAction<UserProfile | null>) => {
+    setUserProfile: (state, action: PayloadAction<SerializedUser | null>) => {
       state.userProfile = action.payload;
     },
     clearError: (state) => {

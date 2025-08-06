@@ -30,7 +30,9 @@ import {
   UpdateTaskInput,
   RecurrencePattern,
   ActivityLog,
+  TaskCategory,
 } from '../types/models';
+import { getFamily } from './family';
 
 // Collection references
 const tasksCollection = collection(db, 'tasks');
@@ -45,6 +47,23 @@ export const createTask = async (
   input: CreateTaskInput
 ): Promise<Task> => {
   try {
+    // Get family to validate and resolve category
+    const family = await getFamily(familyId);
+    if (!family) {
+      throw new Error('Family not found');
+    }
+
+    // Validate assignedTo is a family member
+    if (!family.memberIds.includes(input.assignedTo)) {
+      throw new Error('Cannot assign task to non-family member');
+    }
+
+    // Resolve category
+    const category = family.taskCategories.find(c => c.id === input.categoryId);
+    if (!category) {
+      throw new Error('Invalid task category');
+    }
+
     const taskId = doc(tasksCollection).id;
 
     const newTask: Task = {
@@ -52,7 +71,7 @@ export const createTask = async (
       familyId,
       title: input.title,
       description: input.description,
-      category: input.categoryId as any, // Will be resolved to full category object
+      category: category, // Store full category object
       assignedTo: input.assignedTo,
       assignedBy: userId,
       createdBy: userId,
@@ -70,9 +89,16 @@ export const createTask = async (
       points: input.points,
     };
 
-    // Create task document
+    // Create task document - store category as nested object
     await setDoc(doc(tasksCollection, taskId), {
       ...newTask,
+      category: {
+        id: category.id,
+        name: category.name,
+        color: category.color,
+        icon: category.icon,
+        order: category.order,
+      },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
@@ -85,9 +111,9 @@ export const createTask = async (
     });
 
     return newTask;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating task:', error);
-    throw new Error('Failed to create task');
+    throw new Error(error.message || 'Failed to create task');
   }
 };
 
@@ -107,11 +133,43 @@ export const updateTask = async (
     }
     const currentTask = taskDoc.data() as Task;
 
+    // If updating assignedTo, validate they're in the family
+    if (updates.assignedTo) {
+      const family = await getFamily(currentTask.familyId);
+      if (!family?.memberIds.includes(updates.assignedTo)) {
+        throw new Error('Cannot assign task to non-family member');
+      }
+    }
+
+    // If updating category, resolve it
+    let categoryUpdate: any = undefined;
+    if (updates.categoryId) {
+      const family = await getFamily(currentTask.familyId);
+      const category = family?.taskCategories.find(c => c.id === updates.categoryId);
+      if (!category) {
+        throw new Error('Invalid task category');
+      }
+      categoryUpdate = {
+        id: category.id,
+        name: category.name,
+        color: category.color,
+        icon: category.icon,
+        order: category.order,
+      };
+    }
+
     // Prepare updates
     const taskUpdates: any = {
       ...updates,
       updatedAt: serverTimestamp(),
     };
+
+    // Remove categoryId from updates since we're storing the full object
+    delete taskUpdates.categoryId;
+    
+    if (categoryUpdate) {
+      taskUpdates.category = categoryUpdate;
+    }
 
     if (updates.dueDate) {
       taskUpdates.dueDate = Timestamp.fromDate(updates.dueDate);

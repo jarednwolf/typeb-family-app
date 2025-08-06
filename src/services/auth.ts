@@ -9,19 +9,9 @@ import {
   User,
   UserCredential,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './firebase';
-
-// Types
-export interface UserProfile {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: 'member' | 'manager';
-  familyId?: string;
-  createdAt: any;
-  updatedAt: any;
-}
+import { auth } from './firebase';
+import { createUserProfile, getUserProfile as getUserProfileFromDb, userProfileExists } from './userProfile';
+import realtimeSyncService from './realtimeSync';
 
 export interface SignUpData {
   email: string;
@@ -91,19 +81,10 @@ export const signUp = async ({ email, password, displayName }: SignUpData): Prom
     await sendEmailVerification(user);
     console.log('[AUTH DEBUG] Verification email sent');
     
-    // Create user profile in Firestore
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email!,
-      displayName,
-      role: 'member', // Default role
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-    
-    console.log('[AUTH DEBUG] Attempting to write user profile to Firestore...');
-    await setDoc(doc(db, 'users', user.uid), userProfile);
-    console.log('[AUTH DEBUG] User profile successfully written to Firestore');
+    // Create user profile in Firestore using the userProfile service
+    console.log('[AUTH DEBUG] Creating user profile in Firestore...');
+    await createUserProfile(user.uid, user.email!, displayName);
+    console.log('[AUTH DEBUG] User profile successfully created');
     
     return userCredential;
   } catch (error: any) {
@@ -122,20 +103,15 @@ export const signIn = async ({ email, password }: SignInData): Promise<UserCrede
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     
     // Check if user profile exists in Firestore
-    const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+    const profileExists = await userProfileExists(userCredential.user.uid);
     
-    if (!userDoc.exists()) {
+    if (!profileExists) {
       // Create profile if it doesn't exist (for users created before this system)
-      const userProfile: UserProfile = {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email!,
-        displayName: userCredential.user.displayName || 'User',
-        role: 'member',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      
-      await setDoc(doc(db, 'users', userCredential.user.uid), userProfile);
+      await createUserProfile(
+        userCredential.user.uid,
+        userCredential.user.email!,
+        userCredential.user.displayName || 'User'
+      );
     }
     
     return userCredential;
@@ -148,6 +124,9 @@ export const signIn = async ({ email, password }: SignInData): Promise<UserCrede
 // Sign out current user
 export const logOut = async (): Promise<void> => {
   try {
+    // Clean up real-time sync listeners before signing out
+    realtimeSyncService.cleanup();
+    
     await signOut(auth);
   } catch (error: any) {
     console.error('Sign out error:', error);
@@ -166,15 +145,9 @@ export const resetPassword = async (email: string): Promise<void> => {
 };
 
 // Get current user profile from Firestore
-export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+export const getUserProfile = async (uid: string) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    
-    if (userDoc.exists()) {
-      return userDoc.data() as UserProfile;
-    }
-    
-    return null;
+    return await getUserProfileFromDb(uid);
   } catch (error: any) {
     console.error('Get user profile error:', error);
     throw error;
