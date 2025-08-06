@@ -653,10 +653,10 @@ eas submit --platform ios
 
 ## 🔗 IMPORTANT LINKS
 
-- Firebase Console: [Link to be added]
-- App Store Connect: [Link to be added]
-- TestFlight: [Link to be added]
-- GitHub Repo: [Link to be added]
+- GitHub Repo: https://github.com/jarednwolf/typeb-family-app
+- Firebase Console: https://console.firebase.google.com/u/1/project/typeb-family-app/overview
+- App Store Connect: [Link to be added when ready for submission]
+- TestFlight: [Link to be added when beta testing begins]
 
 ---
 
