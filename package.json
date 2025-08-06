@@ -11,6 +11,7 @@
     "setup:check": "node scripts/verify-firebase.js && echo '✅ Ready to start development!'"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.4.5",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.5",
@@ -24,13 +25,13 @@
     "react": "19.0.0",
     "react-hook-form": "^7.62.0",
     "react-native": "0.79.5",
+    "react-native-gesture-handler": "~2.24.0",
     "react-native-heroicons": "^4.0.0",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.13.1",
     "react-native-svg": "^15.12.1",
     "react-redux": "^9.2.0",
-    "@react-native-async-storage/async-storage": "2.1.2",
-    "react-native-gesture-handler": "~2.24.0"
+    "yup": "^1.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
