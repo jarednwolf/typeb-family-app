@@ -276,4 +276,27 @@ export const {
   clearError,
 } = familySlice.actions;
 
+// Selectors
+import { RootState } from '../store';
+
+export const selectFamily = (state: RootState) => state.family.currentFamily;
+export const selectFamilyMembers = (state: RootState) => state.family.members;
+export const selectFamilyLoading = (state: RootState) => state.family.isLoading;
+export const selectFamilyError = (state: RootState) => state.family.error;
+export const selectInviteCode = (state: RootState) => state.family.inviteCode;
+export const selectIsJoining = (state: RootState) => state.family.isJoining;
+export const selectIsCreating = (state: RootState) => state.family.isCreating;
+
+// Computed selector for current user role
+export const selectCurrentUserRole = (state: RootState) => {
+  const family = state.family.currentFamily;
+  const userId = state.auth.user?.uid;
+  
+  if (!family || !userId) return null;
+  
+  if (family.parentIds.includes(userId)) return 'parent';
+  if (family.childIds.includes(userId)) return 'child';
+  return null;
+};
+
 export default familySlice.reducer;

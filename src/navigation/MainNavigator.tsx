@@ -1,18 +1,12 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import DashboardScreen from '../screens/dashboard/DashboardScreen';
-import TasksScreen from '../screens/tasks/TasksScreen';
+import { Feather } from '@expo/vector-icons';
+import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { TasksScreen } from '../screens/tasks/TasksScreen';
 import FamilyScreen from '../screens/family/FamilyScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
-import { View } from 'react-native';
-import { HomeIcon, ClipboardIcon, UserGroupIcon, CogIcon } from 'react-native-heroicons/outline';
-import {
-  HomeIcon as HomeIconSolid,
-  ClipboardIcon as ClipboardIconSolid,
-  UserGroupIcon as UserGroupIconSolid,
-  CogIcon as CogIconSolid,
-} from 'react-native-heroicons/solid';
+import { theme } from '../constants/theme';
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -152,41 +146,40 @@ const MainNavigator: React.FC = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           const iconSize = 24;
-          const iconColor = focused ? '#0A0A0A' : '#9CA3AF';
+          const iconColor = focused ? theme.colors.primary : theme.colors.textTertiary;
+          let iconName: string;
 
-          if (route.name === 'Dashboard') {
-            return focused ? (
-              <HomeIconSolid size={iconSize} color={iconColor} />
-            ) : (
-              <HomeIcon size={iconSize} color={iconColor} />
-            );
-          } else if (route.name === 'Tasks') {
-            return focused ? (
-              <ClipboardIconSolid size={iconSize} color={iconColor} />
-            ) : (
-              <ClipboardIcon size={iconSize} color={iconColor} />
-            );
-          } else if (route.name === 'Family') {
-            return focused ? (
-              <UserGroupIconSolid size={iconSize} color={iconColor} />
-            ) : (
-              <UserGroupIcon size={iconSize} color={iconColor} />
-            );
-          } else if (route.name === 'Settings') {
-            return focused ? (
-              <CogIconSolid size={iconSize} color={iconColor} />
-            ) : (
-              <CogIcon size={iconSize} color={iconColor} />
-            );
+          switch (route.name) {
+            case 'Dashboard':
+              iconName = 'home';
+              break;
+            case 'Tasks':
+              iconName = 'clipboard';
+              break;
+            case 'Family':
+              iconName = 'users';
+              break;
+            case 'Settings':
+              iconName = 'settings';
+              break;
+            default:
+              iconName = 'circle';
           }
-          return null;
+
+          return (
+            <Feather
+              name={iconName as any}
+              size={iconSize}
+              color={iconColor}
+            />
+          );
         },
-        tabBarActiveTintColor: '#0A0A0A',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#F3F4F6',
+          borderTopColor: theme.colors.separator,
           paddingBottom: 5,
           paddingTop: 5,
           height: 60,

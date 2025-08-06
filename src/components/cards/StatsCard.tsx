@@ -1,0 +1,254 @@
+/**
+ * StatsCard Component - Dashboard statistics display
+ * 
+ * Features:
+ * - Clean metric display
+ * - Trend indicators
+ * - Customizable colors
+ * - Animated number changes
+ */
+
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
+
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  color?: string;
+  icon?: keyof typeof Feather.glyphMap;
+  compact?: boolean;
+}
+
+export const StatsCard: React.FC<StatsCardProps> = ({
+  title,
+  value,
+  subtitle,
+  trend,
+  trendValue,
+  color = colors.primary,
+  icon,
+  compact = false,
+}) => {
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    // Subtle entrance animation
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const getTrendIcon = (): keyof typeof Feather.glyphMap => {
+    if (trend === 'up') return 'trending-up';
+    if (trend === 'down') return 'trending-down';
+    return 'minus';
+  };
+
+  const getTrendColor = () => {
+    if (trend === 'up') return colors.success;
+    if (trend === 'down') return colors.error;
+    return colors.textTertiary;
+  };
+
+  return (
+    <Animated.View 
+      style={[
+        styles.container,
+        compact && styles.containerCompact,
+        { transform: [{ scale: scaleAnim }] }
+      ]}
+    >
+      {icon && (
+        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+          <Feather name={icon} size={24} color={color} />
+        </View>
+      )}
+      
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        
+        <View style={styles.valueContainer}>
+          <Text style={[styles.value, { color }, compact && styles.valueCompact]}>
+            {value}
+          </Text>
+          
+          {trend && (
+            <View style={styles.trendContainer}>
+              <Feather
+                name={getTrendIcon()}
+                size={16}
+                color={getTrendColor()}
+              />
+              {trendValue && (
+                <Text style={[styles.trendValue, { color: getTrendColor() }]}>
+                  {trendValue}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+        
+        {subtitle && (
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        )}
+      </View>
+    </Animated.View>
+  );
+};
+
+// Grid Stats Card for dashboard overview
+export const GridStatsCard: React.FC<StatsCardProps> = (props) => {
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View 
+      style={[
+        styles.gridContainer,
+        { transform: [{ scale: scaleAnim }] }
+      ]}
+    >
+      <Text style={styles.gridTitle}>{props.title}</Text>
+      <Text style={[styles.gridValue, { color: props.color || colors.primary }]}>
+        {props.value}
+      </Text>
+      {props.subtitle && (
+        <View style={styles.gridSubtitleContainer}>
+          {props.trend && (
+            <Feather
+              name={props.trend === 'up' ? 'trending-up' : 'trending-down'}
+              size={14}
+              color={props.trend === 'up' ? colors.success : colors.error}
+              style={styles.gridTrendIcon}
+            />
+          )}
+          <Text style={styles.gridSubtitle}>{props.subtitle}</Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.large,
+    padding: spacing.M,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...shadows.small,
+  },
+  
+  containerCompact: {
+    padding: spacing.S,
+  },
+  
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.M,
+  },
+  
+  content: {
+    flex: 1,
+  },
+  
+  title: {
+    ...typography.caption1,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.XXS,
+  },
+  
+  valueContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  
+  value: {
+    ...typography.title1,
+    fontWeight: '600',
+  },
+  
+  valueCompact: {
+    ...typography.title2,
+  },
+  
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: spacing.XS,
+  },
+  
+  trendValue: {
+    ...typography.caption1,
+    fontWeight: '600',
+    marginLeft: spacing.XXS,
+  },
+  
+  subtitle: {
+    ...typography.caption1,
+    color: colors.textTertiary,
+    marginTop: spacing.XXS,
+  },
+  
+  // Grid variant styles
+  gridContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.large,
+    padding: spacing.M,
+    flex: 1,
+    minHeight: 100,
+    justifyContent: 'space-between',
+    ...shadows.small,
+  },
+  
+  gridTitle: {
+    ...typography.caption1,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  
+  gridValue: {
+    ...typography.title1,
+    fontWeight: '600',
+    marginVertical: spacing.XS,
+  },
+  
+  gridSubtitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  gridTrendIcon: {
+    marginRight: spacing.XXS,
+  },
+  
+  gridSubtitle: {
+    ...typography.caption1,
+    color: colors.textTertiary,
+  },
+});
+
+export default StatsCard;

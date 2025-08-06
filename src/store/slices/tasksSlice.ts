@@ -432,4 +432,41 @@ export const {
   clearError,
 } = tasksSlice.actions;
 
+// Selectors
+import { RootState } from '../store';
+
+export const selectTasks = (state: RootState) => state.tasks.tasks;
+export const selectUserTasks = (state: RootState) => state.tasks.userTasks;
+export const selectOverdueTasks = (state: RootState) => state.tasks.overdueTasks;
+export const selectSelectedTask = (state: RootState) => state.tasks.selectedTask;
+export const selectTasksLoading = (state: RootState) => state.tasks.isLoading;
+export const selectTasksError = (state: RootState) => state.tasks.error;
+export const selectTaskStats = (state: RootState) => state.tasks.stats;
+export const selectTaskFilters = (state: RootState) => state.tasks.filters;
+
+// Computed selectors
+export const selectTasksForToday = (state: RootState) => {
+  const tasks = state.tasks.tasks;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  return tasks.filter(task => {
+    const dueDate = new Date(task.dueDate);
+    return dueDate >= today && dueDate < tomorrow;
+  });
+};
+
+export const selectUpcomingTasks = (state: RootState) => {
+  const tasks = state.tasks.tasks;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  return tasks.filter(task => {
+    const dueDate = new Date(task.dueDate);
+    return dueDate >= tomorrow;
+  });
+};
+
 export default tasksSlice.reducer;
