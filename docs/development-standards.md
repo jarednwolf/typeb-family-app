@@ -37,7 +37,7 @@
 - **Name**: TypeB
 - **Tagline**: "More than checking the box"
 - **Design Philosophy**: Clean, minimal, Apple-inspired
-- **Icon Library**: Heroicons (outline for default, solid for active states)
+- **Icon Library**: Feather Icons (clean, minimal icons matching our premium aesthetic)
 - **Target Audience**: Middle school through college age (Type B personalities)
 
 ## Technical Architecture
