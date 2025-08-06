@@ -140,6 +140,8 @@ const SignUpScreen: React.FC = () => {
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="off"
+                  textContentType="none"
                   editable={!isLoading}
                 />
                 <TouchableOpacity
@@ -199,6 +201,8 @@ const SignUpScreen: React.FC = () => {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="off"
+                textContentType="none"
                 editable={!isLoading}
               />
               {confirmPassword.length > 0 && password !== confirmPassword && (

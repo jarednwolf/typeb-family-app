@@ -32,6 +32,17 @@ const initialState: AuthState = {
   isEmailVerified: false,
 };
 
+// Helper function to serialize timestamps
+const serializeUserProfile = (profile: UserProfile | null): UserProfile | null => {
+  if (!profile) return null;
+  
+  return {
+    ...profile,
+    createdAt: profile.createdAt?.toDate ? profile.createdAt.toDate().toISOString() : profile.createdAt,
+    updatedAt: profile.updatedAt?.toDate ? profile.updatedAt.toDate().toISOString() : profile.updatedAt,
+  };
+};
+
 // Async thunks
 export const signUp = createAsyncThunk(
   'auth/signUp',
@@ -42,7 +53,7 @@ export const signUp = createAsyncThunk(
       
       return {
         user: userCredential.user.toJSON(),
-        userProfile,
+        userProfile: serializeUserProfile(userProfile),
       };
     } catch (error: any) {
       return rejectWithValue(formatAuthError(error));
@@ -59,7 +70,7 @@ export const signIn = createAsyncThunk(
       
       return {
         user: userCredential.user.toJSON(),
-        userProfile,
+        userProfile: serializeUserProfile(userProfile),
       };
     } catch (error: any) {
       return rejectWithValue(formatAuthError(error));
@@ -96,7 +107,7 @@ export const fetchUserProfile = createAsyncThunk(
   async (uid: string, { rejectWithValue }) => {
     try {
       const userProfile = await getUserProfile(uid);
-      return userProfile;
+      return serializeUserProfile(userProfile);
     } catch (error: any) {
       return rejectWithValue(formatAuthError(error));
     }

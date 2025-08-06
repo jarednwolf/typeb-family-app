@@ -95,6 +95,8 @@ const SignInScreen: React.FC = () => {
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="off"
+                  textContentType="none"
                   editable={!isLoading}
                 />
                 <TouchableOpacity

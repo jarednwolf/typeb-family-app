@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read and write their own user document
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read all users (for family member listing)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+    }
+    
+    // Tasks collection rules (for Phase 2)
+    match /tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Families collection rules (for Phase 3)
+    match /families/{familyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

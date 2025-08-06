@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "verify-firebase": "node scripts/verify-firebase.js",
+    "setup:check": "node scripts/verify-firebase.js && echo '✅ Ready to start development!'"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.4.5",
