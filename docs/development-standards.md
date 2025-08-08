@@ -107,21 +107,21 @@
 ## Feature Specifications
 
 ### Task Management
-- **Categories**: Pre-defined (Chores, School, Personal Care, Family Time, Exercise)
-- **Assignment**: Direct assignment by manager
+- **Categories**: Pre-defined (Chores, Homework, Exercise, Personal, Other)
+- **Assignment**: Direct assignment by parent
 - **Templates**: Basic starter pack for all age levels
 - **Recurring Tasks**: All visible in upcoming, completed auto-clear, overdue summarized
 - **Validation**: Photo/text proof (premium feature)
 
 ### Notifications
 - **Default**: Persistent but polite
-- **Escalation**: Smart escalation to manager if ignored
+- **Escalation**: Smart escalation to parent if ignored
 - **Customization**: Per-task settings (future premium feature)
 - **Quiet Hours**: Respect user-defined quiet times
 
 ### Privacy & Data
-- **Consent Model**: Family manager consent covers all members
-- **Data Visibility**: Strict isolation - members see own tasks, manager sees all
+- **Consent Model**: Family parent consent covers all members
+- **Data Visibility**: Strict isolation - children see own tasks, parents see all
 - **Analytics**: Track everything for optimization, anonymized where possible
 - **Future**: Configurable privacy settings (premium)
 
@@ -404,10 +404,17 @@ Brief description of what this service handles
 
 ---
 
-**Last Updated**: Current Session
-**Version**: 1.2.0
+### Data Structure Standards
+For detailed data models, naming conventions, and type definitions, see:
+- `typeb-family-app/docs/DATA-STANDARDS-AND-CONVENTIONS.md`
+
+---
+
+**Last Updated**: January 7, 2025
+**Version**: 1.3.0
 **Owner**: Development Team
 
-**CRITICAL**: 
+**CRITICAL**:
 1. Always update MASTER-TRACKER.md - it's our single source of truth!
 2. Clean docs after each phase for consistency!
+3. Follow DATA-STANDARDS-AND-CONVENTIONS.md for all data structures!
