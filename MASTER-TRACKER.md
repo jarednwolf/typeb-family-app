@@ -1,11 +1,11 @@
 # TypeB Family App - Master Tracker
 
 ## Current Status: Phase 5 - Path to App Store
-**Last Updated**: January 8, 2025 (Day 5 - E2E Testing Implementation)
-**Production Readiness**: 95% (App fully functional, testing architecture issues documented)
-**Deployment Ready**: YES ✅ (Testing issues don't block deployment)
-**Estimated Time to App Store**: 4-5 weeks
-**Current Phase**: 5.4 - E2E Testing Implementation (60 tests written, build issues on iOS)
+**Last Updated**: January 8, 2025 (Day 5 - UI Polish Complete, v1.0.1 Released)
+**Production Readiness**: 96% (App fully functional, UI polished, testing architecture issues documented)
+**Deployment Ready**: YES ✅ (v1.0.1 ready for TestFlight)
+**Estimated Time to App Store**: 3-4 weeks
+**Current Phase**: 5.5 - UI Polish Complete, Moving to App Store Preparation
 
 ## 🎯 Executive Summary
 
@@ -26,7 +26,7 @@ After successful v1 UAT testing, the TypeB Family App is functionally complete b
 - **UI Component Test Coverage**: 253 tests passing (8 components tested)
 - **E2E Test Coverage**: 60 tests written (auth, family, tasks) - iOS build blocked
 - **Type Safety**: 176 `any` types to fix
-- **UI Polish**: Needs significant work (next priority)
+- **UI Polish**: ✅ COMPLETE (Settings & Family screens updated in v1.0.1)
 
 ---
 
@@ -310,7 +310,22 @@ After successful v1 UAT testing, the TypeB Family App is functionally complete b
 
 ## 📝 Session Notes
 
-### January 9, 2025 - Phase 5 Day 5 Implementation
+### January 8, 2025 - v1.0.1 Release - UI Polish Complete
+
+**Evening Session - UI Polish & v1.0.1 Release** ✅ COMPLETED
+- Successfully updated Settings and Family screens for better engagement
+- Key improvements:
+  - Settings: Compact profile, prioritized CTAs (Premium & Notifications above fold)
+  - Family: Reorganized layout, fixed invite code design, inclusive terminology
+  - Changed "Parent/Child" to "Manager/Member" for broader appeal
+  - Consistent premium banner design across both screens
+  - Apple-inspired polish matching Home and Tasks screens
+- Created RELEASE-NOTES-v1.0.1.md
+- Updated app.json to version 1.0.1
+- **Achievement**: UI now fully polished and consistent across all screens
+- **Ready for**: TestFlight deployment and App Store preparation
+
+### January 8, 2025 - Phase 5 Day 5 Implementation
 
 **Day 5 - E2E Testing Implementation** ✅ COMPLETED (with caveats)
 - Successfully analyzed test coverage across entire codebase
