@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,15 +12,18 @@ import { Feather } from '@expo/vector-icons';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import TaskCard from '../../components/cards/TaskCard';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { AppDispatch } from '../../store/store';
 import { Task } from '../../types/models';
 
 const FirstTaskTutorial: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
+  const { theme, isDarkMode } = useTheme();
   const [currentStep, setCurrentStep] = useState(0);
   const [taskCompleted, setTaskCompleted] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   // Sample task for tutorial
   const sampleTask: Task = {
@@ -130,10 +133,10 @@ const FirstTaskTutorial: React.FC = () => {
             styles.iconContainer,
             currentStep === 3 && styles.successIconContainer,
           ]}>
-            <Feather 
-              name={currentStepData.icon as any} 
-              size={64} 
-              color={currentStep === 3 ? theme.colors.success : theme.colors.primary} 
+            <Feather
+              name={currentStepData.icon as any}
+              size={64}
+              color={currentStep === 3 ? theme.colors.success : (isDarkMode ? theme.colors.info : theme.colors.primary)}
             />
           </View>
           
@@ -187,7 +190,7 @@ const FirstTaskTutorial: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
   },
   progressDotActive: {
     width: 24,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.primary,
   },
   progressDotCompleted: {
     backgroundColor: theme.colors.success,
@@ -237,7 +240,7 @@ const styles = StyleSheet.create({
     width: 128,
     height: 128,
     borderRadius: 64,
-    backgroundColor: theme.colors.primary + '10',
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.primary + '10',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.XL,
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: theme.spacing.M,
   },

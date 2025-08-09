@@ -4,7 +4,7 @@
  */
 
 import * as yup from 'yup';
-import { TaskPriority, TaskStatus } from '../types/models';
+import { TaskPriority, TaskStatus, Task, Family } from '../types/models';
 
 // Family validation schemas
 export const createFamilySchema = yup.object().shape({
@@ -50,7 +50,7 @@ export const createTaskSchema = yup.object().shape({
     .min(new Date(), 'Due date cannot be in the past')
     .when('isRecurring', {
       is: true,
-      then: (schema) => schema.required('Due date is required for recurring tasks'),
+      then: (schema: yup.DateSchema) => schema.required('Due date is required for recurring tasks'),
     }),
   
   isRecurring: yup
@@ -74,7 +74,7 @@ export const createTaskSchema = yup.object().shape({
         .of(yup.number().min(0).max(6))
         .when('frequency', {
           is: 'weekly',
-          then: (schema) => schema.min(1, 'Select at least one day of the week'),
+          then: (schema: yup.ArraySchema<number[] | undefined>) => schema.min(1, 'Select at least one day of the week'),
         }),
       dayOfMonth: yup
         .number()
@@ -82,7 +82,7 @@ export const createTaskSchema = yup.object().shape({
         .max(31)
         .when('frequency', {
           is: 'monthly',
-          then: (schema) => schema.required('Day of month is required'),
+          then: (schema: yup.NumberSchema) => schema.required('Day of month is required'),
         }),
       endDate: yup
         .date()
@@ -104,7 +104,7 @@ export const createTaskSchema = yup.object().shape({
     .string()
     .when('reminderEnabled', {
       is: true,
-      then: (schema) => schema
+      then: (schema: yup.StringSchema) => schema
         .required('Reminder time is required')
         .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
     }),
@@ -198,7 +198,7 @@ export const updateProfileSchema = yup.object().shape({
 // Helper functions for validation
 export const validateData = async <T>(
   schema: yup.Schema<T>,
-  data: any
+  data: unknown
 ): Promise<{ isValid: boolean; errors: Record<string, string>; data?: T }> => {
   try {
     const validatedData = await schema.validate(data, { abortEarly: false });
@@ -206,7 +206,7 @@ export const validateData = async <T>(
   } catch (error) {
     if (error instanceof yup.ValidationError) {
       const errors: Record<string, string> = {};
-      error.inner.forEach((err) => {
+      error.inner.forEach((err: yup.ValidationError) => {
         if (err.path) {
           errors[err.path] = err.message;
         }
@@ -231,7 +231,7 @@ export const sanitizeInviteCode = (code: string): string => {
 };
 
 // Date validation helpers
-export const isValidDate = (date: any): boolean => {
+export const isValidDate = (date: unknown): date is Date => {
   return date instanceof Date && !isNaN(date.getTime());
 };
 
@@ -267,48 +267,50 @@ export const parseTime = (time: string): { hours: number; minutes: number } | nu
 };
 
 // Task-specific validation helpers
-export const canCompleteTask = (task: any): boolean => {
+export const canCompleteTask = (task: Partial<Task>): boolean => {
   return task.status === 'pending' || task.status === 'in_progress';
 };
 
-export const canEditTask = (task: any, userId: string, isParent: boolean): boolean => {
+export const canEditTask = (task: Partial<Task>, userId: string, isParent: boolean): boolean => {
   return task.createdBy === userId || task.assignedTo === userId || isParent;
 };
 
-export const canDeleteTask = (task: any, userId: string, isParent: boolean): boolean => {
+export const canDeleteTask = (task: Partial<Task>, userId: string, isParent: boolean): boolean => {
   return task.createdBy === userId || isParent;
 };
 
-export const canValidateTask = (task: any, userId: string, isParent: boolean): boolean => {
-  return isParent && task.requiresPhoto && task.status === 'completed' && task.photoUrl;
+export const canValidateTask = (task: Partial<Task>, userId: string, isParent: boolean): boolean => {
+  return isParent && !!task.requiresPhoto && task.status === 'completed' && !!task.photoUrl;
 };
 
 // Family-specific validation helpers
-export const canInviteMembers = (family: any, userId: string): boolean => {
-  return family.parentIds.includes(userId);
+export const canInviteMembers = (family: Partial<Family>, userId: string): boolean => {
+  return family.parentIds?.includes(userId) ?? false;
 };
 
-export const canRemoveMember = (family: any, userId: string, targetUserId: string): boolean => {
-  return family.parentIds.includes(userId) && userId !== targetUserId;
+export const canRemoveMember = (family: Partial<Family>, userId: string, targetUserId: string): boolean => {
+  return (family.parentIds?.includes(userId) ?? false) && userId !== targetUserId;
 };
 
-export const canLeaveFamily = (family: any, userId: string): boolean => {
+export const canLeaveFamily = (family: Partial<Family>, userId: string): boolean => {
   // Can't leave if you're the only parent
-  if (family.parentIds.length === 1 && family.parentIds[0] === userId) {
-    return family.memberIds.length === 1; // Can only leave if you're the only member
+  if (family.parentIds?.length === 1 && family.parentIds[0] === userId) {
+    return family.memberIds?.length === 1; // Can only leave if you're the only member
   }
   return true;
 };
 
-export const canChangeMemberRole = (family: any, userId: string, targetUserId: string): boolean => {
-  return family.parentIds.includes(userId) && userId !== targetUserId;
+export const canChangeMemberRole = (family: Partial<Family>, userId: string, targetUserId: string): boolean => {
+  return (family.parentIds?.includes(userId) ?? false) && userId !== targetUserId;
 };
 
 // Error message helpers
-export const getErrorMessage = (error: any): string => {
+export const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'string') return error;
-  if (error?.message) return error.message;
-  if (error?.error) return error.error;
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') return error.message;
+    if ('error' in error && typeof error.error === 'string') return error.error;
+  }
   return 'An unexpected error occurred';
 };
 

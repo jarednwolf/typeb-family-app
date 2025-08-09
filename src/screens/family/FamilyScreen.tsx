@@ -9,33 +9,41 @@ import {
   Alert,
   Share,
   Clipboard,
+  SafeAreaView,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { FamilyStackParamList } from '../../navigation/MainNavigator';
+
+type FamilyScreenNavigationProp = StackNavigationProp<FamilyStackParamList, 'FamilyHome'>;
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingState from '../../components/common/LoadingState';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { AppDispatch, RootState } from '../../store/store';
-import { 
-  selectFamily, 
+import {
+  selectFamily,
   selectFamilyMembers,
   selectCurrentUserRole,
   fetchFamily,
   regenerateInviteCode,
   removeMember,
 } from '../../store/slices/familySlice';
+import { canAddFamilyMember, getMemberLimitText, needsPremiumFor } from '../../utils/premiumGates';
+import { getRoleLabel } from '../../utils/roleHelpers';
 
 const FamilyScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<FamilyScreenNavigationProp>();
+  const { theme, isDarkMode } = useTheme();
   
   const family = useSelector(selectFamily);
   const members = useSelector(selectFamilyMembers);
   const currentUserRole = useSelector(selectCurrentUserRole);
-  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
   const isLoading = useSelector((state: RootState) => state.family.isLoading);
   
   const [refreshing, setRefreshing] = useState(false);
@@ -46,17 +54,19 @@ const FamilyScreen: React.FC = () => {
 
   useEffect(() => {
     loadFamily();
-  }, []);
+  }, [userProfile]);
 
   const loadFamily = useCallback(async () => {
-    if (currentUser && (currentUser as any).familyId) {
+    if (userProfile && userProfile.familyId) {
       try {
-        await dispatch(fetchFamily((currentUser as any).familyId)).unwrap();
-      } catch (error) {
+        await dispatch(fetchFamily(userProfile.familyId)).unwrap();
+      } catch (error: any) {
         console.error('Failed to load family:', error);
+        // If the family doesn't exist, the family service will handle clearing the invalid familyId
+        // Just log the error here, the UI will show the "No Family Yet" state
       }
     }
-  }, [currentUser, dispatch]);
+  }, [userProfile, dispatch]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -66,6 +76,26 @@ const FamilyScreen: React.FC = () => {
 
   const handleGenerateInviteCode = useCallback(async () => {
     if (!family) return;
+    
+    // Check if family can add more members
+    if (!canAddFamilyMember(family)) {
+      if (needsPremiumFor('invite_member', family, userProfile)) {
+        Alert.alert(
+          'Premium Required',
+          'Upgrade to Premium to add more family members.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Upgrade',
+              onPress: () => navigation.navigate('Premium' as never)
+            }
+          ]
+        );
+        return;
+      }
+      Alert.alert('Member Limit Reached', 'Your family has reached the maximum number of members.');
+      return;
+    }
     
     setIsGeneratingCode(true);
     try {
@@ -77,9 +107,31 @@ const FamilyScreen: React.FC = () => {
     } finally {
       setIsGeneratingCode(false);
     }
-  }, [family, dispatch]);
+  }, [family, dispatch, userProfile, navigation]);
 
   const handleShareInviteCode = useCallback(async () => {
+    if (!family) return;
+    
+    // Check if family can add more members
+    if (!canAddFamilyMember(family)) {
+      if (needsPremiumFor('invite_member', family, userProfile)) {
+        Alert.alert(
+          'Premium Required',
+          'Upgrade to Premium to add more family members.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Upgrade',
+              onPress: () => navigation.navigate('Premium' as never)
+            }
+          ]
+        );
+        return;
+      }
+      Alert.alert('Member Limit Reached', 'Your family has reached the maximum number of members.');
+      return;
+    }
+    
     const code = inviteCode || family?.inviteCode;
     if (!code) return;
 
@@ -91,7 +143,7 @@ const FamilyScreen: React.FC = () => {
     } catch (error) {
       console.error('Error sharing:', error);
     }
-  }, [inviteCode, family]);
+  }, [inviteCode, family, userProfile, navigation]);
 
   const handleCopyInviteCode = useCallback(() => {
     const code = inviteCode || family?.inviteCode;
@@ -129,12 +181,15 @@ const FamilyScreen: React.FC = () => {
   }, [family, dispatch]);
 
   const handleJoinFamily = useCallback(() => {
-    navigation.navigate('JoinFamily' as never);
+    navigation.navigate('JoinFamily');
   }, [navigation]);
 
   const handleCreateFamily = useCallback(() => {
-    navigation.navigate('CreateFamily' as never);
+    navigation.navigate('CreateFamily');
   }, [navigation]);
+
+  // Create dynamic styles - must be before any conditional returns
+  const styles = React.useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   if (isLoading && !refreshing) {
     return <LoadingState message="Loading family..." />;
@@ -169,20 +224,30 @@ const FamilyScreen: React.FC = () => {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
-      {/* Family Header */}
-      <Card style={styles.familyCard}>
+    <SafeAreaView style={styles.container}>
+      {/* Fixed Header */}
+      <View style={styles.fixedHeader}>
+        <Text style={styles.screenTitle}>Family</Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Compact Family Header */}
         <View style={styles.familyHeader}>
-          <View style={styles.familyIcon}>
-            <Feather name="home" size={32} color={theme.colors.primary} />
+          <View style={styles.familyIconContainer}>
+            <Feather name="home" size={28} color={isDarkMode ? theme.colors.white : theme.colors.primary} />
           </View>
-          <View style={styles.familyInfo}>
+          <View style={styles.familyDetails}>
             <Text style={styles.familyName}>{family.name}</Text>
             <Text style={styles.memberCount}>
               {members.length} {members.length === 1 ? 'member' : 'members'}
@@ -190,135 +255,196 @@ const FamilyScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Invite Code Section */}
+        {/* Premium Upsell - Priority Position */}
+        {!family.isPremium && (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('Premium' as never)}
+          >
+            <Card style={styles.premiumCard}>
+              <View style={styles.premiumContent}>
+                <View style={styles.premiumLeft}>
+                  <View style={styles.premiumIconContainer}>
+                    <Feather name="star" size={24} color={theme.colors.premium} />
+                  </View>
+                  <View style={styles.premiumTextContainer}>
+                    <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                    <Text style={styles.premiumDescription}>
+                      Add family members, photo validation, and advanced features
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.premiumCTA}>
+                  <Feather name="arrow-right" size={18} color={theme.colors.primary} />
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* Invite Code Section - Compact and Better Design */}
         {isParent && (
-          <View style={styles.inviteSection}>
-            <Text style={styles.sectionTitle}>Invite Code</Text>
-            <View style={styles.inviteCodeContainer}>
-              <Text style={styles.inviteCode}>
-                {inviteCode || family.inviteCode}
-              </Text>
+          <Card style={styles.inviteCard} testID="invite-code-section">
+            <View style={styles.inviteContent}>
+              <View style={styles.inviteLeft}>
+                <Text style={styles.inviteTitle}>Invite Code</Text>
+                <View style={styles.inviteCodeContainer}>
+                  <Text style={styles.inviteCode} testID="current-invite-code">
+                    {inviteCode || family.inviteCode}
+                  </Text>
+                </View>
+                <Text style={styles.inviteHint}>
+                  {canAddFamilyMember(family)
+                    ? 'Share this code with others to invite them'
+                    : getMemberLimitText(family)
+                  }
+                </Text>
+              </View>
               <View style={styles.inviteActions}>
                 <TouchableOpacity
                   onPress={handleCopyInviteCode}
                   style={styles.inviteActionButton}
+                  activeOpacity={0.7}
                   testID="copy-code-button"
                 >
-                  <Feather name="copy" size={20} color={theme.colors.primary} />
+                  <Feather name="copy" size={20} color={isDarkMode ? theme.colors.info : theme.colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleShareInviteCode}
                   style={styles.inviteActionButton}
+                  activeOpacity={0.7}
                   testID="share-code-button"
                 >
-                  <Feather name="share-2" size={20} color={theme.colors.primary} />
+                  <Feather name="share-2" size={20} color={isDarkMode ? theme.colors.info : theme.colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleGenerateInviteCode}
                   style={styles.inviteActionButton}
+                  activeOpacity={0.7}
                   disabled={isGeneratingCode}
                   testID="regenerate-code-button"
                 >
-                  <Feather 
-                    name="refresh-cw" 
-                    size={20} 
-                    color={isGeneratingCode ? theme.colors.textTertiary : theme.colors.primary} 
+                  <Feather
+                    name="refresh-cw"
+                    size={20}
+                    color={isGeneratingCode ? theme.colors.textTertiary : (isDarkMode ? theme.colors.info : theme.colors.primary)}
                   />
                 </TouchableOpacity>
               </View>
             </View>
-            <Text style={styles.inviteHint}>
-              Share this code with family members to invite them
-            </Text>
+          </Card>
+        )}
+
+        {/* Members Section - Enhanced */}
+        <View style={styles.membersSection}>
+          <Text style={styles.sectionTitle}>Family Members</Text>
+          <View style={styles.membersList}>
+            {members.map((member, index) => (
+              <View key={member.id}>
+                <View style={styles.memberRow}>
+                  <TouchableOpacity
+                    style={styles.memberContent}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      // Future: Navigate to member profile
+                    }}
+                  >
+                    <View style={styles.memberLeft}>
+                      <View style={[
+                        styles.memberAvatar,
+                        member.role === 'parent' && styles.parentAvatar
+                      ]}>
+                        <Text style={styles.memberInitial}>
+                          {member.displayName?.charAt(0).toUpperCase() || '?'}
+                        </Text>
+                      </View>
+                      <View style={styles.memberInfo}>
+                        <View style={styles.memberNameRow}>
+                          <Text style={styles.memberName}>{member.displayName}</Text>
+                          {member.id === userProfile?.id && (
+                            <View style={styles.youBadge}>
+                              <Text style={styles.youBadgeText}>You</Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={styles.memberMeta}>
+                          <View style={[
+                            styles.roleBadge,
+                            member.role === 'parent' && styles.parentRoleBadge,
+                          ]}>
+                            <Text style={[
+                              styles.roleText,
+                              member.role === 'parent' && styles.parentRoleText
+                            ]}>
+                              {getRoleLabel(family, member.role, false)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                    {isParent && member.id !== userProfile?.id && (
+                      <TouchableOpacity
+                        onPress={() => handleRemoveMember(member.id)}
+                        style={styles.removeButton}
+                        testID={`remove-member-${member.id}`}
+                      >
+                        <Feather name="x-circle" size={20} color={theme.colors.textTertiary} />
+                      </TouchableOpacity>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {index < members.length - 1 && <View style={styles.memberSeparator} />}
+              </View>
+            ))}
+          </View>
+        </View>
+
+
+        {/* Family Settings - Cleaner Design */}
+        {isParent && (
+          <View style={styles.settingsSection}>
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => Alert.alert('Coming Soon', 'Family settings will be available in a future update.')}
+              activeOpacity={0.7}
+              testID="family-settings-button"
+            >
+              <View style={styles.settingsLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Feather name="settings" size={20} color={isDarkMode ? theme.colors.info : theme.colors.primary} />
+                </View>
+                <Text style={styles.settingsButtonText}>Family Settings</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
           </View>
         )}
-      </Card>
-
-      {/* Members List */}
-      <View style={styles.membersSection}>
-        <Text style={styles.sectionTitle}>Family Members</Text>
-        {members.map((member) => (
-          <Card key={member.id} style={styles.memberCard}>
-            <View style={styles.memberContent}>
-              <View style={styles.memberAvatar}>
-                <Text style={styles.memberInitial}>
-                  {member.displayName?.charAt(0).toUpperCase() || '?'}
-                </Text>
-              </View>
-              <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>{member.displayName}</Text>
-                <View style={styles.memberMeta}>
-                  <View style={[
-                    styles.roleBadge,
-                    member.role === 'parent' && styles.parentBadge,
-                  ]}>
-                    <Text style={styles.roleText}>
-                      {member.role === 'parent' ? 'Parent' : 'Child'}
-                    </Text>
-                  </View>
-                  {member.id === currentUser?.uid && (
-                    <Text style={styles.youBadge}>You</Text>
-                  )}
-                </View>
-              </View>
-              {isParent && member.id !== currentUser?.uid && (
-                <TouchableOpacity
-                  onPress={() => handleRemoveMember(member.id)}
-                  style={styles.removeButton}
-                  testID={`remove-member-${member.id}`}
-                >
-                  <Feather name="x" size={20} color={theme.colors.error} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </Card>
-        ))}
-      </View>
-
-      {/* Premium Features */}
-      {!family.isPremium && (
-        <Card style={styles.premiumCard}>
-          <View style={styles.premiumHeader}>
-            <Feather name="star" size={24} color={theme.colors.premium} />
-            <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-          </View>
-          <Text style={styles.premiumDescription}>
-            Get unlimited family members, advanced features, and priority support
-          </Text>
-          <Button
-            title="Learn More"
-            variant="secondary"
-            onPress={() => navigation.navigate('Premium' as never)}
-            style={styles.premiumButton}
-          />
-        </Card>
-      )}
-
-      {/* Family Settings */}
-      {isParent && (
-        <View style={styles.settingsSection}>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('FamilySettings' as never)}
-            testID="family-settings-button"
-          >
-            <Feather name="settings" size={20} color={theme.colors.primary} />
-            <Text style={styles.settingsButtonText}>Family Settings</Text>
-            <Feather name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  fixedHeader: {
+    paddingHorizontal: theme.spacing.L,
+    paddingVertical: theme.spacing.M,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.separator,
+  },
+  screenTitle: {
+    fontSize: theme.typography.title2.fontSize,
+    fontWeight: theme.typography.title2.fontWeight as any,
+    color: theme.colors.textPrimary,
+  },
+  scrollView: {
+    flex: 1,
+  },
   content: {
-    padding: theme.spacing.M,
     paddingBottom: theme.spacing.XXL,
   },
   noFamilyActions: {
@@ -328,105 +454,142 @@ const styles = StyleSheet.create({
   actionButton: {
     width: '100%',
   },
-  familyCard: {
-    marginBottom: theme.spacing.L,
-  },
   familyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.L,
+    paddingHorizontal: theme.spacing.L,
+    paddingTop: theme.spacing.M,
+    paddingBottom: theme.spacing.S,
   },
-  familyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: theme.colors.primary + '10',
+  familyIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.backgroundTexture,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.M,
   },
-  familyInfo: {
+  familyDetails: {
     flex: 1,
   },
   familyName: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.XXS,
+    color: theme.colors.textPrimary,
+    marginBottom: 2,
   },
   memberCount: {
     fontSize: 14,
     color: theme.colors.textSecondary,
   },
-  inviteSection: {
-    paddingTop: theme.spacing.M,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.textTertiary + '30',
+  inviteCard: {
+    marginHorizontal: theme.spacing.L,
+    marginTop: theme.spacing.M,
+    padding: theme.spacing.M,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.M,
-  },
-  inviteCodeContainer: {
+  inviteContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.background,
-    padding: theme.spacing.M,
-    borderRadius: theme.borderRadius.medium,
-    marginBottom: theme.spacing.S,
+  },
+  inviteLeft: {
+    flex: 1,
+  },
+  inviteTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.XS,
+  },
+  inviteCodeContainer: {
+    marginBottom: theme.spacing.XS,
   },
   inviteCode: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     letterSpacing: 2,
   },
   inviteActions: {
     flexDirection: 'row',
-    gap: theme.spacing.S,
+    gap: theme.spacing.XS,
   },
   inviteActionButton: {
-    padding: theme.spacing.S,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.backgroundTexture,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inviteHint: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textTertiary,
   },
   membersSection: {
-    marginBottom: theme.spacing.L,
+    marginTop: theme.spacing.L,
   },
-  memberCard: {
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: theme.spacing.S,
+    marginLeft: theme.spacing.L + theme.spacing.S,
+  },
+  membersList: {
+    marginHorizontal: theme.spacing.L,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    overflow: 'hidden',
+  },
+  memberRow: {
+    backgroundColor: theme.colors.surface,
   },
   memberContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.M,
+    paddingHorizontal: theme.spacing.M,
+  },
+  memberLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   memberAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.textTertiary + '30',
+    backgroundColor: theme.colors.backgroundTexture,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.M,
   },
+  parentAvatar: {
+    backgroundColor: theme.colors.success + '15',
+  },
   memberInitial: {
     fontSize: 20,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   memberInfo: {
     flex: 1,
   },
+  memberNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.S,
+    marginBottom: theme.spacing.XXS,
+  },
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.XXS,
+    color: theme.colors.textPrimary,
   },
   memberMeta: {
     flexDirection: 'row',
@@ -435,64 +598,114 @@ const styles = StyleSheet.create({
   },
   roleBadge: {
     paddingHorizontal: theme.spacing.S,
-    paddingVertical: theme.spacing.XXS,
+    paddingVertical: 2,
     borderRadius: theme.borderRadius.small,
-    backgroundColor: theme.colors.info + '20',
+    backgroundColor: theme.colors.backgroundTexture,
   },
-  parentBadge: {
+  parentRoleBadge: {
     backgroundColor: theme.colors.success + '20',
   },
   roleText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.colors.textSecondary,
+  },
+  parentRoleText: {
+    color: theme.colors.success,
   },
   youBadge: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontStyle: 'italic',
+    paddingHorizontal: theme.spacing.XS,
+    paddingVertical: 1,
+    borderRadius: theme.borderRadius.small,
+    backgroundColor: isDarkMode ? theme.colors.info + '20' : theme.colors.primary + '10',
+  },
+  youBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: isDarkMode ? theme.colors.info : theme.colors.primary,
+  },
+  memberSeparator: {
+    height: 1,
+    backgroundColor: theme.colors.separator,
+    marginLeft: theme.spacing.M + 48 + theme.spacing.M,
   },
   removeButton: {
     padding: theme.spacing.S,
   },
   premiumCard: {
-    marginBottom: theme.spacing.L,
-    backgroundColor: theme.colors.premium + '10',
+    marginHorizontal: theme.spacing.L,
+    marginTop: theme.spacing.M,
+    padding: 0,
+    overflow: 'hidden',
+    backgroundColor: isDarkMode ? '#FFD70015' : theme.colors.premium + '15',
   },
-  premiumHeader: {
+  premiumContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.S,
-    marginBottom: theme.spacing.S,
+    padding: theme.spacing.M,
+  },
+  premiumLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  premiumIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: isDarkMode ? '#FFD70025' : theme.colors.premium + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.M,
+  },
+  premiumTextContainer: {
+    flex: 1,
   },
   premiumTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+    marginBottom: 2,
   },
   premiumDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.M,
+    lineHeight: 18,
   },
-  premiumButton: {
-    alignSelf: 'flex-start',
+  premiumCTA: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   settingsSection: {
     marginTop: theme.spacing.L,
+    marginHorizontal: theme.spacing.L,
+    marginBottom: theme.spacing.L,
   },
   settingsButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: theme.spacing.M,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: theme.borderRadius.large,
+  },
+  settingsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingsIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.backgroundTexture,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.M,
   },
   settingsButtonText: {
-    flex: 1,
     fontSize: 16,
-    color: theme.colors.primary,
-    marginLeft: theme.spacing.M,
+    fontWeight: '500',
+    color: theme.colors.textPrimary,
   },
 });
 

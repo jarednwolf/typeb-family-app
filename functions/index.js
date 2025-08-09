@@ -1,4 +1,5 @@
-const functions = require('firebase-functions');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin
@@ -39,9 +40,7 @@ const isInQuietHours = (date, quietHours) => {
 };
 
 // Scheduled function to check for tasks needing reminders
-exports.checkTaskReminders = functions.pubsub
-  .schedule('every 5 minutes')
-  .onRun(async (context) => {
+exports.checkTaskReminders = onSchedule('every 5 minutes', async (event) => {
     console.log('Checking for task reminders...');
     
     const now = new Date();
@@ -179,9 +178,7 @@ async function sendTaskReminder(task, reminderType) {
 }
 
 // Function to handle overdue tasks and notify managers
-exports.checkOverdueTasks = functions.pubsub
-  .schedule('every 10 minutes')
-  .onRun(async (context) => {
+exports.checkOverdueTasks = onSchedule('every 10 minutes', async (event) => {
     console.log('Checking for overdue tasks...');
     
     const now = new Date();
@@ -291,11 +288,10 @@ async function notifyManagerAboutOverdueTask(task) {
 }
 
 // Trigger when a new task is created
-exports.onTaskCreated = functions.firestore
-  .document('tasks/{taskId}')
-  .onCreate(async (snap, context) => {
+exports.onTaskCreated = onDocumentCreated('tasks/{taskId}', async (event) => {
+    const snap = event.data;
     const task = snap.data();
-    const taskId = context.params.taskId;
+    const taskId = event.params.taskId;
     
     console.log(`New task created: ${task.title}`);
     
@@ -347,18 +343,16 @@ async function notifyUserAboutAssignedTask(task, taskId) {
 }
 
 // Trigger when a task is completed
-exports.onTaskCompleted = functions.firestore
-  .document('tasks/{taskId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
+exports.onTaskCompleted = onDocumentUpdated('tasks/{taskId}', async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
     
     // Check if task was just completed
     if (before.status !== 'completed' && after.status === 'completed') {
       console.log(`Task completed: ${after.title}`);
       
       // Notify family members about completion
-      await notifyFamilyAboutTaskCompletion(after, context.params.taskId);
+      await notifyFamilyAboutTaskCompletion(after, event.params.taskId);
     }
     
     return null;
@@ -397,9 +391,7 @@ async function notifyFamilyAboutTaskCompletion(task, taskId) {
 }
 
 // Clean up old completed tasks (runs daily)
-exports.cleanupCompletedTasks = functions.pubsub
-  .schedule('every 24 hours')
-  .onRun(async (context) => {
+exports.cleanupCompletedTasks = onSchedule('every 24 hours', async (event) => {
     console.log('Cleaning up old completed tasks...');
     
     const thirtyDaysAgo = new Date();

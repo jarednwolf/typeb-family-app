@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,19 +9,28 @@ import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type SetupOption = 'create' | 'join' | null;
 
 const FamilySetupScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, isDarkMode } = useTheme();
   const [selectedOption, setSelectedOption] = useState<SetupOption>(null);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handleContinue = useCallback(() => {
     if (selectedOption === 'create') {
       navigation.navigate('CreateFamily' as never);
     } else if (selectedOption === 'join') {
-      navigation.navigate('JoinFamily' as never);
+      // Navigate to Family tab, then JoinFamily screen
+      navigation.navigate('Main', {
+        screen: 'Family',
+        params: {
+          screen: 'JoinFamily'
+        }
+      } as any);
     }
   }, [selectedOption, navigation]);
 
@@ -34,7 +43,7 @@ const FamilySetupScreen: React.FC = () => {
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="family-setup-screen">
       <View style={styles.header}>
         <Text style={styles.title}>Let's Get Started!</Text>
         <Text style={styles.subtitle}>
@@ -47,7 +56,7 @@ const FamilySetupScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => setSelectedOption('create')}
           activeOpacity={0.8}
-          testID="create-option"
+          testID="create-family-button"
         >
           <Card style={[
             styles.optionCard,
@@ -57,10 +66,10 @@ const FamilySetupScreen: React.FC = () => {
               styles.iconContainer,
               selectedOption === 'create' && styles.selectedIcon,
             ]}>
-              <Feather 
-                name="plus-circle" 
-                size={48} 
-                color={selectedOption === 'create' ? theme.colors.surface : theme.colors.primary} 
+              <Feather
+                name="plus-circle"
+                size={48}
+                color={selectedOption === 'create' ? theme.colors.surface : (isDarkMode ? theme.colors.info : theme.colors.primary)}
               />
             </View>
             <Text style={[
@@ -87,7 +96,7 @@ const FamilySetupScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => setSelectedOption('join')}
           activeOpacity={0.8}
-          testID="join-option"
+          testID="join-family-button"
         >
           <Card style={[
             styles.optionCard,
@@ -97,10 +106,10 @@ const FamilySetupScreen: React.FC = () => {
               styles.iconContainer,
               selectedOption === 'join' && styles.selectedIcon,
             ]}>
-              <Feather 
-                name="user-plus" 
-                size={48} 
-                color={selectedOption === 'join' ? theme.colors.surface : theme.colors.primary} 
+              <Feather
+                name="user-plus"
+                size={48}
+                color={selectedOption === 'join' ? theme.colors.surface : (isDarkMode ? theme.colors.info : theme.colors.primary)}
               />
             </View>
             <Text style={[
@@ -144,7 +153,7 @@ const FamilySetupScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -157,7 +166,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     marginBottom: theme.spacing.M,
   },
   subtitle: {
@@ -177,14 +186,14 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedCard: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary,
+    borderColor: isDarkMode ? theme.colors.info : theme.colors.primary,
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.primary,
   },
   iconContainer: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: theme.colors.primary + '10',
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.primary + '10',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.M,
@@ -195,7 +204,7 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     marginBottom: theme.spacing.S,
   },
   selectedText: {

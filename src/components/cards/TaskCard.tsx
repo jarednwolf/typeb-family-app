@@ -11,29 +11,63 @@
  * - Photo validation badge
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Task, TaskCategory } from '../../types/models';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+
+// Task type that can handle both serialized (string dates) and non-serialized (Date objects)
+interface TaskCardTask {
+  id: string;
+  familyId: string;
+  title: string;
+  description?: string;
+  category: TaskCategory;
+  assignedTo: string;
+  assignedBy: string;
+  createdBy: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  completedAt?: string | Date;
+  completedBy?: string;
+  requiresPhoto: boolean;
+  photoUrl?: string;
+  photoValidatedBy?: string;
+  validationStatus?: 'pending' | 'approved' | 'rejected';
+  validationNotes?: string;
+  dueDate?: string | Date;
+  isRecurring: boolean;
+  reminderEnabled: boolean;
+  reminderTime?: string;
+  lastReminderSent?: string | Date;
+  escalationLevel: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  points?: number;
+}
 
 interface TaskCardProps {
-  task: Task;
+  task: TaskCardTask;
   onPress: () => void;
   onComplete: () => void;
   showAssignee?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ 
-  task, 
-  onPress, 
+export const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  onPress,
   onComplete,
-  showAssignee = true 
+  showAssignee = true
 }) => {
+  const { theme, isDarkMode } = useTheme();
   const isOverdue = task.dueDate &&
     (typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate) < new Date() &&
     task.status !== 'completed';
   const isCompleted = task.status === 'completed';
+  
+  // Create dynamic styles based on theme
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
   
   // Get category icon based on category name
   const getCategoryIcon = (category: TaskCategory): keyof typeof Feather.glyphMap => {
@@ -100,7 +134,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           {isCompleted && (
-            <Feather name="check" size={16} color={colors.white} />
+            <Feather name="check" size={16} color={theme.colors.white} />
           )}
         </TouchableOpacity>
         
@@ -140,7 +174,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {/* Priority Indicator */}
             {task.priority === 'high' && !isCompleted && (
               <View style={styles.priorityBadge}>
-                <Feather name="alert-circle" size={12} color={colors.error} />
+                <Feather name="alert-circle" size={12} color={theme.colors.error} />
                 <Text style={styles.priorityText}>High</Text>
               </View>
             )}
@@ -148,7 +182,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {/* Recurring Indicator */}
             {task.isRecurring && (
               <View style={styles.recurringBadge}>
-                <Feather name="repeat" size={12} color={colors.textSecondary} />
+                <Feather name="repeat" size={12} color={theme.colors.textSecondary} />
               </View>
             )}
           </View>
@@ -158,7 +192,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {/* Assignee */}
             {showAssignee && task.assignedTo && (
               <View style={styles.assigneeContainer}>
-                <Feather name="user" size={12} color={colors.textTertiary} />
+                <Feather name="user" size={12} color={theme.colors.textTertiary} />
                 <Text style={styles.assignee} numberOfLines={1}>
                   {task.assignedTo}
                 </Text>
@@ -171,12 +205,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 <Feather
                   name="calendar"
                   size={12}
-                  color={isOverdue && !isCompleted ? colors.error : colors.textTertiary}
+                  color={isOverdue && !isCompleted ? theme.colors.error : theme.colors.textTertiary}
                 />
-                <Text 
+                <Text
                   style={[
-                    styles.dueDate, 
-                    isOverdue && !isCompleted && styles.dueDateOverdue
+                    styles.dueDate,
+                    (isOverdue && !isCompleted) ? styles.dueDateOverdue : null
                   ]}
                 >
                   {formatDueDate(task.dueDate)}
@@ -191,11 +225,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {task.requiresPhoto && isCompleted && (
         <View style={styles.validationBadge}>
           <Feather
-            name={task.validationStatus === 'approved' ? 'check-circle' : 
+            name={task.validationStatus === 'approved' ? 'check-circle' :
                   task.validationStatus === 'rejected' ? 'x-circle' : 'clock'}
             size={20}
-            color={task.validationStatus === 'approved' ? colors.success : 
-                   task.validationStatus === 'rejected' ? colors.error : colors.warning}
+            color={task.validationStatus === 'approved' ? theme.colors.success :
+                   task.validationStatus === 'rejected' ? theme.colors.error : theme.colors.warning}
           />
         </View>
       )}
@@ -203,23 +237,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {/* Premium Badge for photo tasks */}
       {task.requiresPhoto && !isCompleted && (
         <View style={styles.premiumBadge}>
-          <Feather name="camera" size={16} color={colors.premium} />
+          <Feather name="camera" size={16} color={theme.colors.premium} />
         </View>
       )}
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.large,
-    padding: spacing.M,
-    marginHorizontal: spacing.M,
-    marginVertical: spacing.XS,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.M,
+    marginHorizontal: theme.spacing.M,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.small,
+    ...theme.shadows.small,
   },
   
   containerCompleted: {
@@ -235,18 +268,18 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: borderRadius.large,
+    borderRadius: theme.borderRadius.large,
     borderWidth: 2,
-    borderColor: colors.separator,
-    marginRight: spacing.S,
+    borderColor: theme.colors.separator,
+    marginRight: theme.spacing.S,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
   
   checkboxCompleted: {
-    backgroundColor: colors.success,
-    borderColor: colors.success,
+    backgroundColor: theme.colors.success,
+    borderColor: theme.colors.success,
   },
   
   content: {
@@ -254,31 +287,31 @@ const styles = StyleSheet.create({
   },
   
   title: {
-    ...typography.body,
-    color: colors.textPrimary,
-    marginBottom: spacing.XXS,
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.XXS,
     fontWeight: '500',
   },
   
   titleCompleted: {
     textDecorationLine: 'line-through',
-    color: colors.textTertiary,
+    color: theme.colors.textTertiary,
   },
   
   metadata: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.XS,
+    marginBottom: theme.spacing.XS,
     flexWrap: 'wrap',
   },
   
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.XS,
+    paddingHorizontal: theme.spacing.XS,
     paddingVertical: 2,
-    borderRadius: borderRadius.small,
-    marginRight: spacing.XS,
+    borderRadius: theme.borderRadius.small,
+    marginRight: theme.spacing.XS,
     marginBottom: 2,
   },
   
@@ -287,26 +320,26 @@ const styles = StyleSheet.create({
   },
   
   categoryText: {
-    ...typography.caption1,
+    ...theme.typography.caption1,
     fontWeight: '500',
   },
   
   priorityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: spacing.XS,
+    marginRight: theme.spacing.XS,
     marginBottom: 2,
   },
   
   priorityText: {
-    ...typography.caption1,
-    color: colors.error,
+    ...theme.typography.caption1,
+    color: theme.colors.error,
     fontWeight: '600',
     marginLeft: 4,
   },
   
   recurringBadge: {
-    marginRight: spacing.XS,
+    marginRight: theme.spacing.XS,
     marginBottom: 2,
   },
   
@@ -320,12 +353,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: spacing.XS,
+    marginRight: theme.spacing.XS,
   },
   
   assignee: {
-    ...typography.caption1,
-    color: colors.textTertiary,
+    ...theme.typography.caption1,
+    color: theme.colors.textTertiary,
     marginLeft: 4,
   },
   
@@ -335,22 +368,22 @@ const styles = StyleSheet.create({
   },
   
   dueDate: {
-    ...typography.caption1,
-    color: colors.textTertiary,
+    ...theme.typography.caption1,
+    color: theme.colors.textTertiary,
     marginLeft: 4,
   },
   
   dueDateOverdue: {
-    color: colors.error,
+    color: theme.colors.error,
     fontWeight: '600',
   },
   
   validationBadge: {
-    marginLeft: spacing.S,
+    marginLeft: theme.spacing.S,
   },
   
   premiumBadge: {
-    marginLeft: spacing.S,
+    marginLeft: theme.spacing.S,
   },
 });
 

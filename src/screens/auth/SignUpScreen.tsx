@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -18,6 +20,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { signUp, selectIsLoading, selectAuthError, clearError } from '../../store/slices/authSlice';
 import { validatePassword } from '../../services/auth';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
 
@@ -26,13 +29,17 @@ const SignUpScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectAuthError);
+  const { theme, isDarkMode } = useTheme();
 
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
@@ -44,7 +51,7 @@ const SignUpScreen: React.FC = () => {
 
   const handleSignUp = async () => {
     // Validate all fields
-    if (!displayName || !email || !password || !confirmPassword) {
+    if (!firstName || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -70,7 +77,7 @@ const SignUpScreen: React.FC = () => {
     }
 
     dispatch(clearError());
-    const result = await dispatch(signUp({ email, password, displayName }));
+    const result = await dispatch(signUp({ email, password, displayName: firstName }));
     
     if (signUp.rejected.match(result)) {
       Alert.alert('Sign Up Failed', result.payload as string);
@@ -84,29 +91,46 @@ const SignUpScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="signup-screen">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={28} color={theme.colors.textPrimary} />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+          
           <View style={styles.header}>
+            <Image
+              source={require('../../../assets/type_b_logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join TypeB to get started</Text>
+            <Text style={styles.subtitle}>Join the TypeB Family community</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Display Name</Text>
+              <Text style={styles.label}>First Name</Text>
               <TextInput
+                testID="display-name-input"
                 style={styles.input}
-                placeholder="Enter your name"
-                placeholderTextColor="#9CA3AF"
-                value={displayName}
-                onChangeText={setDisplayName}
+                placeholder="Enter your first name"
+                placeholderTextColor={theme.colors.textTertiary}
+                value={firstName}
+                onChangeText={setFirstName}
                 autoCapitalize="words"
                 autoCorrect={false}
                 editable={!isLoading}
@@ -116,9 +140,10 @@ const SignUpScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
+                testID="email-input"
                 style={styles.input}
                 placeholder="Enter your email"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.colors.textTertiary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -132,9 +157,10 @@ const SignUpScreen: React.FC = () => {
               <Text style={styles.label}>Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
+                  testID="password-input"
                   style={[styles.input, styles.passwordInput]}
                   placeholder="Create a password"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.colors.textTertiary}
                   value={password}
                   onChangeText={handlePasswordChange}
                   secureTextEntry={!showPassword}
@@ -193,9 +219,10 @@ const SignUpScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Confirm Password</Text>
               <TextInput
+                testID="confirm-password-input"
                 style={styles.input}
                 placeholder="Confirm your password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.colors.textTertiary}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
@@ -204,6 +231,12 @@ const SignUpScreen: React.FC = () => {
                 autoComplete="off"
                 textContentType="none"
                 editable={!isLoading}
+                onFocus={() => {
+                  // Scroll to make confirm password field visible
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 500, animated: true });
+                  }, 100);
+                }}
               />
               {confirmPassword.length > 0 && password !== confirmPassword && (
                 <Text style={styles.errorText}>Passwords do not match</Text>
@@ -211,12 +244,13 @@ const SignUpScreen: React.FC = () => {
             </View>
 
             <TouchableOpacity
+              testID="create-account-button"
               style={[styles.signUpButton, isLoading && styles.disabledButton]}
               onPress={handleSignUp}
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={theme.colors.background} />
               ) : (
                 <Text style={styles.signUpButtonText}>Create Account</Text>
               )}
@@ -224,7 +258,7 @@ const SignUpScreen: React.FC = () => {
 
             <View style={styles.signInContainer}>
               <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.goBack()} disabled={isLoading}>
+              <TouchableOpacity testID="signin-link" onPress={() => navigation.goBack()} disabled={isLoading}>
                 <Text style={styles.signInLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
@@ -235,10 +269,10 @@ const SignUpScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -246,21 +280,43 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 32,
+    paddingBottom: Platform.OS === 'ios' ? 150 : 32, // Extra padding for iOS keyboard and confirm password field
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  backText: {
+    fontSize: 17,
+    color: theme.colors.textPrimary,
+    marginLeft: 4,
   },
   header: {
-    marginBottom: 48,
-    marginTop: 24,
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 32,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
   },
   form: {
     flex: 1,
@@ -271,18 +327,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.border,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#0A0A0A',
-    backgroundColor: '#F9FAFB',
+    color: theme.colors.textPrimary,
+    backgroundColor: isDarkMode ? theme.colors.surface : '#F9FAFB',
   },
   passwordContainer: {
     position: 'relative',
@@ -297,7 +353,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -10 }],
   },
   showPasswordText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -310,18 +366,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   requirementMet: {
-    color: '#10B981',
+    color: theme.colors.success,
   },
   requirementUnmet: {
-    color: '#9CA3AF',
+    color: theme.colors.textTertiary,
   },
   errorText: {
-    color: '#EF4444',
+    color: theme.colors.error,
     fontSize: 12,
     marginTop: 4,
   },
   signUpButton: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -332,7 +388,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signUpButtonText: {
-    color: '#FFFFFF',
+    color: theme.colors.background,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -342,11 +398,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
   },
   signInLink: {
-    color: '#0A0A0A',
+    color: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },

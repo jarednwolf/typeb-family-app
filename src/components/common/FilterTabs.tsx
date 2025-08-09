@@ -30,6 +30,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(({
   testID = 'filter-tabs',
   accessibilityLabel = 'Filter tabs',
 }) => {
+  const [containerWidth, setContainerWidth] = React.useState(0);
   const animatedValue = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -42,17 +43,23 @@ export const FilterTabs: FC<FilterTabsProps> = memo(({
     }).start();
   }, [activeTab, tabs]);
 
+  // Calculate the actual pixel value for translateX based on container width
+  const tabWidth = containerWidth / tabs.length;
   const indicatorTranslateX = animatedValue.interpolate({
     inputRange: tabs.map((_, index) => index),
-    outputRange: tabs.map((_, index) => index * (100 / tabs.length)),
+    outputRange: tabs.map((_, index) => index * tabWidth),
   });
 
   return (
-    <View 
+    <View
       style={styles.container}
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="tablist"
+      onLayout={(event) => {
+        const { width } = event.nativeEvent.layout;
+        setContainerWidth(width);
+      }}
     >
       <ScrollView
         horizontal
@@ -97,24 +104,23 @@ export const FilterTabs: FC<FilterTabsProps> = memo(({
       </ScrollView>
       
       {/* Animated indicator */}
-      <View style={styles.indicatorContainer}>
-        <Animated.View
-          style={[
-            styles.indicator,
-            {
-              width: `${100 / tabs.length}%`,
-              transform: [
-                {
-                  translateX: indicatorTranslateX.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: ['0%', '100%'],
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
-      </View>
+      {containerWidth > 0 && (
+        <View style={styles.indicatorContainer}>
+          <Animated.View
+            style={[
+              styles.indicator,
+              {
+                width: tabWidth,
+                transform: [
+                  {
+                    translateX: indicatorTranslateX,
+                  },
+                ],
+              },
+            ]}
+          />
+        </View>
+      )}
     </View>
   );
 });

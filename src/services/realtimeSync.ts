@@ -4,16 +4,25 @@
  */
 
 import { Unsubscribe } from 'firebase/firestore';
-import { store } from '../store/store';
 import { setFamily, setMembers } from '../store/slices/familySlice';
 import { setTasks, setUserTasks, setOverdueTasks, setStats } from '../store/slices/tasksSlice';
 import * as familyService from './family';
 import * as tasksService from './tasks';
+import { Family, User, Task } from '../types/models';
+import { toISOString } from '../utils/dateHelpers';
 
 class RealtimeSyncService {
   private listeners: Map<string, Unsubscribe> = new Map();
   private familyId: string | null = null;
   private userId: string | null = null;
+  private dispatch: any = null;
+
+  /**
+   * Set the dispatch function
+   */
+  setDispatch(dispatch: any) {
+    this.dispatch = dispatch;
+  }
 
   /**
    * Initialize real-time sync for a user
@@ -23,10 +32,63 @@ class RealtimeSyncService {
     this.userId = userId;
     this.familyId = familyId;
 
-    if (familyId) {
+    if (familyId && this.dispatch) {
       this.startFamilySync(familyId);
       this.startTasksSync(familyId, userId);
     }
+  }
+
+  /**
+   * Serialize family data for Redux
+   */
+  private serializeFamily(family: Family | null) {
+    if (!family) return null;
+    
+    return {
+      ...family,
+      createdAt: toISOString(family.createdAt) || '',
+      updatedAt: toISOString(family.updatedAt) || '',
+    };
+  }
+
+  /**
+   * Serialize member data for Redux
+   */
+  private serializeMember(member: User) {
+    return {
+      ...member,
+      createdAt: toISOString(member.createdAt) || '',
+      updatedAt: toISOString(member.updatedAt) || '',
+      subscriptionEndDate: toISOString(member.subscriptionEndDate) || undefined,
+    };
+  }
+
+  /**
+   * Serialize task data for Redux
+   */
+  private serializeTask(task: Task) {
+    const { completedAt, dueDate, lastReminderSent, createdAt, updatedAt, recurrencePattern, ...rest } = task;
+    
+    const serialized: any = {
+      ...rest,
+      completedAt: toISOString(completedAt) || undefined,
+      dueDate: toISOString(dueDate) || undefined,
+      lastReminderSent: toISOString(lastReminderSent) || undefined,
+      createdAt: toISOString(createdAt) || '',
+      updatedAt: toISOString(updatedAt) || '',
+    };
+    
+    if (recurrencePattern) {
+      serialized.recurrencePattern = {
+        frequency: recurrencePattern.frequency,
+        interval: recurrencePattern.interval,
+        daysOfWeek: recurrencePattern.daysOfWeek,
+        dayOfMonth: recurrencePattern.dayOfMonth,
+        endDate: toISOString(recurrencePattern.endDate) || undefined,
+      };
+    }
+    
+    return serialized;
   }
 
   /**
@@ -37,15 +99,15 @@ class RealtimeSyncService {
     const familyUnsubscribe = familyService.subscribeToFamily(
       familyId,
       (family) => {
-        if (family) {
-          store.dispatch(setFamily(family));
+        if (family && this.dispatch) {
+          this.dispatch(setFamily(this.serializeFamily(family)));
           
           // Subscribe to family members
           this.startMembersSync(family.memberIds);
-        } else {
+        } else if (this.dispatch) {
           // Family was deleted or user lost access
-          store.dispatch(setFamily(null));
-          store.dispatch(setMembers([]));
+          this.dispatch(setFamily(null));
+          this.dispatch(setMembers([]));
           this.cleanup();
         }
       }
@@ -68,7 +130,9 @@ class RealtimeSyncService {
     const membersUnsubscribe = familyService.subscribeToFamilyMembers(
       memberIds,
       (members) => {
-        store.dispatch(setMembers(members));
+        if (this.dispatch) {
+          this.dispatch(setMembers(members.map(m => this.serializeMember(m))));
+        }
       }
     );
 
@@ -82,22 +146,26 @@ class RealtimeSyncService {
     // Subscribe to all family tasks
     const tasksUnsubscribe = tasksService.subscribeToFamilyTasks(
       familyId,
-      (tasks) => {
-        store.dispatch(setTasks(tasks));
-        
-        // Filter user tasks
-        const userTasks = tasks.filter(t => t.assignedTo === userId);
-        store.dispatch(setUserTasks(userTasks));
-        
-        // Filter overdue tasks
-        const now = new Date();
-        const overdueTasks = tasks.filter(
-          t => t.status === 'pending' && t.dueDate && t.dueDate < now
-        );
-        store.dispatch(setOverdueTasks(overdueTasks));
-        
-        // Calculate stats
-        this.updateTaskStats(tasks, userId);
+      userId,
+      (tasks: Task[]) => {
+        if (this.dispatch) {
+          const serializedTasks = tasks.map(t => this.serializeTask(t));
+          this.dispatch(setTasks(serializedTasks));
+          
+          // Filter user tasks
+          const userTasks = serializedTasks.filter(t => t.assignedTo === userId);
+          this.dispatch(setUserTasks(userTasks));
+          
+          // Filter overdue tasks
+          const now = new Date();
+          const overdueTasks = serializedTasks.filter(
+            t => t.status === 'pending' && t.dueDate && new Date(t.dueDate) < now
+          );
+          this.dispatch(setOverdueTasks(overdueTasks));
+          
+          // Calculate stats
+          this.updateTaskStats(tasks, userId);
+        }
       }
     );
 
@@ -107,7 +175,7 @@ class RealtimeSyncService {
   /**
    * Update task statistics
    */
-  private updateTaskStats(tasks: any[], userId: string) {
+  private updateTaskStats(tasks: Task[], userId: string) {
     let total = 0;
     let pending = 0;
     let completed = 0;
@@ -124,7 +192,7 @@ class RealtimeSyncService {
         completed++;
       } else if (task.status === 'pending') {
         pending++;
-        if (task.dueDate && task.dueDate < now) {
+        if (task.dueDate && new Date(task.dueDate) < now) {
           overdue++;
         }
       }
@@ -132,13 +200,15 @@ class RealtimeSyncService {
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    store.dispatch(setStats({
-      total,
-      pending,
-      completed,
-      overdue,
-      completionRate,
-    }));
+    if (this.dispatch) {
+      this.dispatch(setStats({
+        total,
+        pending,
+        completed,
+        overdue,
+        completionRate,
+      }));
+    }
   }
 
   /**
@@ -199,9 +269,10 @@ export default realtimeSyncService;
  */
 export const useRealtimeSync = () => {
   return {
-    initialize: (userId: string, familyId: string | null) => 
+    setDispatch: (dispatch: any) => realtimeSyncService.setDispatch(dispatch),
+    initialize: (userId: string, familyId: string | null) =>
       realtimeSyncService.initialize(userId, familyId),
-    updateFamily: (familyId: string | null) => 
+    updateFamily: (familyId: string | null) =>
       realtimeSyncService.updateFamily(familyId),
     cleanup: () => realtimeSyncService.cleanup(),
     isActive: () => realtimeSyncService.isActive(),

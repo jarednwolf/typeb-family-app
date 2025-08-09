@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,18 +14,21 @@ import { Feather } from '@expo/vector-icons';
 import Input from '../../components/forms/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { AppDispatch, RootState } from '../../store/store';
 import { joinFamily } from '../../store/slices/familySlice';
 
 const JoinFamilyScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation();
-  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const { theme, isDarkMode } = useTheme();
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
   
   const [inviteCode, setInviteCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState('');
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const validateCode = useCallback(() => {
     if (!inviteCode.trim()) {
@@ -47,26 +50,42 @@ const JoinFamilyScreen: React.FC = () => {
     try {
       await dispatch(joinFamily({
         inviteCode: inviteCode.toUpperCase(),
-        userId: currentUser?.uid || '',
+        userId: userProfile?.id || '',
       })).unwrap();
       
       Alert.alert('Success', 'You have joined the family!', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error: any) {
-      Alert.alert(
-        'Failed to Join',
-        error.message || 'Invalid invite code or code has expired'
-      );
+      // Check if it's a capacity error and show upgrade option
+      if (error.message?.includes('maximum capacity')) {
+        Alert.alert(
+          'Family is Full',
+          'This family has reached its member limit. Ask a family manager to upgrade to premium for more member slots.',
+          [
+            { text: 'OK', style: 'cancel' },
+            {
+              text: 'View Premium',
+              onPress: () => navigation.navigate('Premium' as never)
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Failed to Join',
+          error.message || 'Invalid invite code or code has expired'
+        );
+      }
     } finally {
       setIsJoining(false);
     }
-  }, [inviteCode, currentUser, dispatch, navigation, validateCode]);
+  }, [inviteCode, userProfile, dispatch, navigation, validateCode]);
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      testID="join-family-screen"
     >
       <View style={styles.content}>
         <View style={styles.header}>
@@ -75,14 +94,14 @@ const JoinFamilyScreen: React.FC = () => {
             style={styles.backButton}
             testID="back-button"
           >
-            <Feather name="arrow-left" size={24} color={theme.colors.primary} />
+            <Feather name="arrow-left" size={24} color={isDarkMode ? theme.colors.info : theme.colors.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Join a Family</Text>
         </View>
 
         <Card style={styles.card}>
           <View style={styles.iconContainer}>
-            <Feather name="users" size={48} color={theme.colors.primary} />
+            <Feather name="users" size={48} color={isDarkMode ? theme.colors.info : theme.colors.primary} />
           </View>
           
           <Text style={styles.description}>
@@ -137,7 +156,7 @@ const JoinFamilyScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -158,7 +177,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   card: {
     alignItems: 'center',
@@ -168,7 +187,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: theme.colors.primary + '10',
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.primary + '10',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.L,
@@ -202,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginTop: theme.spacing.XL,
     padding: theme.spacing.M,
-    backgroundColor: theme.colors.info + '10',
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.info + '10',
     borderRadius: theme.borderRadius.medium,
     gap: theme.spacing.S,
   },

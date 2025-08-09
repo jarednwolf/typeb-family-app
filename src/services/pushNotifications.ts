@@ -1,4 +1,3 @@
-import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -30,217 +29,130 @@ class PushNotificationService {
     if (this.isInitialized) return;
 
     try {
-      // Check if push notifications are supported
-      const isSupported = await this.checkPushSupport();
-      if (!isSupported) {
-        console.log('Push notifications not supported on this device');
-        return;
-      }
-
-      // Request permission
-      const hasPermission = await this.requestPermission();
-      if (!hasPermission) {
-        console.log('Push notification permission denied');
-        return;
-      }
-
-      // Get FCM token
-      await this.getFCMToken();
-
-      // Set up message handlers
-      this.setupMessageHandlers();
-
-      // Subscribe to default topics
-      await this.subscribeToDefaultTopics();
-
+      console.log('Push notifications using React Native Firebase are not supported in Expo Go');
+      console.log('Using Expo Notifications for local notifications only');
+      
+      // For Expo Go, we'll only use local notifications
+      // Push notifications require a development build
+      
       this.isInitialized = true;
-      console.log('Push notification service initialized');
+      console.log('Push notification service initialized (limited mode for Expo Go)');
     } catch (error) {
       console.error('Error initializing push notifications:', error);
     }
   }
 
-  private async checkPushSupport(): Promise<boolean> {
-    // Push notifications require a physical device
-    if (!Platform.OS || Platform.OS === 'web') {
-      return false;
-    }
-
-    // Check if messaging is available
-    try {
-      const isSupported = await messaging().isSupported();
-      return isSupported;
-    } catch {
-      return false;
-    }
-  }
-
   async requestPermission(): Promise<boolean> {
     try {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-      // Save permission status
-      await AsyncStorage.setItem(PUSH_PERMISSION_KEY, enabled ? 'granted' : 'denied');
-
-      if (enabled) {
-        console.log('Push notification permission granted');
+      // Use Expo's notification permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
       }
-
+      
+      const enabled = finalStatus === 'granted';
+      await AsyncStorage.setItem(PUSH_PERMISSION_KEY, enabled ? 'granted' : 'denied');
+      
+      if (enabled) {
+        console.log('Notification permission granted');
+      }
+      
       return enabled;
     } catch (error) {
-      console.error('Error requesting push permission:', error);
+      console.error('Error requesting permission:', error);
       return false;
     }
   }
 
   async getFCMToken(): Promise<string | null> {
-    try {
-      // Check if we have a saved token
-      const savedToken = await AsyncStorage.getItem(FCM_TOKEN_KEY);
-      if (savedToken) {
-        this.fcmToken = savedToken;
-        return savedToken;
-      }
-
-      // Get new token
-      const token = await messaging().getToken();
-      if (token) {
-        this.fcmToken = token;
-        await AsyncStorage.setItem(FCM_TOKEN_KEY, token);
-        console.log('FCM token obtained:', token);
-        return token;
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error getting FCM token:', error);
-      return null;
-    }
+    // In Expo Go, we can't get a real FCM token
+    // Return a mock token for development
+    const mockToken = 'expo-go-mock-token-' + Math.random().toString(36).substr(2, 9);
+    this.fcmToken = mockToken;
+    await AsyncStorage.setItem(FCM_TOKEN_KEY, mockToken);
+    console.log('Mock FCM token for Expo Go:', mockToken);
+    return mockToken;
   }
 
   async updateUserToken(userId: string) {
     if (!this.fcmToken || !userId) return;
 
     try {
-      // Update user document with FCM token
+      // Update user document with mock FCM token
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         fcmToken: this.fcmToken,
         fcmTokenUpdatedAt: new Date(),
         platform: Platform.OS,
+        isExpoGo: true, // Flag to indicate this is from Expo Go
       });
 
-      console.log('User FCM token updated in Firestore');
+      console.log('User mock FCM token updated in Firestore');
     } catch (error) {
       console.error('Error updating user FCM token:', error);
     }
   }
 
   private setupMessageHandlers() {
-    // Handle messages received while app is in foreground
-    messaging().onMessage(async (remoteMessage) => {
-      console.log('Foreground message received:', remoteMessage);
-      await this.handleForegroundMessage(remoteMessage);
-    });
-
-    // Handle notification opened app from background state
-    messaging().onNotificationOpenedApp((remoteMessage) => {
-      console.log('Notification opened app from background:', remoteMessage);
-      this.handleNotificationOpen(remoteMessage);
-    });
-
-    // Check if app was opened from a notification (killed state)
-    messaging()
-      .getInitialNotification()
-      .then((remoteMessage) => {
-        if (remoteMessage) {
-          console.log('App opened from notification (killed state):', remoteMessage);
-          this.handleNotificationOpen(remoteMessage);
-        }
-      });
-
-    // Handle token refresh
-    messaging().onTokenRefresh(async (token) => {
-      console.log('FCM token refreshed:', token);
-      this.fcmToken = token;
-      await AsyncStorage.setItem(FCM_TOKEN_KEY, token);
-      // TODO: Update token in user profile
-    });
+    // In Expo Go, we can't handle Firebase messages
+    // This is a no-op for now
+    console.log('Firebase message handlers not available in Expo Go');
   }
 
-  private async handleForegroundMessage(remoteMessage: FirebaseMessagingTypes.RemoteMessage) {
-    const { notification, data } = remoteMessage;
-
-    if (!notification) return;
-
+  private async handleForegroundMessage(notification: any) {
     // Show local notification using Expo
     await Notifications.scheduleNotificationAsync({
       content: {
         title: notification.title || 'TypeB',
         body: notification.body || '',
-        data: data || {},
+        data: notification.data || {},
         sound: true,
       },
       trigger: null, // Show immediately
     });
   }
 
-  private handleNotificationOpen(remoteMessage: FirebaseMessagingTypes.RemoteMessage) {
-    const data = remoteMessage.data as PushNotificationData;
-
+  private handleNotificationOpen(data: PushNotificationData) {
     if (!data) return;
 
     // Handle different notification types
     switch (data.type) {
       case 'task_reminder':
         if (data.taskId) {
-          // TODO: Navigate to task detail
           console.log('Navigate to task:', data.taskId);
         }
         break;
 
       case 'task_assigned':
         if (data.taskId) {
-          // TODO: Navigate to task detail
           console.log('Navigate to assigned task:', data.taskId);
         }
         break;
 
       case 'task_completed':
-        // TODO: Navigate to family dashboard
         console.log('Navigate to family dashboard');
         break;
 
       case 'family_update':
-        // TODO: Navigate to family screen
         console.log('Navigate to family screen');
         break;
 
       default:
-        // TODO: Navigate to dashboard
         console.log('Navigate to dashboard');
     }
   }
 
   async subscribeToTopic(topic: string) {
-    try {
-      await messaging().subscribeToTopic(topic);
-      console.log(`Subscribed to topic: ${topic}`);
-    } catch (error) {
-      console.error(`Error subscribing to topic ${topic}:`, error);
-    }
+    // Topics not supported in Expo Go
+    console.log(`Mock subscribe to topic: ${topic}`);
   }
 
   async unsubscribeFromTopic(topic: string) {
-    try {
-      await messaging().unsubscribeFromTopic(topic);
-      console.log(`Unsubscribed from topic: ${topic}`);
-    } catch (error) {
-      console.error(`Error unsubscribing from topic ${topic}:`, error);
-    }
+    // Topics not supported in Expo Go
+    console.log(`Mock unsubscribe from topic: ${topic}`);
   }
 
   async subscribeToFamily(familyId: string) {
@@ -264,7 +176,6 @@ class PushNotificationService {
     data?: PushNotificationData;
   }) {
     // This would typically be done server-side via Cloud Functions
-    // Placeholder for client-side reference
     console.log('Push notification would be sent to user:', userId, notification);
   }
 
@@ -274,16 +185,14 @@ class PushNotificationService {
     data?: PushNotificationData;
   }) {
     // This would typically be done server-side via Cloud Functions
-    // Placeholder for client-side reference
     console.log('Push notification would be sent to family:', familyId, notification);
   }
 
   async clearToken() {
     try {
-      await messaging().deleteToken();
       await AsyncStorage.removeItem(FCM_TOKEN_KEY);
       this.fcmToken = null;
-      console.log('FCM token cleared');
+      console.log('Mock FCM token cleared');
     } catch (error) {
       console.error('Error clearing FCM token:', error);
     }
@@ -294,7 +203,7 @@ class PushNotificationService {
   }
 
   isReady(): boolean {
-    return this.isInitialized && !!this.fcmToken;
+    return this.isInitialized;
   }
 }
 

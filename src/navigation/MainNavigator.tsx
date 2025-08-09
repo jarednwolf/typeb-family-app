@@ -2,11 +2,25 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { TasksScreen } from '../screens/tasks/TasksScreen';
+import CreateTaskScreen from '../screens/tasks/CreateTaskScreen';
+import TaskDetailScreen from '../screens/tasks/TaskDetailScreen';
+import PhotoValidationScreen from '../screens/tasks/PhotoValidationScreen';
+import AnalyticsDashboard from '../screens/analytics/AnalyticsDashboard';
 import FamilyScreen from '../screens/family/FamilyScreen';
+import CreateFamilyScreen from '../screens/family/CreateFamilyScreen';
+import JoinFamilyScreen from '../screens/family/JoinFamilyScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
-import { theme } from '../constants/theme';
+import EditProfileScreen from '../screens/settings/EditProfileScreen';
+import PremiumScreen from '../screens/premium/PremiumScreen';
+import SupportScreen from '../screens/support/SupportScreen';
+import PrivacyScreen from '../screens/legal/PrivacyScreen';
+import TermsScreen from '../screens/legal/TermsScreen';
+import AboutScreen from '../screens/settings/AboutScreen';
+import FamilySettingsScreen from '../screens/family/FamilySettingsScreen';
+import { useTheme } from '../contexts/ThemeContext';
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -17,24 +31,32 @@ export type MainTabParamList = {
 
 export type DashboardStackParamList = {
   DashboardHome: undefined;
+  Analytics: undefined;
 };
 
 export type TasksStackParamList = {
   TasksList: undefined;
   TaskDetail: { taskId: string };
   CreateTask: undefined;
+  PhotoValidation: undefined;
 };
 
 export type FamilyStackParamList = {
   FamilyHome: undefined;
+  CreateFamily: undefined;
+  JoinFamily: undefined;
   InviteMembers: undefined;
+  FamilySettings: undefined;
 };
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
-  Profile: undefined;
-  Notifications: undefined;
-  Subscription: undefined;
+  EditProfile: undefined;
+  Premium: undefined;
+  Support: undefined;
+  Privacy: undefined;
+  Terms: undefined;
+  About: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -44,103 +66,203 @@ const FamilyStack = createStackNavigator<FamilyStackParamList>();
 const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 // Stack navigators for each tab
-const DashboardStackNavigator = () => (
-  <DashboardStack.Navigator
-    screenOptions={{
-      headerStyle: {
-        backgroundColor: '#FFFFFF',
-        elevation: 0,
-        shadowOpacity: 0,
-        borderBottomWidth: 0,
-      },
-      headerTintColor: '#0A0A0A',
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 17,
-      },
-    }}
-  >
-    <DashboardStack.Screen
-      name="DashboardHome"
-      component={DashboardScreen}
-      options={{ title: 'Dashboard' }}
-    />
-  </DashboardStack.Navigator>
-);
+const DashboardStackNavigator = () => {
+  const { theme, isDarkMode } = useTheme();
+  
+  return (
+    <DashboardStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.separator,
+        },
+        headerTintColor: theme.colors.textPrimary,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 17,
+        },
+      }}
+    >
+      <DashboardStack.Screen
+        name="DashboardHome"
+        component={DashboardScreen}
+        options={{ title: 'Dashboard' }}
+      />
+      <DashboardStack.Screen
+        name="Analytics"
+        component={AnalyticsDashboard}
+        options={{
+          headerShown: false,
+          presentation: 'modal' as any
+        }}
+      />
+    </DashboardStack.Navigator>
+  );
+};
 
-const TasksStackNavigator = () => (
-  <TasksStack.Navigator
-    screenOptions={{
-      headerStyle: {
-        backgroundColor: '#FFFFFF',
-        elevation: 0,
-        shadowOpacity: 0,
-        borderBottomWidth: 0,
-      },
-      headerTintColor: '#0A0A0A',
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 17,
-      },
-    }}
-  >
-    <TasksStack.Screen
-      name="TasksList"
-      component={TasksScreen}
-      options={{ title: 'Tasks' }}
-    />
-  </TasksStack.Navigator>
-);
+const TasksStackNavigator = () => {
+  const { theme, isDarkMode } = useTheme();
+  
+  return (
+    <TasksStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.separator,
+        },
+        headerTintColor: theme.colors.textPrimary,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 17,
+        },
+      }}
+    >
+      <TasksStack.Screen
+        name="TasksList"
+        component={TasksScreen}
+        options={{ title: 'Tasks' }}
+      />
+      <TasksStack.Screen
+        name="CreateTask"
+        component={CreateTaskScreen}
+        options={{
+          title: 'Create Task',
+          presentation: 'modal' as any
+        }}
+      />
+      <TasksStack.Screen
+        name="TaskDetail"
+        component={TaskDetailScreen}
+        options={{
+          title: 'Task Details',
+          presentation: 'modal' as any
+        }}
+      />
+      <TasksStack.Screen
+        name="PhotoValidation"
+        component={PhotoValidationScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal' as any
+        }}
+      />
+    </TasksStack.Navigator>
+  );
+};
 
-const FamilyStackNavigator = () => (
-  <FamilyStack.Navigator
-    screenOptions={{
-      headerStyle: {
-        backgroundColor: '#FFFFFF',
-        elevation: 0,
-        shadowOpacity: 0,
-        borderBottomWidth: 0,
-      },
-      headerTintColor: '#0A0A0A',
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 17,
-      },
-    }}
-  >
-    <FamilyStack.Screen
-      name="FamilyHome"
-      component={FamilyScreen}
-      options={{ title: 'Family' }}
-    />
-  </FamilyStack.Navigator>
-);
+const FamilyStackNavigator = () => {
+  const { theme, isDarkMode } = useTheme();
+  
+  return (
+    <FamilyStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.separator,
+        },
+        headerTintColor: theme.colors.textPrimary,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 17,
+        },
+      }}
+    >
+      <FamilyStack.Screen
+        name="FamilyHome"
+        component={FamilyScreen}
+        options={{ title: 'Family' }}
+      />
+      <FamilyStack.Screen
+        name="CreateFamily"
+        component={CreateFamilyScreen}
+        options={{ title: 'Create Family' }}
+      />
+      <FamilyStack.Screen
+        name="JoinFamily"
+        component={JoinFamilyScreen}
+        options={{ title: 'Join Family' }}
+      />
+      <FamilyStack.Screen
+        name="FamilySettings"
+        component={FamilySettingsScreen}
+        options={{ headerShown: false }}
+      />
+    </FamilyStack.Navigator>
+  );
+};
 
-const SettingsStackNavigator = () => (
-  <SettingsStack.Navigator
-    screenOptions={{
-      headerStyle: {
-        backgroundColor: '#FFFFFF',
-        elevation: 0,
-        shadowOpacity: 0,
-        borderBottomWidth: 0,
-      },
-      headerTintColor: '#0A0A0A',
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 17,
-      },
-    }}
-  >
-    <SettingsStack.Screen
-      name="SettingsHome"
-      component={SettingsScreen}
-      options={{ title: 'Settings' }}
-    />
-  </SettingsStack.Navigator>
-);
+const SettingsStackNavigator = () => {
+  const { theme, isDarkMode } = useTheme();
+  
+  return (
+    <SettingsStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.separator,
+        },
+        headerTintColor: theme.colors.textPrimary,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 17,
+        },
+      }}
+    >
+      <SettingsStack.Screen
+        name="SettingsHome"
+        component={SettingsScreen}
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen
+        name="Premium"
+        component={PremiumScreen}
+        options={{ headerShown: false, presentation: 'modal' as any }}
+      />
+      <SettingsStack.Screen
+        name="Support"
+        component={SupportScreen}
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen
+        name="Privacy"
+        component={PrivacyScreen}
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen
+        name="Terms"
+        component={TermsScreen}
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen
+        name="About"
+        component={AboutScreen}
+        options={{ headerShown: false }}
+      />
+    </SettingsStack.Navigator>
+  );
+};
 
 const MainNavigator: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const { theme, isDarkMode } = useTheme();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -180,9 +302,9 @@ const MainNavigator: React.FC = () => {
           backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
           borderTopColor: theme.colors.separator,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
+          paddingBottom: insets.bottom > 0 ? insets.bottom - 10 : 5,
+          paddingTop: 8,
+          height: 60 + (insets.bottom > 0 ? insets.bottom - 10 : 0),
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -194,22 +316,34 @@ const MainNavigator: React.FC = () => {
       <Tab.Screen
         name="Dashboard"
         component={DashboardStackNavigator}
-        options={{ title: 'Home' }}
+        options={{
+          title: 'Home',
+          tabBarTestID: 'dashboard-tab'
+        }}
       />
       <Tab.Screen
         name="Tasks"
         component={TasksStackNavigator}
-        options={{ title: 'Tasks' }}
+        options={{
+          title: 'Tasks',
+          tabBarTestID: 'tasks-tab'
+        }}
       />
       <Tab.Screen
         name="Family"
         component={FamilyStackNavigator}
-        options={{ title: 'Family' }}
+        options={{
+          title: 'Family',
+          tabBarTestID: 'family-tab'
+        }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsStackNavigator}
-        options={{ title: 'Settings' }}
+        options={{
+          title: 'Settings',
+          tabBarTestID: 'settings-tab'
+        }}
       />
     </Tab.Navigator>
   );

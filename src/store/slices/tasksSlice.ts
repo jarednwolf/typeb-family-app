@@ -4,14 +4,52 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskStatus, TaskPriority } from '../../types/models';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskStatus, TaskPriority, TaskCategory, RecurrencePattern } from '../../types/models';
 import * as tasksService from '../../services/tasks';
+import { toISOString } from '../../utils/dateHelpers';
+
+// Serializable version of Task for Redux
+interface SerializedTask {
+  id: string;
+  familyId: string;
+  title: string;
+  description?: string;
+  category: TaskCategory;
+  assignedTo: string;
+  assignedBy: string;
+  createdBy: string;
+  status: TaskStatus;
+  completedAt?: string;
+  completedBy?: string;
+  requiresPhoto: boolean;
+  photoUrl?: string;
+  photoValidatedBy?: string;
+  validationStatus?: 'pending' | 'approved' | 'rejected';
+  validationNotes?: string;
+  dueDate?: string;
+  isRecurring: boolean;
+  recurrencePattern?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    interval: number;
+    daysOfWeek?: number[];
+    dayOfMonth?: number;
+    endDate?: string; // ISO string instead of Date
+  };
+  reminderEnabled: boolean;
+  reminderTime?: string;
+  lastReminderSent?: string;
+  escalationLevel: number;
+  createdAt: string;
+  updatedAt: string;
+  priority: TaskPriority;
+  points?: number;
+}
 
 interface TasksState {
-  tasks: Task[];
-  userTasks: Task[];
-  overdueTasks: Task[];
-  selectedTask: Task | null;
+  tasks: SerializedTask[];
+  userTasks: SerializedTask[];
+  overdueTasks: SerializedTask[];
+  selectedTask: SerializedTask | null;
   isLoading: boolean;
   isCreating: boolean;
   isUpdating: boolean;
@@ -49,12 +87,40 @@ const initialState: TasksState = {
   filters: {},
 };
 
+// Helper function to serialize task dates
+const serializeTask = (task: Task): SerializedTask => {
+  // First, create a copy without the date fields and recurrencePattern
+  const { completedAt, dueDate, lastReminderSent, createdAt, updatedAt, recurrencePattern, ...rest } = task;
+  
+  const serialized: SerializedTask = {
+    ...rest,
+    completedAt: toISOString(completedAt) || undefined,
+    dueDate: toISOString(dueDate) || undefined,
+    lastReminderSent: toISOString(lastReminderSent) || undefined,
+    createdAt: toISOString(createdAt) || '',
+    updatedAt: toISOString(updatedAt) || '',
+  };
+  
+  // Handle recurrence pattern separately to ensure proper typing
+  if (recurrencePattern) {
+    serialized.recurrencePattern = {
+      frequency: recurrencePattern.frequency,
+      interval: recurrencePattern.interval,
+      daysOfWeek: recurrencePattern.daysOfWeek,
+      dayOfMonth: recurrencePattern.dayOfMonth,
+      endDate: toISOString(recurrencePattern.endDate) || undefined,
+    };
+  }
+  
+  return serialized;
+};
+
 // Async thunks
 export const createTask = createAsyncThunk(
   'tasks/create',
   async ({ familyId, userId, input }: { familyId: string; userId: string; input: CreateTaskInput }) => {
     const task = await tasksService.createTask(familyId, userId, input);
-    return task;
+    return serializeTask(task);
   }
 );
 
@@ -84,12 +150,13 @@ export const deleteTask = createAsyncThunk(
 
 export const fetchFamilyTasks = createAsyncThunk(
   'tasks/fetchFamily',
-  async ({ familyId, filters }: { 
-    familyId: string; 
-    filters?: { status?: TaskStatus; assignedTo?: string; priority?: TaskPriority; limit?: number } 
+  async ({ familyId, userId, filters }: {
+    familyId: string;
+    userId: string;
+    filters?: { status?: TaskStatus; assignedTo?: string; priority?: TaskPriority; limit?: number }
   }) => {
-    const tasks = await tasksService.getFamilyTasks(familyId, filters);
-    return tasks;
+    const tasks = await tasksService.getFamilyTasks(familyId, userId, filters);
+    return tasks.map(serializeTask);
   }
 );
 
@@ -97,15 +164,15 @@ export const fetchUserTasks = createAsyncThunk(
   'tasks/fetchUser',
   async ({ userId, familyId, status }: { userId: string; familyId: string; status?: TaskStatus }) => {
     const tasks = await tasksService.getUserTasks(userId, familyId, status);
-    return tasks;
+    return tasks.map(serializeTask);
   }
 );
 
 export const fetchOverdueTasks = createAsyncThunk(
   'tasks/fetchOverdue',
-  async (familyId: string) => {
-    const tasks = await tasksService.getOverdueTasks(familyId);
-    return tasks;
+  async ({ familyId, userId }: { familyId: string; userId: string }) => {
+    const tasks = await tasksService.getOverdueTasks(familyId, userId);
+    return tasks.map(serializeTask);
   }
 );
 
@@ -124,8 +191,8 @@ export const validateTask = createAsyncThunk(
 
 export const fetchTaskStats = createAsyncThunk(
   'tasks/fetchStats',
-  async ({ familyId, userId }: { familyId: string; userId?: string }) => {
-    const stats = await tasksService.getTaskStats(familyId, userId);
+  async ({ familyId, userId, targetUserId }: { familyId: string; userId: string; targetUserId?: string }) => {
+    const stats = await tasksService.getTaskStats(familyId, userId, targetUserId);
     return stats;
   }
 );
@@ -134,28 +201,30 @@ const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    setTasks: (state, action: PayloadAction<Task[]>) => {
+    setTasks: (state, action: PayloadAction<SerializedTask[]>) => {
       state.tasks = action.payload;
     },
-    setUserTasks: (state, action: PayloadAction<Task[]>) => {
+    setUserTasks: (state, action: PayloadAction<SerializedTask[]>) => {
       state.userTasks = action.payload;
     },
-    setOverdueTasks: (state, action: PayloadAction<Task[]>) => {
+    setOverdueTasks: (state, action: PayloadAction<SerializedTask[]>) => {
       state.overdueTasks = action.payload;
     },
     addTask: (state, action: PayloadAction<Task>) => {
-      state.tasks.unshift(action.payload);
+      const serialized = serializeTask(action.payload);
+      state.tasks.unshift(serialized);
       // Update stats
       state.stats.total++;
-      if (action.payload.status === 'pending') {
+      if (serialized.status === 'pending') {
         state.stats.pending++;
       }
     },
     updateTaskInList: (state, action: PayloadAction<Task>) => {
-      const index = state.tasks.findIndex(t => t.id === action.payload.id);
+      const serialized = serializeTask(action.payload);
+      const index = state.tasks.findIndex(t => t.id === serialized.id);
       if (index !== -1) {
         const oldTask = state.tasks[index];
-        state.tasks[index] = action.payload;
+        state.tasks[index] = serialized;
         
         // Update stats if status changed
         if (oldTask.status !== action.payload.status) {
@@ -172,9 +241,9 @@ const tasksSlice = createSlice({
       }
       
       // Also update in userTasks if present
-      const userIndex = state.userTasks.findIndex(t => t.id === action.payload.id);
+      const userIndex = state.userTasks.findIndex(t => t.id === serialized.id);
       if (userIndex !== -1) {
-        state.userTasks[userIndex] = action.payload;
+        state.userTasks[userIndex] = serialized;
       }
     },
     removeTask: (state, action: PayloadAction<string>) => {
@@ -198,7 +267,7 @@ const tasksSlice = createSlice({
       state.overdueTasks = state.overdueTasks.filter(t => t.id !== action.payload);
     },
     setSelectedTask: (state, action: PayloadAction<Task | null>) => {
-      state.selectedTask = action.payload;
+      state.selectedTask = action.payload ? serializeTask(action.payload) : null;
     },
     setFilters: (state, action: PayloadAction<TasksState['filters']>) => {
       state.filters = action.payload;
@@ -280,7 +349,7 @@ const tasksSlice = createSlice({
         const task = state.tasks.find(t => t.id === taskId);
         if (task) {
           task.status = 'completed';
-          task.completedAt = new Date();
+          task.completedAt = new Date().toISOString();
           if (photoUrl) {
             task.photoUrl = photoUrl;
             task.validationStatus = 'pending';
@@ -453,6 +522,7 @@ export const selectTasksForToday = (state: RootState) => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   return tasks.filter(task => {
+    if (!task.dueDate) return false;
     const dueDate = new Date(task.dueDate);
     return dueDate >= today && dueDate < tomorrow;
   });
@@ -464,6 +534,7 @@ export const selectUpcomingTasks = (state: RootState) => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   return tasks.filter(task => {
+    if (!task.dueDate) return false;
     const dueDate = new Date(task.dueDate);
     return dueDate >= tomorrow;
   });

@@ -2,12 +2,12 @@
   "expo": {
     "name": "TypeB Family",
     "slug": "typeb-family-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,9 +17,13 @@
       "infoPlist": {
         "NSCameraUsageDescription": "TypeB uses the camera to take photos for task validation.",
         "NSPhotoLibraryUsageDescription": "TypeB accesses your photo library to upload images for task validation.",
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized features and measure app performance."
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized features and measure app performance.",
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "1"
+      "buildNumber": "2",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,19 +31,21 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.typeb.familyapp",
-      "versionCode": 1,
+      "versionCode": 2,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
+      "sentryDsn": "$EXPO_PUBLIC_SENTRY_DSN",
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "0b1cab38-fdeb-4b64-a3bb-874e84c9d5c9"
       }
     },
     "updates": {
@@ -47,6 +53,19 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "plugins": [
+      [
+        "@config-plugins/detox",
+        {
+          "skipProguard": false,
+          "subdomains": "*"
+        }
+      ],
+      "expo-notifications",
+      "expo-camera",
+      "expo-image-picker"
+    ],
+    "owner": "wolfjn1"
   }
 }

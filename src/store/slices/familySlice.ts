@@ -4,12 +4,56 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Family, User } from '../../types/models';
+import { Family, User, TaskCategory } from '../../types/models';
 import * as familyService from '../../services/family';
+import { fetchUserProfile } from './authSlice';
+import { toISOString } from '../../utils/dateHelpers';
+
+// Serializable version of Family for Redux
+interface SerializedFamily {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  memberIds: string[];
+  parentIds: string[];
+  childIds: string[];
+  maxMembers: number;
+  isPremium: boolean;
+  taskCategories: any[]; // TaskCategory doesn't have dates
+  defaultTaskAssignee?: string;
+  roleConfig?: {
+    preset: 'family' | 'roommates' | 'team' | 'custom';
+    adminLabel: string;
+    memberLabel: string;
+    adminPlural?: string;
+    memberPlural?: string;
+  };
+}
+
+// Serializable version of User for Redux (member list)
+interface SerializedMember {
+  id: string;
+  email: string;
+  displayName: string;
+  familyId?: string;
+  role: 'parent' | 'child';
+  createdAt: string;
+  updatedAt: string;
+  isPremium: boolean;
+  subscriptionEndDate?: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  notificationsEnabled: boolean;
+  reminderTime?: string;
+  timezone: string;
+}
 
 interface FamilyState {
-  currentFamily: Family | null;
-  members: User[];
+  currentFamily: SerializedFamily | null;
+  members: SerializedMember[];
   isLoading: boolean;
   error: string | null;
   inviteCode: string | null;
@@ -27,20 +71,55 @@ const initialState: FamilyState = {
   isCreating: false,
 };
 
+// Helper functions to serialize data
+const serializeFamily = (family: Family | null): SerializedFamily | null => {
+  if (!family) return null;
+  
+  return {
+    ...family,
+    createdAt: toISOString(family.createdAt) || '',
+    updatedAt: toISOString(family.updatedAt) || '',
+  };
+};
+
+const serializeMember = (member: User): SerializedMember => {
+  return {
+    ...member,
+    createdAt: toISOString(member.createdAt) || '',
+    updatedAt: toISOString(member.updatedAt) || '',
+    subscriptionEndDate: toISOString(member.subscriptionEndDate) || undefined,
+  };
+};
+
 // Async thunks
 export const createFamily = createAsyncThunk(
   'family/create',
-  async ({ userId, name, isPremium }: { userId: string; name: string; isPremium?: boolean }) => {
-    const family = await familyService.createFamily(userId, name, isPremium);
-    return family;
+  async ({ userId, name, isPremium, roleConfig }: {
+    userId: string;
+    name: string;
+    isPremium?: boolean;
+    roleConfig?: {
+      preset: 'family' | 'roommates' | 'team' | 'custom';
+      adminLabel: string;
+      memberLabel: string;
+      adminPlural?: string;
+      memberPlural?: string;
+    };
+  }, { dispatch }) => {
+    const family = await familyService.createFamily(userId, name, isPremium, roleConfig);
+    // Refresh user profile to get the updated familyId
+    await dispatch(fetchUserProfile(userId));
+    return serializeFamily(family);
   }
 );
 
 export const joinFamily = createAsyncThunk(
   'family/join',
-  async ({ userId, inviteCode, role }: { userId: string; inviteCode: string; role?: 'parent' | 'child' }) => {
+  async ({ userId, inviteCode, role }: { userId: string; inviteCode: string; role?: 'parent' | 'child' }, { dispatch }) => {
     const family = await familyService.joinFamily(userId, inviteCode, role);
-    return family;
+    // Refresh user profile to get the updated familyId
+    await dispatch(fetchUserProfile(userId));
+    return serializeFamily(family);
   }
 );
 
@@ -48,7 +127,7 @@ export const fetchFamily = createAsyncThunk(
   'family/fetch',
   async (familyId: string) => {
     const family = await familyService.getFamily(familyId);
-    return family;
+    return serializeFamily(family);
   }
 );
 
@@ -56,7 +135,7 @@ export const fetchFamilyMembers = createAsyncThunk(
   'family/fetchMembers',
   async (familyId: string) => {
     const members = await familyService.getFamilyMembers(familyId);
-    return members;
+    return members.map(serializeMember);
   }
 );
 
@@ -91,20 +170,34 @@ export const regenerateInviteCode = createAsyncThunk(
   }
 );
 
+export const addTaskCategory = createAsyncThunk(
+  'family/addTaskCategory',
+  async ({ familyId, userId, category }: {
+    familyId: string;
+    userId: string;
+    category: TaskCategory
+  }) => {
+    // In a real app, this would call a service to update the family
+    // For now, we'll just return the category to be added to state
+    return category;
+  }
+);
+
 const familySlice = createSlice({
   name: 'family',
   initialState,
   reducers: {
-    setFamily: (state, action: PayloadAction<Family | null>) => {
+    setFamily: (state, action: PayloadAction<SerializedFamily | null>) => {
       state.currentFamily = action.payload;
     },
-    setMembers: (state, action: PayloadAction<User[]>) => {
+    setMembers: (state, action: PayloadAction<SerializedMember[]>) => {
       state.members = action.payload;
     },
     updateMember: (state, action: PayloadAction<User>) => {
-      const index = state.members.findIndex(m => m.id === action.payload.id);
+      const serialized = serializeMember(action.payload);
+      const index = state.members.findIndex(m => m.id === serialized.id);
       if (index !== -1) {
-        state.members[index] = action.payload;
+        state.members[index] = serialized;
       }
     },
     clearFamily: (state) => {
@@ -130,7 +223,9 @@ const familySlice = createSlice({
       .addCase(createFamily.fulfilled, (state, action) => {
         state.isCreating = false;
         state.currentFamily = action.payload;
-        state.inviteCode = action.payload.inviteCode;
+        if (action.payload) {
+          state.inviteCode = action.payload.inviteCode;
+        }
       })
       .addCase(createFamily.rejected, (state, action) => {
         state.isCreating = false;
@@ -264,6 +359,17 @@ const familySlice = createSlice({
         state.isLoading = false;
         state.error = action.error.message || 'Failed to regenerate invite code';
       });
+      
+    // Add task category
+    builder
+      .addCase(addTaskCategory.fulfilled, (state, action) => {
+        if (state.currentFamily) {
+          if (!state.currentFamily.taskCategories) {
+            state.currentFamily.taskCategories = [];
+          }
+          state.currentFamily.taskCategories.push(action.payload);
+        }
+      });
   },
 });
 
@@ -290,12 +396,12 @@ export const selectIsCreating = (state: RootState) => state.family.isCreating;
 // Computed selector for current user role
 export const selectCurrentUserRole = (state: RootState) => {
   const family = state.family.currentFamily;
-  const userId = state.auth.user?.uid;
+  const userProfile = state.auth.userProfile;
   
-  if (!family || !userId) return null;
+  if (!family || !userProfile) return null;
   
-  if (family.parentIds.includes(userId)) return 'parent';
-  if (family.childIds.includes(userId)) return 'child';
+  if (family.parentIds.includes(userProfile.id)) return 'parent';
+  if (family.childIds.includes(userProfile.id)) return 'child';
   return null;
 };
 

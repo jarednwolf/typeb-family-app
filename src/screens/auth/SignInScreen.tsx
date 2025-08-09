@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +18,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { signIn, selectIsLoading, selectAuthError, clearError } from '../../store/slices/authSlice';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -25,10 +27,13 @@ const SignInScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectAuthError);
+  const { theme, isDarkMode } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -53,7 +58,7 @@ const SignInScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="signin-screen">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -63,17 +68,23 @@ const SignInScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
+            <Image
+              source={require('../../../assets/type_b_logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue</Text>
+            <Text style={styles.subtitle}>Sign in to continue with TypeB Family</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
+                testID="email-input"
                 style={styles.input}
                 placeholder="Enter your email"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.colors.textTertiary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -87,9 +98,10 @@ const SignInScreen: React.FC = () => {
               <Text style={styles.label}>Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
+                  testID="password-input"
                   style={[styles.input, styles.passwordInput]}
                   placeholder="Enter your password"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.colors.textTertiary}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -111,6 +123,7 @@ const SignInScreen: React.FC = () => {
             </View>
 
             <TouchableOpacity
+              testID="forgot-password-button"
               style={styles.forgotPasswordButton}
               onPress={handleForgotPassword}
               disabled={isLoading}
@@ -119,12 +132,13 @@ const SignInScreen: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="signin-button"
               style={[styles.signInButton, isLoading && styles.disabledButton]}
               onPress={handleSignIn}
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={theme.colors.background} />
               ) : (
                 <Text style={styles.signInButtonText}>Sign In</Text>
               )}
@@ -132,7 +146,7 @@ const SignInScreen: React.FC = () => {
 
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleSignUp} disabled={isLoading}>
+              <TouchableOpacity testID="signup-link" onPress={handleSignUp} disabled={isLoading}>
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
@@ -143,10 +157,10 @@ const SignInScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -158,17 +172,28 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 48,
-    marginTop: 48,
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 32,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
   },
   form: {
     flex: 1,
@@ -179,18 +204,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.border,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#0A0A0A',
-    backgroundColor: '#F9FAFB',
+    color: theme.colors.textPrimary,
+    backgroundColor: isDarkMode ? theme.colors.surface : '#F9FAFB',
   },
   passwordContainer: {
     position: 'relative',
@@ -205,7 +230,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -10 }],
   },
   showPasswordText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -214,12 +239,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   forgotPasswordText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
     fontWeight: '500',
   },
   signInButton: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -229,7 +254,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signInButtonText: {
-    color: '#FFFFFF',
+    color: theme.colors.background,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -239,11 +264,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signUpText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
   },
   signUpLink: {
-    color: '#0A0A0A',
+    color: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -67,16 +67,14 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       ]}
     >
       {icon && (
-        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-          <Feather name={icon} size={24} color={color} />
+        <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <Feather name={icon} size={28} color={color} />
         </View>
       )}
       
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, { color }, compact && styles.valueCompact]}>
+          <Text style={[styles.value, compact && styles.valueCompact]}>
             {value}
           </Text>
           
@@ -95,6 +93,8 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             </View>
           )}
         </View>
+        
+        <Text style={styles.title}>{title}</Text>
         
         {subtitle && (
           <Text style={styles.subtitle}>{subtitle}</Text>
@@ -160,9 +160,9 @@ const styles = StyleSheet.create({
   },
   
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.medium,
+    width: 56,
+    height: 56,
+    borderRadius: borderRadius.large,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.M,
@@ -173,11 +173,9 @@ const styles = StyleSheet.create({
   },
   
   title: {
-    ...typography.caption1,
+    ...typography.body,
     color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.XXS,
+    marginTop: spacing.XXS,
   },
   
   valueContainer: {
@@ -187,7 +185,8 @@ const styles = StyleSheet.create({
   
   value: {
     ...typography.title1,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   
   valueCompact: {

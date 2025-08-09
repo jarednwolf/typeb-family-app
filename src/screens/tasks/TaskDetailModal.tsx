@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,16 +16,48 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/forms/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import { theme } from '../../constants/theme';
+import PhotoUpload from '../../components/tasks/PhotoUpload';
+import { spacing, borderRadius } from '../../constants/theme';
 import { AppDispatch, RootState } from '../../store/store';
 import { updateTask, deleteTask, completeTask } from '../../store/slices/tasksSlice';
 import { selectFamilyMembers } from '../../store/slices/familySlice';
 import { Task, TaskPriority } from '../../types/models';
+import { useTheme } from '../../contexts/ThemeContext';
+
+// Task type that can handle both serialized (string dates) and non-serialized (Date objects)
+interface FlexibleTask {
+  id: string;
+  familyId: string;
+  title: string;
+  description?: string;
+  category: any;
+  assignedTo: string;
+  assignedBy: string;
+  createdBy: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  completedAt?: string | Date;
+  completedBy?: string;
+  requiresPhoto: boolean;
+  photoUrl?: string;
+  photoValidatedBy?: string;
+  validationStatus?: 'pending' | 'approved' | 'rejected';
+  validationNotes?: string;
+  dueDate?: string | Date;
+  isRecurring: boolean;
+  reminderEnabled: boolean;
+  reminderTime?: string;
+  lastReminderSent?: string | Date;
+  escalationLevel: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  points?: number;
+}
 
 interface TaskDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  task: Task | null;
+  task: FlexibleTask | null;
 }
 
 const priorities: { value: TaskPriority; label: string; color: string }[] = [
@@ -38,8 +70,9 @@ const priorities: { value: TaskPriority; label: string; color: string }[] = [
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, task }) => {
   const dispatch = useDispatch<AppDispatch>();
   const familyMembers = useSelector(selectFamilyMembers);
-  const currentUser = useSelector((state: RootState) => state.auth.user);
-  const isParent = (currentUser as any)?.role === 'parent';
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
+  const isParent = userProfile?.role === 'parent';
+  const { theme, isDarkMode } = useTheme();
 
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState('');
@@ -49,6 +82,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
   const [points, setPoints] = useState('10');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   // Reset form when task changes
   useEffect(() => {
@@ -69,7 +105,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
     try {
       await dispatch(updateTask({
         taskId: task.id,
-        userId: currentUser?.uid || '',
+        userId: userProfile?.id || '',
         updates: {
           title: title.trim(),
           description: description.trim(),
@@ -88,14 +124,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
     }
   }, [task, title, description, priority, assignedTo, points, dispatch]);
 
-  const handleComplete = useCallback(async () => {
+  const handleComplete = useCallback(async (photoUrl?: string) => {
     if (!task) return;
+
+    // If task requires photo but none provided, show upload modal
+    if (task.requiresPhoto && !photoUrl && !showPhotoUpload) {
+      setShowPhotoUpload(true);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await dispatch(completeTask({
         taskId: task.id,
-        userId: currentUser?.uid || '',
+        userId: userProfile?.id || '',
+        photoUrl,
       })).unwrap();
       
       Alert.alert('Success', 'Task marked as complete!');
@@ -104,8 +147,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
       Alert.alert('Error', 'Failed to complete task. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setShowPhotoUpload(false);
     }
-  }, [task, currentUser, dispatch, onClose]);
+  }, [task, userProfile, dispatch, onClose, showPhotoUpload]);
+
+  const handlePhotoUploaded = useCallback((photoUrl: string) => {
+    handleComplete(photoUrl);
+  }, [handleComplete]);
 
   const handleDelete = useCallback(async () => {
     if (!task) return;
@@ -114,7 +162,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
     try {
       await dispatch(deleteTask({
         taskId: task.id,
-        userId: currentUser?.uid || '',
+        userId: userProfile?.id || '',
       })).unwrap();
       Alert.alert('Success', 'Task deleted successfully');
       onClose();
@@ -140,6 +188,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
+        testID="task-detail-modal"
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -158,7 +207,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
             </View>
             {task.points && (
               <View style={styles.pointsBadge}>
-                <Feather name="star" size={16} color={theme.colors.warning} />
+                <Feather name="star" size={16} color={isDarkMode ? '#FFD700' : theme.colors.warning} />
                 <Text style={styles.pointsText}>{task.points} pts</Text>
               </View>
             )}
@@ -212,7 +261,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
                     style={[
                       styles.priorityChip,
                       priority === pri.value && styles.priorityChipActive,
-                      { borderColor: priority === pri.value ? pri.color : theme.colors.textTertiary },
+                      { borderColor: priority === pri.value ? pri.color : theme.colors.separator },
                     ]}
                     onPress={() => setPriority(pri.value)}
                     testID={`priority-${pri.value}`}
@@ -297,7 +346,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
             <View style={styles.section}>
               <Text style={styles.label}>Due Date</Text>
               <View style={styles.dateDisplay}>
-                <Feather name="calendar" size={20} color={theme.colors.textSecondary} />
+                <Feather name="calendar" size={20} color={theme.colors.textTertiary} />
                 <Text style={styles.dateText}>
                   {new Date(task.dueDate).toLocaleDateString('en-US', {
                     weekday: 'short',
@@ -391,23 +440,23 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
               <>
                 {task.status !== 'completed' && (
                   <>
-                    {(isParent || task.assignedTo === currentUser?.uid) && (
+                    {(isParent || task.assignedTo === userProfile?.id) && (
                       <Button
                         title="Edit"
                         variant="secondary"
                         onPress={() => setIsEditing(true)}
                         style={styles.actionButton}
-                        testID="edit-button"
+                        testID="edit-task-button"
                       />
                     )}
-                    {task.assignedTo === currentUser?.uid && (
+                    {task.assignedTo === userProfile?.id && (
                       <Button
-                        title="Complete"
-                        onPress={handleComplete}
+                        title={task.requiresPhoto ? "Complete with Photo" : "Complete"}
+                        onPress={() => handleComplete()}
                         style={styles.actionButton}
                         loading={isSubmitting}
                         disabled={isSubmitting}
-                        testID="complete-button"
+                        testID="complete-task-button"
                       />
                     )}
                   </>
@@ -445,7 +494,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => setShowDeleteConfirm(true)}
-                  testID="delete-button"
+                  testID="delete-task-button"
                 >
                   <Feather name="trash-2" size={20} color={theme.colors.error} />
                   <Text style={styles.deleteButtonText}>Delete Task</Text>
@@ -453,32 +502,48 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
               )}
             </View>
           )}
+
+          {/* Photo Upload Modal */}
+          {showPhotoUpload && task && (
+            <Modal
+              visible={showPhotoUpload}
+              onClose={() => setShowPhotoUpload(false)}
+              title="Complete Task with Photo"
+            >
+              <PhotoUpload
+                taskId={task.id}
+                onPhotoUploaded={handlePhotoUploaded}
+                onCancel={() => setShowPhotoUpload(false)}
+                required={task.requiresPhoto}
+              />
+            </Modal>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: theme.spacing.XL,
+    paddingBottom: spacing.XL,
   },
   section: {
-    marginBottom: theme.spacing.L,
+    marginBottom: spacing.L,
   },
   statusContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.L,
+    marginBottom: spacing.L,
   },
   statusBadge: {
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.XS,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.XS,
+    borderRadius: borderRadius.round,
     backgroundColor: theme.colors.textTertiary,
   },
   statusCompleted: {
@@ -490,28 +555,28 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.surface,
+    color: isDarkMode ? theme.colors.background : theme.colors.surface,
   },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.XXS,
+    gap: spacing.XXS,
   },
   pointsText: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.warning,
+    color: isDarkMode ? '#FFD700' : theme.colors.warning,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.S,
+    color: theme.colors.textPrimary,
+    marginBottom: spacing.S,
   },
   description: {
     fontSize: 16,
@@ -521,17 +586,17 @@ const styles = StyleSheet.create({
   priorityContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.S,
+    gap: spacing.S,
   },
   priorityChip: {
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.S,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.S,
+    borderRadius: borderRadius.round,
     borderWidth: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: isDarkMode ? theme.colors.surface : theme.colors.background,
   },
   priorityChipActive: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
   },
   priorityLabel: {
     fontSize: 14,
@@ -539,9 +604,9 @@ const styles = StyleSheet.create({
   },
   priorityDisplay: {
     alignSelf: 'flex-start',
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.S,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.S,
+    borderRadius: borderRadius.round,
   },
   priorityDisplayText: {
     fontSize: 14,
@@ -552,7 +617,7 @@ const styles = StyleSheet.create({
   },
   memberChip: {
     alignItems: 'center',
-    marginRight: theme.spacing.M,
+    marginRight: spacing.M,
     opacity: 0.6,
   },
   memberChipActive: {
@@ -562,41 +627,41 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.textTertiary,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.textTertiary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.XS,
+    marginBottom: spacing.XS,
   },
   memberInitial: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: isDarkMode ? theme.colors.textPrimary : theme.colors.surface,
   },
   memberName: {
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
   memberNameActive: {
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     fontWeight: '600',
   },
   assignedDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.M,
+    gap: spacing.M,
   },
   assignedName: {
     fontSize: 16,
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   dateDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.S,
+    gap: spacing.S,
   },
   dateText: {
     fontSize: 16,
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   photoContainer: {
     position: 'relative',
@@ -604,16 +669,16 @@ const styles = StyleSheet.create({
   photo: {
     width: '100%',
     height: 200,
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: borderRadius.medium,
     backgroundColor: theme.colors.textTertiary,
   },
   validationBadge: {
     position: 'absolute',
-    top: theme.spacing.S,
-    right: theme.spacing.S,
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.XS,
-    borderRadius: theme.borderRadius.round,
+    top: spacing.S,
+    right: spacing.S,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.XS,
+    borderRadius: borderRadius.round,
     backgroundColor: theme.colors.warning,
   },
   validationApproved: {
@@ -625,7 +690,7 @@ const styles = StyleSheet.create({
   validationText: {
     fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.surface,
+    color: isDarkMode ? theme.colors.background : theme.colors.surface,
   },
   photoRequired: {
     fontSize: 14,
@@ -633,55 +698,55 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   metadata: {
-    paddingTop: theme.spacing.M,
+    paddingTop: spacing.M,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.textTertiary + '30',
-    marginBottom: theme.spacing.L,
+    borderTopColor: theme.colors.separator,
+    marginBottom: spacing.L,
   },
   metadataText: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.XXS,
+    marginBottom: spacing.XXS,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: theme.spacing.M,
+    gap: spacing.M,
   },
   actionButton: {
     flex: 1,
   },
   dangerZone: {
-    marginTop: theme.spacing.XL,
-    paddingTop: theme.spacing.L,
+    marginTop: spacing.XL,
+    paddingTop: spacing.L,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.error + '30',
+    borderTopColor: isDarkMode ? theme.colors.error + '40' : theme.colors.error + '30',
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.S,
-    padding: theme.spacing.M,
+    gap: spacing.S,
+    padding: spacing.M,
   },
   deleteButtonText: {
     fontSize: 16,
     color: theme.colors.error,
   },
   deleteConfirm: {
-    padding: theme.spacing.M,
-    backgroundColor: theme.colors.error + '10',
-    borderRadius: theme.borderRadius.medium,
+    padding: spacing.M,
+    backgroundColor: isDarkMode ? theme.colors.error + '20' : theme.colors.error + '10',
+    borderRadius: borderRadius.medium,
   },
   deleteConfirmText: {
     fontSize: 14,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.M,
+    color: theme.colors.textPrimary,
+    marginBottom: spacing.M,
     textAlign: 'center',
   },
   deleteConfirmButtons: {
     flexDirection: 'row',
-    gap: theme.spacing.S,
+    gap: spacing.S,
   },
   deleteConfirmButton: {
     flex: 1,

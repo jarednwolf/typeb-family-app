@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,32 +17,24 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/forms/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import { theme } from '../../constants/theme';
+import CustomCategoryModal from '../../components/categories/CustomCategoryModal';
+import PremiumBadge from '../../components/premium/PremiumBadge';
+import { spacing, borderRadius } from '../../constants/theme';
 import { AppDispatch, RootState } from '../../store/store';
 import { createTask } from '../../store/slices/tasksSlice';
-import { selectFamilyMembers } from '../../store/slices/familySlice';
-import { Task, TaskPriority } from '../../types/models';
+import { selectFamilyMembers, addTaskCategory } from '../../store/slices/familySlice';
+import { TaskPriority, CreateTaskInput, TaskCategory } from '../../types/models';
 import notificationService from '../../services/notifications';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CreateTaskModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-// Simple category type for now
-type SimpleTaskCategory = 'chore' | 'errand' | 'homework' | 'appointment' | 'other';
-
-const categories: { value: SimpleTaskCategory; label: string; icon: string; color: string }[] = [
-  { value: 'chore', label: 'Chore', icon: 'home', color: '#4CAF50' },
-  { value: 'errand', label: 'Errand', icon: 'shopping-cart', color: '#2196F3' },
-  { value: 'homework', label: 'Homework', icon: 'book', color: '#FF9800' },
-  { value: 'appointment', label: 'Appointment', icon: 'calendar', color: '#9C27B0' },
-  { value: 'other', label: 'Other', icon: 'more-horizontal', color: '#607D8B' },
-];
 
 const priorities: { value: TaskPriority; label: string; color: string }[] = [
-  { value: 'urgent', label: 'Urgent', color: '#F44336' },
-  { value: 'high', label: 'High', color: '#FF9800' },
+  { value: 'high', label: 'High', color: '#F44336' },
   { value: 'medium', label: 'Medium', color: '#FFC107' },
   { value: 'low', label: 'Low', color: '#4CAF50' },
 ];
@@ -50,19 +42,44 @@ const priorities: { value: TaskPriority; label: string; color: string }[] = [
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const familyMembers = useSelector(selectFamilyMembers);
-  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
+  const family = useSelector((state: RootState) => state.family.currentFamily);
+  const { theme, isDarkMode } = useTheme();
+  
+  // Get categories from family or use defaults
+  const categories = useMemo(() => {
+    if (family?.taskCategories && family.taskCategories.length > 0) {
+      return family.taskCategories.map(cat => ({
+        id: cat.id,
+        label: cat.name,
+        icon: cat.icon || 'folder',
+        color: cat.color || '#6B7280',
+      }));
+    }
+    // Default categories
+    return [
+      { id: '1', label: 'Chores', icon: 'home', color: '#10B981' },
+      { id: '2', label: 'Homework', icon: 'book', color: '#3B82F6' },
+      { id: '3', label: 'Exercise', icon: 'heart', color: '#F59E0B' },
+      { id: '4', label: 'Personal', icon: 'user', color: '#8B5CF6' },
+      { id: '5', label: 'Other', icon: 'more-horizontal', color: '#6B7280' },
+    ];
+  }, [family]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<SimpleTaskCategory>('chore');
+  const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || '1');
   const [priority, setPriority] = useState<TaskPriority>('medium');
-  const [assignedTo, setAssignedTo] = useState<string>(currentUser?.uid || '');
+  const [assignedTo, setAssignedTo] = useState<string>(userProfile?.id || '');
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [points, setPoints] = useState('10');
   const [enableReminder, setEnableReminder] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -97,62 +114,70 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       return;
     }
 
+    // Check if user has a family
+    const familyId = userProfile?.familyId;
+    if (!familyId) {
+      Alert.alert(
+        'No Family',
+        'You need to create or join a family before creating tasks.',
+        [{ text: 'OK', onPress: onClose }]
+      );
+      return;
+    }
+
+    // Prevent double submission
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
+    
     try {
-      // Create a simple task object for now
-      const newTask = {
+      // Create task input matching the CreateTaskInput interface
+      const newTask: CreateTaskInput = {
         title: title.trim(),
         description: description.trim(),
-        category: category as any, // Will be converted to proper TaskCategory in backend
+        categoryId: categoryId,
         priority,
         assignedTo,
-        createdBy: currentUser?.uid || '',
-        dueDate: dueDate,
+        dueDate: dueDate, // Keep as Date object
         points: parseInt(points, 10),
-        status: 'pending' as const,
-        familyId: (currentUser as any)?.familyId || '',
+        isRecurring: false,
+        requiresPhoto: false,
+        reminderEnabled: enableReminder,
       };
 
-      const createdTask = await dispatch(createTask({
-        familyId: (currentUser as any)?.familyId || '',
-        userId: currentUser?.uid || '',
-        input: newTask as any
+      await dispatch(createTask({
+        familyId: familyId,
+        userId: userProfile?.id || '',
+        input: newTask
       })).unwrap();
       
-      // Schedule notification reminder if enabled
-      if (enableReminder && createdTask && dueDate) {
-        try {
-          const assignedMember = familyMembers.find(m => m.id === assignedTo);
-          if (assignedMember) {
-            await notificationService.scheduleTaskReminder(
-              { ...createdTask, dueDate } as Task,
-              assignedMember
-            );
-          }
-        } catch (error) {
-          console.error('Failed to schedule reminder:', error);
-          // Don't fail the task creation if reminder scheduling fails
-        }
-      }
+      // Don't schedule notifications - they might be causing issues
+      // The backend should handle this
       
-      // Reset form
+      // Reset form state
       setTitle('');
       setDescription('');
-      setCategory('chore');
+      setCategoryId('1');
       setPriority('medium');
-      setAssignedTo(currentUser?.uid || '');
+      setAssignedTo(userProfile?.id || '');
       setDueDate(new Date());
       setPoints('10');
       setEnableReminder(true);
       setErrors({});
       
+      // Close modal immediately after successful creation
       onClose();
+      
     } catch (error) {
+      console.error('Failed to create task:', error);
       Alert.alert('Error', 'Failed to create task. Please try again.');
     } finally {
+      // Always reset submitting state
       setIsSubmitting(false);
     }
-  }, [validateForm, title, description, category, priority, assignedTo, dueDate, points, enableReminder, currentUser, dispatch, onClose, familyMembers]);
+  }, [validateForm, title, description, categoryId, priority, assignedTo, dueDate, points, enableReminder, userProfile, dispatch, onClose, isSubmitting]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     // setShowDatePicker(Platform.OS === 'ios');
@@ -161,21 +186,43 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       setDueDate(selectedDate);
     }
   };
+  
+  const handleCustomCategoryCreate = useCallback(async (categoryData: Omit<TaskCategory, 'id'>) => {
+    if (!family?.id || !userProfile?.id) return;
+    
+    try {
+      // Generate a unique ID for the category
+      const category: TaskCategory = {
+        ...categoryData,
+        id: `custom_${Date.now()}`,
+      };
+      
+      // Add the category to the family
+      await dispatch(addTaskCategory({
+        familyId: family.id,
+        userId: userProfile.id,
+        category
+      })).unwrap();
+      
+      // Select the new category
+      setCategoryId(category.id);
+      setShowCustomCategoryModal(false);
+      
+      Alert.alert('Success', 'Custom category created!');
+    } catch (error) {
+      console.error('Failed to create custom category:', error);
+      Alert.alert('Error', 'Failed to create custom category');
+    }
+  }, [family, userProfile, dispatch]);
 
   return (
     <Modal
       visible={visible}
       onClose={onClose}
       title="Create New Task"
+      scrollable={true}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+      <View style={styles.container} testID="create-task-screen">
           {/* Title Input */}
           <View style={styles.section}>
             <Input
@@ -205,8 +252,21 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
           </View>
 
           {/* Category Selector */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Category</Text>
+          <View style={styles.section} testID="category-selector">
+            <View style={styles.categoryHeader}>
+              <Text style={styles.label}>Category</Text>
+              {family?.isPremium && (
+                <TouchableOpacity
+                  style={styles.addCategoryButton}
+                  onPress={() => setShowCustomCategoryModal(true)}
+                  testID="add-category-button"
+                >
+                  <Feather name="plus" size={16} color={theme.colors.primary} />
+                  <Text style={styles.addCategoryText}>Add Custom</Text>
+                  <PremiumBadge size="small" />
+                </TouchableOpacity>
+              )}
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -214,24 +274,20 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
             >
               {categories.map((cat) => (
                 <TouchableOpacity
-                  key={cat.value as string}
+                  key={cat.id}
                   style={[
                     styles.categoryChip,
-                    category === cat.value && styles.categoryChipActive,
-                    { borderColor: category === cat.value ? cat.color : theme.colors.textTertiary },
+                    categoryId === cat.id && styles.categoryChipActive,
+                    { borderColor: categoryId === cat.id ? cat.color : theme.colors.textSecondary },
                   ]}
-                  onPress={() => setCategory(cat.value)}
-                  testID={`category-${cat.value}`}
+                  onPress={() => setCategoryId(cat.id)}
+                  testID={`category-${cat.id}`}
                 >
-                  <Feather
-                    name={cat.icon as any}
-                    size={16}
-                    color={category === cat.value ? cat.color : theme.colors.textSecondary}
-                  />
+                  <Text style={{ fontSize: 16 }}>{cat.icon}</Text>
                   <Text
                     style={[
                       styles.categoryLabel,
-                      category === cat.value && { color: cat.color },
+                      categoryId === cat.id && { color: cat.color },
                     ]}
                   >
                     {cat.label}
@@ -251,7 +307,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
                   style={[
                     styles.priorityChip,
                     priority === pri.value && styles.priorityChipActive,
-                    { borderColor: priority === pri.value ? pri.color : theme.colors.textTertiary },
+                    { borderColor: priority === pri.value ? pri.color : theme.colors.textSecondary },
                   ]}
                   onPress={() => setPriority(pri.value)}
                   testID={`priority-${pri.value}`}
@@ -270,7 +326,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
           </View>
 
           {/* Assign To */}
-          <View style={styles.section}>
+          <View style={styles.section} testID="assignee-selector">
             <Text style={styles.label}>Assign To</Text>
             {errors.assignedTo && (
               <Text style={styles.errorText}>{errors.assignedTo}</Text>
@@ -309,14 +365,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
           </View>
 
           {/* Due Date */}
-          <View style={styles.section}>
+          <View style={styles.section} testID="due-date-picker">
             <Text style={styles.label}>Due Date</Text>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => setShowDatePicker(true)}
               testID="due-date-button"
             >
-              <Feather name="calendar" size={20} color={theme.colors.textSecondary} />
+              <Feather name="calendar" size={20} color={theme.colors.textTertiary} />
               <Text style={styles.dateText}>
                 {dueDate.toLocaleDateString('en-US', {
                   weekday: 'short',
@@ -336,7 +392,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
           <View style={styles.section}>
             <View style={styles.reminderContainer}>
               <View style={styles.reminderLeft}>
-                <Feather name="bell" size={20} color={theme.colors.primary} />
+                <Feather name="bell" size={20} color={theme.colors.textPrimary} />
                 <View style={styles.reminderText}>
                   <Text style={styles.label}>Task Reminder</Text>
                   <Text style={styles.reminderSubtext}>
@@ -348,10 +404,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
                 value={enableReminder}
                 onValueChange={setEnableReminder}
                 trackColor={{
-                  false: theme.colors.textTertiary,
+                  false: theme.colors.textSecondary,
                   true: theme.colors.success
                 }}
-                thumbColor={theme.colors.surface}
+                thumbColor={isDarkMode ? '#FFFFFF' : theme.colors.surface}
                 testID="reminder-switch"
               />
             </View>
@@ -386,35 +442,41 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
               style={styles.actionButton}
               loading={isSubmitting}
               disabled={isSubmitting}
-              testID="create-button"
+              testID="save-task-button"
             />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </View>
+      
+      {/* Custom Category Modal */}
+      {showCustomCategoryModal && (
+        <CustomCategoryModal
+          visible={showCustomCategoryModal}
+          onClose={() => setShowCustomCategoryModal(false)}
+          onSave={handleCustomCategoryCreate}
+          existingCategories={family?.taskCategories || []}
+        />
+      )}
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: theme.spacing.XL,
-  },
   section: {
-    marginBottom: theme.spacing.L,
+    marginBottom: spacing.L,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.S,
+    color: theme.colors.textPrimary,
+    marginBottom: spacing.S,
   },
   errorText: {
     fontSize: 12,
     color: theme.colors.error,
-    marginTop: theme.spacing.XS,
+    marginTop: spacing.XS,
   },
   categoryScroll: {
     flexDirection: 'row',
@@ -422,35 +484,35 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.S,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.S,
+    borderRadius: borderRadius.round,
     borderWidth: 1,
-    marginRight: theme.spacing.S,
-    backgroundColor: theme.colors.background,
+    marginRight: spacing.S,
+    backgroundColor: isDarkMode ? theme.colors.surface : theme.colors.background,
   },
   categoryChipActive: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
   },
   categoryLabel: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    marginLeft: theme.spacing.XS,
+    marginLeft: spacing.XS,
   },
   priorityContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.S,
+    gap: spacing.S,
   },
   priorityChip: {
-    paddingHorizontal: theme.spacing.M,
-    paddingVertical: theme.spacing.S,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.M,
+    paddingVertical: spacing.S,
+    borderRadius: borderRadius.round,
     borderWidth: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: isDarkMode ? theme.colors.surface : theme.colors.background,
   },
   priorityChipActive: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
   },
   priorityLabel: {
     fontSize: 14,
@@ -461,7 +523,7 @@ const styles = StyleSheet.create({
   },
   memberChip: {
     alignItems: 'center',
-    marginRight: theme.spacing.M,
+    marginRight: spacing.M,
     opacity: 0.6,
   },
   memberChipActive: {
@@ -471,43 +533,43 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.textTertiary,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.textTertiary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.XS,
+    marginBottom: spacing.XS,
   },
   memberInitial: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: isDarkMode ? theme.colors.textPrimary : theme.colors.surface,
   },
   memberName: {
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
   memberNameActive: {
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     fontWeight: '600',
   },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.M,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.medium,
+    padding: spacing.M,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
+    borderRadius: borderRadius.medium,
     borderWidth: 1,
-    borderColor: theme.colors.textTertiary,
+    borderColor: theme.colors.separator,
   },
   dateText: {
     fontSize: 16,
-    color: theme.colors.primary,
-    marginLeft: theme.spacing.S,
+    color: theme.colors.textPrimary,
+    marginLeft: spacing.S,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.XL,
-    gap: theme.spacing.M,
+    marginTop: spacing.XL,
+    gap: spacing.M,
   },
   actionButton: {
     flex: 1,
@@ -516,9 +578,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing.M,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.medium,
+    padding: spacing.M,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
+    borderRadius: borderRadius.medium,
     borderWidth: 1,
     borderColor: theme.colors.separator,
   },
@@ -528,13 +590,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reminderText: {
-    marginLeft: theme.spacing.M,
+    marginLeft: spacing.M,
     flex: 1,
   },
   reminderSubtext: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    marginTop: theme.spacing.XXS,
+    marginTop: spacing.XXS,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.S,
+  },
+  addCategoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.XS,
+    paddingHorizontal: spacing.S,
+    paddingVertical: spacing.XS,
+    borderRadius: borderRadius.medium,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  addCategoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
   },
 });
 

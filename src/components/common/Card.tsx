@@ -6,6 +6,7 @@
  * - Optional header and footer
  * - Press handling
  * - Shadow variants
+ * - Dark mode support
  */
 
 import React from 'react';
@@ -18,7 +19,8 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
+import { typography, spacing, borderRadius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CardProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -47,6 +49,8 @@ export const Card: React.FC<CardProps> = ({
   disabled,
   ...props
 }) => {
+  const { theme, isDarkMode } = useTheme();
+  
   const paddingMap = {
     none: 0,
     small: spacing.S,
@@ -63,8 +67,18 @@ export const Card: React.FC<CardProps> = ({
 
   const cardStyles = [
     styles.container,
-    variant === 'outlined' && styles.outlined,
-    variant === 'elevated' && styles.elevated,
+    {
+      backgroundColor: theme.colors.surface,
+      ...theme.shadows.small,
+    },
+    variant === 'outlined' && {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.colors.separator,
+      shadowColor: 'transparent',
+      elevation: 0,
+    },
+    variant === 'elevated' && theme.shadows.large,
     {
       padding: paddingMap[padding],
       marginHorizontal: marginMap[margin],
@@ -73,16 +87,22 @@ export const Card: React.FC<CardProps> = ({
     style,
   ].filter(Boolean) as ViewStyle[];
 
-  const CardWrapper = onPress ? TouchableOpacity : View;
-  const wrapperProps = onPress ? { onPress, disabled, activeOpacity: 0.7, ...props } : props;
+  if (onPress) {
+    return (
+      <TouchableOpacity style={cardStyles} onPress={onPress} disabled={disabled} activeOpacity={0.7} {...props}>
+        {renderContent()}
+      </TouchableOpacity>
+    );
+  }
 
-  return (
-    <CardWrapper style={cardStyles} {...wrapperProps}>
+  function renderContent() {
+    return (
+      <>
       {(title || subtitle || rightIcon) && (
         <View style={styles.header}>
           <View style={styles.headerText}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            {title && <Text style={[styles.title, { color: theme.colors.textPrimary }]}>{title}</Text>}
+            {subtitle && <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>{subtitle}</Text>}
           </View>
           {rightIcon && (
             <TouchableOpacity
@@ -90,7 +110,7 @@ export const Card: React.FC<CardProps> = ({
               disabled={!onRightIconPress}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Feather name={rightIcon} size={20} color={colors.textSecondary} />
+              <Feather name={rightIcon} size={20} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -104,11 +124,18 @@ export const Card: React.FC<CardProps> = ({
       </View>
       
       {footer && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: theme.colors.separator }]}>
           {footer}
         </View>
       )}
-    </CardWrapper>
+      </>
+    );
+  }
+
+  return (
+    <View style={cardStyles}>
+      {renderContent()}
+    </View>
   );
 };
 
@@ -119,16 +146,19 @@ export const InfoCard: React.FC<{
   description: string;
   color?: string;
   onPress?: () => void;
-}> = ({ icon, title, description, color = colors.info, onPress }) => {
+}> = ({ icon, title, description, color, onPress }) => {
+  const { theme } = useTheme();
+  const iconColor = color || theme.colors.info;
+  
   return (
     <Card onPress={onPress} padding="medium">
       <View style={styles.infoCardContent}>
-        <View style={[styles.infoCardIcon, { backgroundColor: color + '15' }]}>
-          <Feather name={icon} size={24} color={color} />
+        <View style={[styles.infoCardIcon, { backgroundColor: iconColor + '15' }]}>
+          <Feather name={icon} size={24} color={iconColor} />
         </View>
         <View style={styles.infoCardText}>
-          <Text style={styles.infoCardTitle}>{title}</Text>
-          <Text style={styles.infoCardDescription}>{description}</Text>
+          <Text style={[styles.infoCardTitle, { color: theme.colors.textPrimary }]}>{title}</Text>
+          <Text style={[styles.infoCardDescription, { color: theme.colors.textSecondary }]}>{description}</Text>
         </View>
       </View>
     </Card>
@@ -142,27 +172,29 @@ export const ActionCard: React.FC<{
   onAction: () => void;
   icon?: keyof typeof Feather.glyphMap;
 }> = ({ title, description, actionText, onAction, icon }) => {
+  const { theme } = useTheme();
+  
   return (
     <Card padding="medium">
       <View style={styles.actionCardContent}>
         {icon && (
           <View style={styles.actionCardIcon}>
-            <Feather name={icon} size={32} color={colors.textSecondary} />
+            <Feather name={icon} size={32} color={theme.colors.textSecondary} />
           </View>
         )}
         <View style={styles.actionCardText}>
-          <Text style={styles.actionCardTitle}>{title}</Text>
+          <Text style={[styles.actionCardTitle, { color: theme.colors.textPrimary }]}>{title}</Text>
           {description && (
-            <Text style={styles.actionCardDescription}>{description}</Text>
+            <Text style={[styles.actionCardDescription, { color: theme.colors.textSecondary }]}>{description}</Text>
           )}
         </View>
         <TouchableOpacity
-          style={styles.actionCardButton}
+          style={[styles.actionCardButton, { backgroundColor: theme.colors.background }]}
           onPress={onAction}
           activeOpacity={0.7}
         >
-          <Text style={styles.actionCardButtonText}>{actionText}</Text>
-          <Feather name="chevron-right" size={16} color={colors.primary} />
+          <Text style={[styles.actionCardButtonText, { color: theme.colors.primary }]}>{actionText}</Text>
+          <Feather name="chevron-right" size={16} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
     </Card>
@@ -171,21 +203,7 @@ export const ActionCard: React.FC<{
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.large,
-    ...shadows.small,
-  },
-  
-  outlined: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.separator,
-    shadowColor: 'transparent',
-    elevation: 0,
-  },
-  
-  elevated: {
-    ...shadows.large,
   },
   
   header: {
@@ -201,12 +219,10 @@ const styles = StyleSheet.create({
   
   title: {
     ...typography.headline,
-    color: colors.textPrimary,
   },
   
   subtitle: {
     ...typography.caption1,
-    color: colors.textSecondary,
     marginTop: spacing.XXS,
   },
   
@@ -222,7 +238,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.M,
     paddingTop: spacing.M,
     borderTopWidth: 1,
-    borderTopColor: colors.separator,
   },
   
   // InfoCard styles
@@ -246,13 +261,11 @@ const styles = StyleSheet.create({
   
   infoCardTitle: {
     ...typography.body,
-    color: colors.textPrimary,
     fontWeight: '600',
   },
   
   infoCardDescription: {
     ...typography.caption1,
-    color: colors.textSecondary,
     marginTop: spacing.XXS,
   },
   
@@ -272,13 +285,11 @@ const styles = StyleSheet.create({
   
   actionCardTitle: {
     ...typography.body,
-    color: colors.textPrimary,
     fontWeight: '500',
   },
   
   actionCardDescription: {
     ...typography.caption1,
-    color: colors.textSecondary,
     marginTop: spacing.XXS,
   },
   
@@ -287,13 +298,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.XS,
     paddingHorizontal: spacing.S,
-    backgroundColor: colors.background,
     borderRadius: borderRadius.medium,
   },
   
   actionCardButtonText: {
     ...typography.caption1,
-    color: colors.primary,
     fontWeight: '600',
     marginRight: spacing.XXS,
   },

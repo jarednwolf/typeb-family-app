@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import Button from '../../components/common/Button';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -23,42 +23,45 @@ interface OnboardingSlide {
   color: string;
 }
 
-const slides: OnboardingSlide[] = [
-  {
-    id: 'welcome',
-    title: 'Welcome to TypeB',
-    description: 'The smart way to manage family tasks and build better habits together',
-    icon: 'home',
-    color: theme.colors.primary,
-  },
-  {
-    id: 'tasks',
-    title: 'Organize Tasks',
-    description: 'Create, assign, and track tasks for every family member with ease',
-    icon: 'check-circle',
-    color: theme.colors.success,
-  },
-  {
-    id: 'family',
-    title: 'Work Together',
-    description: 'Collaborate as a family, celebrate achievements, and grow together',
-    icon: 'users',
-    color: theme.colors.info,
-  },
-  {
-    id: 'rewards',
-    title: 'Earn Rewards',
-    description: 'Complete tasks to earn points and unlock achievements',
-    icon: 'star',
-    color: theme.colors.warning,
-  },
-];
-
 const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, isDarkMode } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
+
+  const slides: OnboardingSlide[] = useMemo(() => [
+    {
+      id: 'welcome',
+      title: 'Welcome to TypeB',
+      description: 'The smart way to manage family tasks and build better habits together',
+      icon: 'home',
+      color: isDarkMode ? theme.colors.info : theme.colors.primary,
+    },
+    {
+      id: 'tasks',
+      title: 'Organize Tasks',
+      description: 'Create, assign, and track tasks for every family member with ease',
+      icon: 'check-circle',
+      color: theme.colors.success,
+    },
+    {
+      id: 'family',
+      title: 'Work Together',
+      description: 'Collaborate as a family, celebrate achievements, and grow together',
+      icon: 'users',
+      color: theme.colors.info,
+    },
+    {
+      id: 'rewards',
+      title: 'Earn Rewards',
+      description: 'Complete tasks to earn points and unlock achievements',
+      icon: 'star',
+      color: theme.colors.warning,
+    },
+  ], [theme, isDarkMode]);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -153,7 +156,7 @@ const OnboardingScreen: React.FC = () => {
                 {
                   width: dotWidth,
                   opacity,
-                  backgroundColor: theme.colors.primary,
+                  backgroundColor: isDarkMode ? theme.colors.info : theme.colors.primary,
                 },
               ]}
             />
@@ -174,7 +177,7 @@ const OnboardingScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: theme.spacing.M,
   },

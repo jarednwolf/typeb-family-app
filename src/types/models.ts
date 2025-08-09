@@ -37,11 +37,19 @@ export interface Family {
   parentIds: string[]; // Users with parent role
   childIds: string[]; // Users with child role
   // Settings
-  maxMembers: number; // 4 for free, 10 for premium
+  maxMembers: number; // 1 for free, 10 for premium
   isPremium: boolean;
   // Task settings
   taskCategories: TaskCategory[];
   defaultTaskAssignee?: string; // User ID
+  // Role customization
+  roleConfig?: {
+    preset: 'family' | 'roommates' | 'team' | 'custom';
+    adminLabel: string;    // Display name for parent role
+    memberLabel: string;   // Display name for child role
+    adminPlural?: string;  // Plural form of admin label
+    memberPlural?: string; // Plural form of member label
+  };
 }
 
 // Task category
@@ -214,6 +222,7 @@ export interface CreateTaskInput {
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {
   status?: TaskStatus;
+  validationStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface ValidateTaskInput {

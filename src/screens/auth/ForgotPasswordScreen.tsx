@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { resetPassword, selectIsLoading, clearError } from '../../store/slices/authSlice';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type ForgotPasswordScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
 
@@ -24,9 +25,12 @@ const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
+  const { theme, isDarkMode } = useTheme();
 
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -66,7 +70,7 @@ const ForgotPasswordScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="forgot-password-screen">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -87,9 +91,10 @@ const ForgotPasswordScreen: React.FC = () => {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Email</Text>
                 <TextInput
+                  testID="email-input"
                   style={styles.input}
                   placeholder="Enter your email"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.colors.textTertiary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -100,18 +105,20 @@ const ForgotPasswordScreen: React.FC = () => {
               </View>
 
               <TouchableOpacity
+                testID="send-reset-button"
                 style={[styles.resetButton, isLoading && styles.disabledButton]}
                 onPress={handleResetPassword}
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={theme.colors.background} />
                 ) : (
                   <Text style={styles.resetButtonText}>Send Reset Email</Text>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
+                testID="back-button"
                 style={styles.backButton}
                 onPress={handleBackToSignIn}
                 disabled={isLoading}
@@ -142,10 +149,10 @@ const ForgotPasswordScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -162,12 +169,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     lineHeight: 24,
   },
   form: {
@@ -179,21 +186,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: theme.colors.border,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#0A0A0A',
-    backgroundColor: '#F9FAFB',
+    color: theme.colors.textPrimary,
+    backgroundColor: isDarkMode ? theme.colors.surface : '#F9FAFB',
   },
   resetButton: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -203,7 +210,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   resetButtonText: {
-    color: '#FFFFFF',
+    color: theme.colors.background,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -212,7 +219,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -225,25 +232,25 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#10B981',
+    backgroundColor: theme.colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   successIconText: {
-    color: '#FFFFFF',
+    color: theme.colors.background,
     fontSize: 40,
     fontWeight: '700',
   },
   successTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
   },
   successMessage: {
     fontSize: 16,
-    color: '#6B7280',
+    color: theme.colors.textTertiary,
     textAlign: 'center',
     marginBottom: 48,
     paddingHorizontal: 24,

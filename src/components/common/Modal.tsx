@@ -9,7 +9,7 @@
  * - Footer actions
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,8 +24,9 @@ import {
   PanResponder,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius } from '../../constants/theme';
+import { typography, spacing, borderRadius } from '../../constants/theme';
 import { Button, TextButton } from './Button';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -66,9 +67,12 @@ export const Modal: React.FC<ModalProps> = ({
   primaryAction,
   secondaryAction,
 }) => {
+  const { theme, isDarkMode } = useTheme();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
+
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   // Pan responder for swipe to dismiss
   const panResponder = useRef(
@@ -150,7 +154,9 @@ export const Modal: React.FC<ModalProps> = ({
   const contentWrapperProps = scrollable
     ? {
         showsVerticalScrollIndicator: false,
-        bounces: true,
+        bounces: false,
+        overScrollMode: 'never' as const,
+        alwaysBounceVertical: false,
         contentContainerStyle: styles.scrollContent,
       }
     : {};
@@ -218,7 +224,7 @@ export const Modal: React.FC<ModalProps> = ({
                     onPress={handleClose}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Feather name="x" size={24} color={colors.textSecondary} />
+                    <Feather name="x" size={24} color={theme.colors.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -271,14 +277,14 @@ export const FullScreenModal: React.FC<Omit<ModalProps, 'fullScreen'>> = (props)
   <Modal {...props} fullScreen={true} />
 );
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
   
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
   },
   
   keyboardAvoid: {
@@ -287,7 +293,7 @@ const styles = StyleSheet.create({
   },
   
   modal: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderTopLeftRadius: borderRadius.xlarge,
     borderTopRightRadius: borderRadius.xlarge,
     maxHeight: SCREEN_HEIGHT * 0.9,
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
   dragIndicator: {
     width: 36,
     height: 4,
-    backgroundColor: colors.separator,
+    backgroundColor: theme.colors.separator,
     borderRadius: borderRadius.round,
   },
   
@@ -319,7 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.M,
     paddingVertical: spacing.M,
     borderBottomWidth: 1,
-    borderBottomColor: colors.separator,
+    borderBottomColor: theme.colors.separator,
   },
   
   headerText: {
@@ -328,12 +334,12 @@ const styles = StyleSheet.create({
   
   title: {
     ...typography.headline,
-    color: colors.textPrimary,
+    color: theme.colors.textPrimary,
   },
   
   subtitle: {
     ...typography.caption1,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginTop: spacing.XXS,
   },
   
@@ -349,13 +355,14 @@ const styles = StyleSheet.create({
   
   scrollContent: {
     paddingBottom: spacing.L,
+    flexGrow: 1,
   },
   
   footer: {
     paddingHorizontal: spacing.M,
     paddingVertical: spacing.M,
     borderTopWidth: 1,
-    borderTopColor: colors.separator,
+    borderTopColor: theme.colors.separator,
   },
   
   actions: {

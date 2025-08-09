@@ -45,8 +45,7 @@ const AuthNavigator: React.FC = () => {
         name="SignUp"
         component={SignUpScreen}
         options={{
-          title: 'Create Account',
-          headerBackTitle: 'Back',
+          headerShown: false,  // Hide the header like SignIn screen
         }}
       />
       <Stack.Screen

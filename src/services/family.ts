@@ -1,6 +1,13 @@
 /**
  * Family management service
  * Handles all family-related operations with Firestore
+ * 
+ * SECURITY IMPLEMENTATION:
+ * - Authorization checks for all operations
+ * - Input validation for all user inputs
+ * - Transaction support for data consistency
+ * - Permission-based access control
+ * - Proper error handling and recovery
  */
 
 import {
@@ -17,36 +24,191 @@ import {
   serverTimestamp,
   onSnapshot,
   Unsubscribe,
+  runTransaction,
+  Transaction,
 } from 'firebase/firestore';
-import { db } from './firebase';
-import { Family, User, FamilyInvite, DEFAULT_TASK_CATEGORIES } from '../types/models';
+import { db, auth } from './firebase';
+import { Family, User, TaskCategory, DEFAULT_TASK_CATEGORIES } from '../types/models';
+import { handleOrphanedTasks } from './taskCleanup';
 
 // Collection references
 const familiesCollection = collection(db, 'families');
 const usersCollection = collection(db, 'users');
 const invitesCollection = collection(db, 'invites');
 
+// Input validation constants
+const FAMILY_NAME_MIN_LENGTH = 2;
+const FAMILY_NAME_MAX_LENGTH = 50;
+const INVITE_CODE_LENGTH = 6;
+const INVITE_CODE_PATTERN = /^[A-Z0-9]{6}$/;
+
+/**
+ * Validate family permissions
+ */
+const validateFamilyPermission = async (
+  userId: string,
+  familyId: string,
+  action: 'view' | 'update' | 'admin' | 'leave'
+): Promise<{ family: Family; user: User }> => {
+  if (!userId) {
+    throw new Error('User authentication required');
+  }
+
+  if (!familyId) {
+    throw new Error('Family ID is required');
+  }
+
+  // Get user and family data
+  const [userDoc, familyDoc] = await Promise.all([
+    getDoc(doc(usersCollection, userId)),
+    getDoc(doc(familiesCollection, familyId))
+  ]);
+
+  if (!userDoc.exists()) {
+    throw new Error('User not found');
+  }
+
+  if (!familyDoc.exists()) {
+    throw new Error('Family not found');
+  }
+
+  const user = { id: userDoc.id, ...userDoc.data() } as User;
+  const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
+
+  // Check if user is member of family
+  if (!family.memberIds.includes(userId)) {
+    throw new Error('You are not a member of this family');
+  }
+
+  // Check specific permissions
+  switch (action) {
+    case 'view':
+      // All members can view
+      break;
+    case 'update':
+      // Only parents can update
+      if (!family.parentIds.includes(userId)) {
+        throw new Error('Only parents can update family settings');
+      }
+      break;
+    case 'admin':
+      // Only parents can perform admin actions
+      if (!family.parentIds.includes(userId)) {
+        throw new Error('Only parents can perform administrative actions');
+      }
+      break;
+    case 'leave':
+      // Check if last parent
+      if (family.parentIds.includes(userId) && 
+          family.parentIds.length === 1 && 
+          family.memberIds.length > 1) {
+        throw new Error('Cannot leave family as the last parent while other members exist');
+      }
+      break;
+  }
+
+  return { family, user };
+};
+
+/**
+ * Validate family input
+ */
+const validateFamilyInput = (input: {
+  name?: string;
+  inviteCode?: string;
+  role?: 'parent' | 'child';
+  maxMembers?: number;
+  taskCategories?: TaskCategory[];
+}): void => {
+  // Validate family name
+  if (input.name !== undefined) {
+    if (!input.name || input.name.trim().length === 0) {
+      throw new Error('Family name is required');
+    }
+    if (input.name.trim().length < FAMILY_NAME_MIN_LENGTH) {
+      throw new Error(`Family name must be at least ${FAMILY_NAME_MIN_LENGTH} characters`);
+    }
+    if (input.name.length > FAMILY_NAME_MAX_LENGTH) {
+      throw new Error(`Family name must not exceed ${FAMILY_NAME_MAX_LENGTH} characters`);
+    }
+    // Check for inappropriate content
+    if (/[<>\"\'&]/.test(input.name)) {
+      throw new Error('Family name contains invalid characters');
+    }
+  }
+
+  // Validate invite code
+  if (input.inviteCode !== undefined) {
+    if (!input.inviteCode || input.inviteCode.trim().length === 0) {
+      throw new Error('Invite code is required');
+    }
+    if (!INVITE_CODE_PATTERN.test(input.inviteCode.toUpperCase())) {
+      throw new Error('Invalid invite code format');
+    }
+  }
+
+  // Validate role
+  if (input.role !== undefined) {
+    if (!['parent', 'child'].includes(input.role)) {
+      throw new Error('Invalid role. Must be "parent" or "child"');
+    }
+  }
+
+  // Validate max members
+  if (input.maxMembers !== undefined) {
+    if (input.maxMembers < 2 || input.maxMembers > 20) {
+      throw new Error('Maximum members must be between 2 and 20');
+    }
+  }
+
+  // Validate task categories
+  if (input.taskCategories !== undefined) {
+    if (!Array.isArray(input.taskCategories)) {
+      throw new Error('Task categories must be an array');
+    }
+    if (input.taskCategories.length > 20) {
+      throw new Error('Cannot have more than 20 task categories');
+    }
+    for (const category of input.taskCategories) {
+      if (!category || typeof category !== 'object') {
+        throw new Error('Invalid task category format');
+      }
+      if (!category.id || !category.name || !category.color || typeof category.order !== 'number') {
+        throw new Error('Task category must have id, name, color, and order');
+      }
+      if (category.name.trim().length === 0) {
+        throw new Error('Task category name cannot be empty');
+      }
+      if (category.name.length > 30) {
+        throw new Error('Task category name too long');
+      }
+      if (!/^#[0-9A-F]{6}$/i.test(category.color)) {
+        throw new Error('Task category color must be a valid hex color');
+      }
+    }
+  }
+};
+
 /**
  * Generate a unique 6-character invite code
  */
 const generateInviteCode = async (): Promise<string> => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  let isUnique = false;
-
-  while (!isUnique) {
-    // Generate random 6-character code
-    code = '';
-    for (let i = 0; i < 6; i++) {
-      code += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-
-    // Check if code already exists
-    const q = query(familiesCollection, where('inviteCode', '==', code));
-    const snapshot = await getDocs(q);
-    isUnique = snapshot.empty;
-  }
-
+  
+  // Generate a more unique code using timestamp and random characters
+  // This reduces the chance of collisions without needing to query the database
+  const timestamp = Date.now().toString(36).toUpperCase().slice(-3); // Last 3 chars of timestamp in base36
+  const randomPart = Array.from({ length: 3 }, () =>
+    characters.charAt(Math.floor(Math.random() * characters.length))
+  ).join('');
+  
+  const code = timestamp + randomPart;
+  
+  // Note: In a production environment, you might want to:
+  // 1. Use a separate collection for invite codes with different security rules
+  // 2. Use Cloud Functions to generate codes server-side
+  // 3. Handle the rare case of collisions in the transaction
+  
   return code;
 };
 
@@ -56,45 +218,88 @@ const generateInviteCode = async (): Promise<string> => {
 export const createFamily = async (
   userId: string,
   familyName: string,
-  isPremium: boolean = false
+  isPremium: boolean = false,
+  roleConfig?: {
+    preset: 'family' | 'roommates' | 'team' | 'custom';
+    adminLabel: string;
+    memberLabel: string;
+    adminPlural?: string;
+    memberPlural?: string;
+  }
 ): Promise<Family> => {
+  // Validate authentication
+  if (!userId || !auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('User authentication required');
+  }
+
+  // Validate input
+  validateFamilyInput({ name: familyName });
+
+  // Generate unique invite code BEFORE transaction to avoid permission issues
+  const inviteCode = await generateInviteCode();
+  
   try {
-    const inviteCode = await generateInviteCode();
-    const familyId = doc(familiesCollection).id;
+    return await runTransaction(db, async (transaction) => {
+      // Check if user exists and is not already in a family
+      const userDoc = await transaction.get(doc(usersCollection, userId));
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found. Please complete your profile first.');
+      }
 
-    const newFamily: Family = {
-      id: familyId,
-      name: familyName,
-      inviteCode,
-      createdBy: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      memberIds: [userId],
-      parentIds: [userId], // Creator is automatically a parent
-      childIds: [],
-      maxMembers: isPremium ? 10 : 4,
-      isPremium,
-      taskCategories: DEFAULT_TASK_CATEGORIES,
-    };
+      const userData = userDoc.data();
+      if (userData.familyId) {
+        // Check if the family actually exists
+        const existingFamilyDoc = await transaction.get(doc(familiesCollection, userData.familyId));
+        if (existingFamilyDoc.exists()) {
+          throw new Error('You are already in a family. Leave your current family first.');
+        } else {
+          // Family doesn't exist, clear the invalid familyId
+          transaction.update(doc(usersCollection, userId), {
+            familyId: null,
+            role: null,
+            updatedAt: serverTimestamp(),
+          });
+        }
+      }
 
-    // Create family document
-    await setDoc(doc(familiesCollection, familyId), {
-      ...newFamily,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      // Use the pre-generated invite code
+      const familyId = doc(familiesCollection).id;
+
+      const newFamily: Omit<Family, 'id'> = {
+        name: familyName.trim(),
+        inviteCode,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        memberIds: [userId],
+        parentIds: [userId], // Creator is automatically a parent
+        childIds: [],
+        maxMembers: isPremium ? 10 : 1,  // Changed from 4 to 1 for free tier
+        isPremium,
+        taskCategories: DEFAULT_TASK_CATEGORIES,
+        ...(roleConfig && { roleConfig }), // Add roleConfig if provided
+      };
+
+      // Create family document
+      const familyRef = doc(familiesCollection, familyId);
+      transaction.set(familyRef, {
+        ...newFamily,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update user's familyId and role
+      transaction.update(doc(usersCollection, userId), {
+        familyId,
+        role: 'parent',
+        updatedAt: serverTimestamp(),
+      });
+
+      return { id: familyId, ...newFamily };
     });
-
-    // Update user's familyId
-    await updateDoc(doc(usersCollection, userId), {
-      familyId,
-      role: 'parent',
-      updatedAt: serverTimestamp(),
-    });
-
-    return newFamily;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating family:', error);
-    throw new Error('Failed to create family');
+    throw new Error(error.message || 'Failed to create family');
   }
 };
 
@@ -106,51 +311,83 @@ export const joinFamily = async (
   inviteCode: string,
   role: 'parent' | 'child' = 'child'
 ): Promise<Family> => {
+  // Validate authentication
+  if (!userId || !auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('User authentication required');
+  }
+
+  // Validate input
+  validateFamilyInput({ inviteCode, role });
+
+  // Find family with invite code BEFORE transaction to avoid permission issues
+  const q = query(familiesCollection, where('inviteCode', '==', inviteCode.toUpperCase()));
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error('Invalid invite code. Please check and try again.');
+  }
+
+  const familyDoc = snapshot.docs[0];
+  const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
+
   try {
-    // Find family with invite code
-    const q = query(familiesCollection, where('inviteCode', '==', inviteCode.toUpperCase()));
-    const snapshot = await getDocs(q);
+    return await runTransaction(db, async (transaction) => {
+      // Check if user exists and is not already in a family
+      const userDoc = await transaction.get(doc(usersCollection, userId));
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found. Please complete your profile first.');
+      }
 
-    if (snapshot.empty) {
-      throw new Error('Invalid invite code');
-    }
+      const userData = userDoc.data();
+      if (userData.familyId) {
+        // Check if the family actually exists
+        const existingFamilyDoc = await transaction.get(doc(familiesCollection, userData.familyId));
+        if (existingFamilyDoc.exists()) {
+          throw new Error('You are already in a family. Leave your current family first.');
+        } else {
+          // Family doesn't exist, clear the invalid familyId
+          transaction.update(doc(usersCollection, userId), {
+            familyId: null,
+            role: null,
+            updatedAt: serverTimestamp(),
+          });
+        }
+      }
 
-    const familyDoc = snapshot.docs[0];
-    const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
+      // Use the pre-found family data
 
-    // Check if family is at max capacity
-    if (family.memberIds.length >= family.maxMembers) {
-      throw new Error('Family is at maximum capacity');
-    }
+      // Check if already a member (shouldn't happen but double-check)
+      if (family.memberIds.includes(userId)) {
+        throw new Error('You are already a member of this family');
+      }
 
-    // Check if user is already in a family
-    const userDoc = await getDoc(doc(usersCollection, userId));
-    const userData = userDoc.data();
-    if (userData?.familyId) {
-      throw new Error('You are already in a family');
-    }
+      // Check if family is at max capacity
+      if (family.memberIds.length >= family.maxMembers) {
+        throw new Error(`Family is at maximum capacity (${family.maxMembers} members)`);
+      }
 
-    // Add user to family
-    const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
-    await updateDoc(doc(familiesCollection, family.id), {
-      memberIds: arrayUnion(userId),
-      [roleArray]: arrayUnion(userId),
-      updatedAt: serverTimestamp(),
+      // Add user to family
+      const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
+      transaction.update(doc(familiesCollection, family.id), {
+        memberIds: arrayUnion(userId),
+        [roleArray]: arrayUnion(userId),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update user's familyId and role
+      transaction.update(doc(usersCollection, userId), {
+        familyId: family.id,
+        role,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Return updated family
+      return {
+        ...family,
+        memberIds: [...family.memberIds, userId],
+        [roleArray]: [...family[roleArray], userId],
+      };
     });
-
-    // Update user's familyId and role
-    await updateDoc(doc(usersCollection, userId), {
-      familyId: family.id,
-      role,
-      updatedAt: serverTimestamp(),
-    });
-
-    // Return updated family
-    return {
-      ...family,
-      memberIds: [...family.memberIds, userId],
-      [roleArray]: [...family[roleArray], userId],
-    };
   } catch (error: any) {
     console.error('Error joining family:', error);
     throw new Error(error.message || 'Failed to join family');
@@ -161,6 +398,12 @@ export const joinFamily = async (
  * Get family by ID
  */
 export const getFamily = async (familyId: string): Promise<Family | null> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
   try {
     const familyDoc = await getDoc(doc(familiesCollection, familyId));
     
@@ -168,10 +411,17 @@ export const getFamily = async (familyId: string): Promise<Family | null> => {
       return null;
     }
 
-    return { id: familyDoc.id, ...familyDoc.data() } as Family;
-  } catch (error) {
+    const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
+
+    // Verify user is member of family
+    if (!family.memberIds.includes(currentUser.uid)) {
+      throw new Error('You are not authorized to view this family');
+    }
+
+    return family;
+  } catch (error: any) {
     console.error('Error getting family:', error);
-    throw new Error('Failed to get family');
+    throw new Error(error.message || 'Failed to get family');
   }
 };
 
@@ -179,26 +429,35 @@ export const getFamily = async (familyId: string): Promise<Family | null> => {
  * Get family members
  */
 export const getFamilyMembers = async (familyId: string): Promise<User[]> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
   try {
-    const family = await getFamily(familyId);
-    if (!family) {
-      throw new Error('Family not found');
-    }
+    // Validate permission to view family
+    const { family } = await validateFamilyPermission(currentUser.uid, familyId, 'view');
 
     const members: User[] = [];
     
-    // Fetch all member documents
-    for (const memberId of family.memberIds) {
-      const userDoc = await getDoc(doc(usersCollection, memberId));
+    // Fetch all member documents using Promise.all for better performance and no transaction permission issues
+    const memberPromises = family.memberIds.map(memberId =>
+      getDoc(doc(usersCollection, memberId))
+    );
+    
+    const memberDocs = await Promise.all(memberPromises);
+    
+    for (const userDoc of memberDocs) {
       if (userDoc.exists()) {
         members.push({ id: userDoc.id, ...userDoc.data() } as User);
       }
     }
 
     return members;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting family members:', error);
-    throw new Error('Failed to get family members');
+    throw new Error(error.message || 'Failed to get family members');
   }
 };
 
@@ -207,16 +466,41 @@ export const getFamilyMembers = async (familyId: string): Promise<User[]> => {
  */
 export const updateFamily = async (
   familyId: string,
-  updates: Partial<Family>
+  updates: Partial<Pick<Family, 'name' | 'maxMembers' | 'taskCategories'>>
 ): Promise<void> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
+  // Validate input
+  validateFamilyInput(updates);
+
+  // Validate permission BEFORE transaction
+  const { family } = await validateFamilyPermission(currentUser.uid, familyId, 'update');
+
+  // Additional validation for maxMembers
+  if (updates.maxMembers !== undefined) {
+    if (updates.maxMembers < family.memberIds.length) {
+      throw new Error(`Cannot set max members to ${updates.maxMembers}. Family currently has ${family.memberIds.length} members.`);
+    }
+    if (!family.isPremium && updates.maxMembers > 1) {
+      throw new Error('Premium subscription required for more than 1 member');
+    }
+  }
+
   try {
-    await updateDoc(doc(familiesCollection, familyId), {
-      ...updates,
-      updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+      // Update family
+      transaction.update(doc(familiesCollection, familyId), {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating family:', error);
-    throw new Error('Failed to update family');
+    throw new Error(error.message || 'Failed to update family');
   }
 };
 
@@ -225,37 +509,60 @@ export const updateFamily = async (
  */
 export const removeFamilyMember = async (
   familyId: string,
-  userId: string
+  targetUserId: string
 ): Promise<void> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
+  if (!targetUserId) {
+    throw new Error('Target user ID is required');
+  }
+
+  // Validate admin permission BEFORE transaction
+  const { family } = await validateFamilyPermission(currentUser.uid, familyId, 'admin');
+
+  // Check if target user is a member
+  if (!family.memberIds.includes(targetUserId)) {
+    throw new Error('User is not a member of this family');
+  }
+
+  // Prevent removing yourself
+  if (currentUser.uid === targetUserId) {
+    throw new Error('Cannot remove yourself. Use leave family instead.');
+  }
+
+  // Check if this is the last parent
+  if (family.parentIds.includes(targetUserId) &&
+      family.parentIds.length === 1 &&
+      family.memberIds.length > 1) {
+    throw new Error('Cannot remove the last parent while other members exist');
+  }
+
+  // Determine user's role
+  const role = family.parentIds.includes(targetUserId) ? 'parent' : 'child';
+  const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
+
+  // Handle orphaned tasks BEFORE transaction
+  await handleOrphanedTasks(familyId, targetUserId, family.createdBy);
+
   try {
-    const family = await getFamily(familyId);
-    if (!family) {
-      throw new Error('Family not found');
-    }
+    await runTransaction(db, async (transaction) => {
+      // Remove user from family
+      transaction.update(doc(familiesCollection, familyId), {
+        memberIds: arrayRemove(targetUserId),
+        [roleArray]: arrayRemove(targetUserId),
+        updatedAt: serverTimestamp(),
+      });
 
-    // Check if this is the last parent
-    if (family.parentIds.includes(userId) && family.parentIds.length === 1 && family.memberIds.length > 1) {
-      throw new Error('Cannot remove the last parent while other members exist');
-    }
-
-    // Determine user's role
-    const role = family.parentIds.includes(userId) ? 'parent' : 'child';
-    const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
-
-    // Handle orphaned tasks
-    await handleOrphanedTasks(familyId, userId, family.createdBy);
-
-    // Remove user from family
-    await updateDoc(doc(familiesCollection, familyId), {
-      memberIds: arrayRemove(userId),
-      [roleArray]: arrayRemove(userId),
-      updatedAt: serverTimestamp(),
-    });
-
-    // Clear user's familyId
-    await updateDoc(doc(usersCollection, userId), {
-      familyId: null,
-      updatedAt: serverTimestamp(),
+      // Clear user's familyId
+      transaction.update(doc(usersCollection, targetUserId), {
+        familyId: null,
+        role: null,
+        updatedAt: serverTimestamp(),
+      });
     });
   } catch (error: any) {
     console.error('Error removing family member:', error);
@@ -264,60 +571,51 @@ export const removeFamilyMember = async (
 };
 
 /**
- * Handle orphaned tasks when a user is removed from family
- */
-const handleOrphanedTasks = async (
-  familyId: string,
-  removedUserId: string,
-  familyCreatorId: string
-): Promise<void> => {
-  try {
-    // Import here to avoid circular dependency
-    const { collection, query, where, getDocs, updateDoc, doc, serverTimestamp } = await import('firebase/firestore');
-    const { db } = await import('./firebase');
-    
-    const tasksCollection = collection(db, 'tasks');
-    
-    // Find all tasks assigned to the removed user
-    const q = query(
-      tasksCollection,
-      where('familyId', '==', familyId),
-      where('assignedTo', '==', removedUserId),
-      where('status', '!=', 'completed')
-    );
-    
-    const snapshot = await getDocs(q);
-    
-    // Reassign incomplete tasks to family creator
-    const updatePromises = snapshot.docs.map(taskDoc =>
-      updateDoc(doc(tasksCollection, taskDoc.id), {
-        assignedTo: familyCreatorId,
-        updatedAt: serverTimestamp(),
-      })
-    );
-    
-    await Promise.all(updatePromises);
-    
-    console.log(`Reassigned ${snapshot.size} tasks from ${removedUserId} to ${familyCreatorId}`);
-  } catch (error) {
-    console.error('Error handling orphaned tasks:', error);
-    // Don't throw - this is a cleanup operation that shouldn't block member removal
-  }
-};
-
-/**
  * Leave family (remove self)
  */
 export const leaveFamily = async (userId: string): Promise<void> => {
-  try {
-    const userDoc = await getDoc(doc(usersCollection, userId));
-    const userData = userDoc.data();
-    
-    if (!userData?.familyId) {
-      throw new Error('You are not in a family');
-    }
+  // Validate authentication
+  if (!userId || !auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('User authentication required');
+  }
 
-    await removeFamilyMember(userData.familyId, userId);
+  // Get user data BEFORE transaction
+  const userDoc = await getDoc(doc(usersCollection, userId));
+  if (!userDoc.exists()) {
+    throw new Error('User not found');
+  }
+
+  const userData = userDoc.data();
+  if (!userData.familyId) {
+    throw new Error('You are not in a family');
+  }
+
+  // Validate permission to leave BEFORE transaction
+  const { family } = await validateFamilyPermission(userId, userData.familyId, 'leave');
+
+  // Determine user's role
+  const role = family.parentIds.includes(userId) ? 'parent' : 'child';
+  const roleArray = role === 'parent' ? 'parentIds' : 'childIds';
+
+  // Handle orphaned tasks BEFORE transaction
+  await handleOrphanedTasks(userData.familyId, userId, family.createdBy);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      // Remove user from family
+      transaction.update(doc(familiesCollection, userData.familyId), {
+        memberIds: arrayRemove(userId),
+        [roleArray]: arrayRemove(userId),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Clear user's familyId
+      transaction.update(doc(usersCollection, userId), {
+        familyId: null,
+        role: null,
+        updatedAt: serverTimestamp(),
+      });
+    });
   } catch (error: any) {
     console.error('Error leaving family:', error);
     throw new Error(error.message || 'Failed to leave family');
@@ -329,38 +627,65 @@ export const leaveFamily = async (userId: string): Promise<void> => {
  */
 export const changeMemberRole = async (
   familyId: string,
-  userId: string,
+  targetUserId: string,
   newRole: 'parent' | 'child'
 ): Promise<void> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
+  // Validate input
+  validateFamilyInput({ role: newRole });
+
+  if (!targetUserId) {
+    throw new Error('Target user ID is required');
+  }
+
+  // Validate admin permission BEFORE transaction
+  const { family } = await validateFamilyPermission(currentUser.uid, familyId, 'admin');
+
+  // Check if target user is a member
+  if (!family.memberIds.includes(targetUserId)) {
+    throw new Error('User is not a member of this family');
+  }
+
+  // Get current role
+  const currentRole = family.parentIds.includes(targetUserId) ? 'parent' : 'child';
+  
+  if (currentRole === newRole) {
+    return; // No change needed
+  }
+
+  // Prevent demoting the last parent
+  if (currentRole === 'parent' &&
+      newRole === 'child' &&
+      family.parentIds.length === 1) {
+    throw new Error('Cannot demote the last parent');
+  }
+
+  const oldRoleArray = currentRole === 'parent' ? 'parentIds' : 'childIds';
+  const newRoleArray = newRole === 'parent' ? 'parentIds' : 'childIds';
+
   try {
-    const family = await getFamily(familyId);
-    if (!family) {
-      throw new Error('Family not found');
-    }
+    await runTransaction(db, async (transaction) => {
+      // Update family document
+      transaction.update(doc(familiesCollection, familyId), {
+        [oldRoleArray]: arrayRemove(targetUserId),
+        [newRoleArray]: arrayUnion(targetUserId),
+        updatedAt: serverTimestamp(),
+      });
 
-    const currentRole = family.parentIds.includes(userId) ? 'parent' : 'child';
-    if (currentRole === newRole) {
-      return; // No change needed
-    }
-
-    const oldRoleArray = currentRole === 'parent' ? 'parentIds' : 'childIds';
-    const newRoleArray = newRole === 'parent' ? 'parentIds' : 'childIds';
-
-    // Update family document
-    await updateDoc(doc(familiesCollection, familyId), {
-      [oldRoleArray]: arrayRemove(userId),
-      [newRoleArray]: arrayUnion(userId),
-      updatedAt: serverTimestamp(),
+      // Update user document
+      transaction.update(doc(usersCollection, targetUserId), {
+        role: newRole,
+        updatedAt: serverTimestamp(),
+      });
     });
-
-    // Update user document
-    await updateDoc(doc(usersCollection, userId), {
-      role: newRole,
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error changing member role:', error);
-    throw new Error('Failed to change member role');
+    throw new Error(error.message || 'Failed to change member role');
   }
 };
 
@@ -371,11 +696,28 @@ export const subscribeToFamily = (
   familyId: string,
   callback: (family: Family | null) => void
 ): Unsubscribe => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.error('User authentication required for family subscription');
+    callback(null);
+    return () => {};
+  }
+
   return onSnapshot(
     doc(familiesCollection, familyId),
-    (doc) => {
+    async (doc) => {
       if (doc.exists()) {
-        callback({ id: doc.id, ...doc.data() } as Family);
+        const family = { id: doc.id, ...doc.data() } as Family;
+        
+        // Verify user is still a member
+        if (!family.memberIds.includes(currentUser.uid)) {
+          console.error('User is not a member of this family');
+          callback(null);
+          return;
+        }
+        
+        callback(family);
       } else {
         callback(null);
       }
@@ -394,9 +736,23 @@ export const subscribeToFamilyMembers = (
   memberIds: string[],
   callback: (members: User[]) => void
 ): Unsubscribe => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.error('User authentication required for members subscription');
+    callback([]);
+    return () => {};
+  }
+
   if (memberIds.length === 0) {
     callback([]);
     return () => {};
+  }
+
+  // Firestore 'in' query has a limit of 10 items
+  if (memberIds.length > 10) {
+    console.warn('Too many member IDs for single query. Only first 10 will be monitored.');
+    memberIds = memberIds.slice(0, 10);
   }
 
   // Create a query for all member documents
@@ -422,18 +778,31 @@ export const subscribeToFamilyMembers = (
  * Generate a new invite code for the family
  */
 export const regenerateInviteCode = async (familyId: string): Promise<string> => {
+  // Validate authentication
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User authentication required');
+  }
+
+  // Validate admin permission BEFORE transaction
+  await validateFamilyPermission(currentUser.uid, familyId, 'admin');
+
+  // Generate new unique code BEFORE transaction
+  const newCode = await generateInviteCode();
+
   try {
-    const newCode = await generateInviteCode();
-    
-    await updateDoc(doc(familiesCollection, familyId), {
-      inviteCode: newCode,
-      updatedAt: serverTimestamp(),
+    await runTransaction(db, async (transaction) => {
+      // Update family with new code
+      transaction.update(doc(familiesCollection, familyId), {
+        inviteCode: newCode,
+        updatedAt: serverTimestamp(),
+      });
     });
 
     return newCode;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error regenerating invite code:', error);
-    throw new Error('Failed to regenerate invite code');
+    throw new Error(error.message || 'Failed to regenerate invite code');
   }
 };
 
@@ -444,6 +813,11 @@ export const canPerformAdminAction = async (
   userId: string,
   familyId: string
 ): Promise<boolean> => {
+  // Validate authentication
+  if (!userId || !auth.currentUser || auth.currentUser.uid !== userId) {
+    return false;
+  }
+
   try {
     const family = await getFamily(familyId);
     if (!family) {

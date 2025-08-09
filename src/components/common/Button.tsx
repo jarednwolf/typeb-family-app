@@ -13,7 +13,7 @@
  * - small: 36px height (compact areas)
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -25,7 +25,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius, layout, animations } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -49,7 +49,11 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
+  const { theme, isDarkMode } = useTheme();
   const isDisabled = disabled || loading;
+  
+  // Create dynamic styles based on theme
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
   
   // Get button styles based on variant and size
   const buttonStyles = [
@@ -70,10 +74,10 @@ export const Button: React.FC<ButtonProps> = ({
   
   // Determine colors for loading indicator and icon
   const getContentColor = () => {
-    if (variant === 'primary') return colors.white;
-    if (variant === 'danger') return colors.white;
-    if (variant === 'secondary' || variant === 'text') return colors.textPrimary;
-    return colors.textPrimary;
+    if (variant === 'primary') return isDarkMode ? theme.colors.black : theme.colors.white;
+    if (variant === 'danger') return theme.colors.white;
+    if (variant === 'secondary' || variant === 'text') return theme.colors.textPrimary;
+    return theme.colors.textPrimary;
   };
   
   const contentColor = getContentColor();
@@ -112,13 +116,13 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.medium,
-    paddingHorizontal: spacing.L,
+    borderRadius: theme.borderRadius.medium,
+    paddingHorizontal: theme.spacing.L,
   },
   
   content: {
@@ -129,38 +133,38 @@ const styles = StyleSheet.create({
   
   // Variants
   primary: {
-    backgroundColor: colors.primary,
+    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.primary,
   },
   
   secondary: {
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: colors.separator,
+    borderColor: theme.colors.separator,
   },
   
   textVariant: {
     backgroundColor: 'transparent',
-    paddingHorizontal: spacing.S,
+    paddingHorizontal: theme.spacing.S,
   },
   
   danger: {
-    backgroundColor: colors.error,
+    backgroundColor: theme.colors.error,
   },
   
   // Sizes
   large: {
-    height: layout.buttonHeight.large,
-    paddingHorizontal: spacing.L,
+    height: theme.layout.buttonHeight.large,
+    paddingHorizontal: theme.spacing.L,
   },
   
   medium: {
-    height: layout.buttonHeight.medium,
-    paddingHorizontal: spacing.M,
+    height: theme.layout.buttonHeight.medium,
+    paddingHorizontal: theme.spacing.M,
   },
   
   small: {
-    height: layout.buttonHeight.small,
-    paddingHorizontal: spacing.S,
+    height: theme.layout.buttonHeight.small,
+    paddingHorizontal: theme.spacing.S,
   },
   
   // States
@@ -174,24 +178,24 @@ const styles = StyleSheet.create({
   
   // Base text style
   text: {
-    ...typography.body,
+    ...theme.typography.body,
     fontWeight: '600',
   } as TextStyle,
   
   primaryText: {
-    color: colors.white,
+    color: isDarkMode ? theme.colors.black : theme.colors.white,
   },
   
   secondaryText: {
-    color: colors.textPrimary,
+    color: theme.colors.textPrimary,
   },
   
   textText: {
-    color: colors.textPrimary,
+    color: theme.colors.textPrimary,
   },
   
   dangerText: {
-    color: colors.white,
+    color: theme.colors.white,
   },
   
   // Text sizes
@@ -209,11 +213,11 @@ const styles = StyleSheet.create({
   
   // Icon spacing
   iconLeft: {
-    marginRight: spacing.XS,
+    marginRight: theme.spacing.XS,
   },
   
   iconRight: {
-    marginLeft: spacing.XS,
+    marginLeft: theme.spacing.XS,
   },
 });
 

@@ -11,6 +11,7 @@ import {
   formatAuthError,
 } from '../../services/auth';
 import { User } from '../../types/models';
+import { toISOString } from '../../utils/dateHelpers';
 
 // Serializable version of User for Redux
 interface SerializedUser {
@@ -56,9 +57,9 @@ const serializeUserProfile = (profile: User | null): SerializedUser | null => {
   
   return {
     ...profile,
-    createdAt: profile.createdAt instanceof Date ? profile.createdAt.toISOString() : String(profile.createdAt),
-    updatedAt: profile.updatedAt instanceof Date ? profile.updatedAt.toISOString() : String(profile.updatedAt),
-    subscriptionEndDate: profile.subscriptionEndDate instanceof Date ? profile.subscriptionEndDate.toISOString() : profile.subscriptionEndDate,
+    createdAt: toISOString(profile.createdAt) || '',
+    updatedAt: toISOString(profile.updatedAt) || '',
+    subscriptionEndDate: toISOString(profile.subscriptionEndDate) || undefined,
   };
 };
 

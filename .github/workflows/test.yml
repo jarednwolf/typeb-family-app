@@ -1,0 +1,157 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: typeb-family-app/package-lock.json
+    
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+    
+    - name: Install dependencies
+      working-directory: ./typeb-family-app
+      run: npm ci
+    
+    - name: Install Functions dependencies
+      working-directory: ./typeb-family-app/functions
+      run: npm ci
+    
+    - name: Type check
+      working-directory: ./typeb-family-app
+      run: npm run type-check
+    
+    - name: Lint
+      working-directory: ./typeb-family-app
+      run: npm run lint
+    
+    - name: Start Firebase Emulators
+      working-directory: ./typeb-family-app
+      run: |
+        firebase emulators:start --only auth,firestore,storage,functions --project test-project &
+        sleep 10
+    
+    - name: Wait for emulators
+      working-directory: ./typeb-family-app
+      run: |
+        npx wait-on http://localhost:4000 http://localhost:8080 http://localhost:9099 http://localhost:5001 -t 30000
+    
+    - name: Run Unit Tests
+      working-directory: ./typeb-family-app
+      run: npm run test:unit
+      env:
+        FIRESTORE_EMULATOR_HOST: localhost:8080
+        FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+        FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+        FIREBASE_FUNCTIONS_EMULATOR_HOST: localhost:5001
+    
+    - name: Run Integration Tests
+      working-directory: ./typeb-family-app
+      run: npm run test:integration
+      env:
+        FIRESTORE_EMULATOR_HOST: localhost:8080
+        FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+        FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+        FIREBASE_FUNCTIONS_EMULATOR_HOST: localhost:5001
+    
+    - name: Generate Coverage Report
+      working-directory: ./typeb-family-app
+      run: npm run test:coverage
+      env:
+        FIRESTORE_EMULATOR_HOST: localhost:8080
+        FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+        FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+        FIREBASE_FUNCTIONS_EMULATOR_HOST: localhost:5001
+    
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./typeb-family-app/coverage
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Stop Firebase Emulators
+      if: always()
+      run: |
+        pkill -f "firebase emulators:start" || true
+
+  e2e:
+    runs-on: macos-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: typeb-family-app/package-lock.json
+    
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+    
+    - name: Install dependencies
+      working-directory: ./typeb-family-app
+      run: npm ci
+    
+    - name: Install Detox CLI
+      run: npm install -g detox-cli
+    
+    - name: Setup Detox
+      working-directory: ./typeb-family-app
+      run: |
+        brew tap wix/brew
+        brew install applesimutils
+        detox clean-framework-cache
+        detox build-framework-cache
+    
+    - name: Start Firebase Emulators
+      working-directory: ./typeb-family-app
+      run: |
+        firebase emulators:start --only auth,firestore,storage,functions --project test-project &
+        sleep 10
+    
+    - name: Build iOS App for Testing
+      working-directory: ./typeb-family-app
+      run: |
+        npx expo prebuild --platform ios
+        detox build --configuration ios.sim.debug
+    
+    - name: Run E2E Tests
+      working-directory: ./typeb-family-app
+      run: detox test --configuration ios.sim.debug --cleanup
+      env:
+        FIRESTORE_EMULATOR_HOST: localhost:8080
+        FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+        FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+        FIREBASE_FUNCTIONS_EMULATOR_HOST: localhost:5001
+    
+    - name: Upload E2E Test Artifacts
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: detox-artifacts
+        path: typeb-family-app/artifacts
