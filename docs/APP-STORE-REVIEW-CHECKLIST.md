@@ -12,8 +12,9 @@
 - ✅ Category: Productivity
 
 #### 2. TestFlight Build
-- ✅ Build #16 (version 1.0) uploaded and processed
-- ✅ Build available in TestFlight
+- ✅ Build #18 (version 1.0) uploaded and processed
+- ✅ Build available in TestFlight (processing ~5-10 minutes)
+- ✅ Includes all latest features (date/time picker, etc.)
 - ✅ No crashes or critical issues reported
 - ✅ Demo account tested and working
 
@@ -55,7 +56,8 @@
 ### 📋 Final Steps Before Submission
 
 1. **In App Store Connect:**
-   - [ ] Verify Build #16 is selected
+   - [ ] Wait 5-10 minutes for Build #18 to process
+   - [ ] Select Build #18 (not Build #16)
    - [ ] Confirm all screenshots uploaded correctly
    - [ ] Review all text fields for typos
    - [ ] Set release option to "Manually release this version"
@@ -72,10 +74,11 @@
 
 ### 🚨 Important Notes
 
-1. **No New Build Needed**: Use existing Build #16 from TestFlight
+1. **Use Build #18**: Contains all latest features including date/time picker
 2. **Special Characters**: All content uses plain text (no smart quotes)
 3. **Demo Account**: Verified working with pre-configured family data
 4. **Screenshots**: Clean app interface without marketing overlays
+5. **Processing Time**: Wait 5-10 minutes for Build #18 to appear in App Store Connect
 
 ### 📞 If Rejected
 
@@ -89,9 +92,12 @@ Common fixes:
 
 Your app is fully prepared for App Store review. The clean content has been tested and accepted by App Store Connect. All documentation is updated and pushed to git.
 
-**Next Action**: Go to App Store Connect and submit Build #16 for review!
+**Next Action**: Wait for Build #18 to process (check email), then go to App Store Connect and submit Build #18 for review!
+
+**TestFlight Link**: https://appstoreconnect.apple.com/apps/6749812496/testflight/ios
 
 ---
 
 Last Updated: August 10, 2025
-Status: READY FOR SUBMISSION
+Build Number: 18
+Status: READY FOR SUBMISSION (after processing)
