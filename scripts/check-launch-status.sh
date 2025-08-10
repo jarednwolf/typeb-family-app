@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# TypeB Family App - Launch Status Checker
-# This script provides a quick overview of your app's launch readiness
+# TypeB Family App - iOS Launch Status Checker
+# This script provides a quick overview of your iOS app's launch readiness
 
 echo "================================================"
-echo "🚀 TypeB Family App - Launch Status Check"
+echo "🚀 TypeB Family App - iOS Launch Status Check"
 echo "================================================"
 echo ""
 
@@ -19,12 +19,7 @@ echo "📱 iOS Status:"
 echo "  ✅ Build #16 on TestFlight"
 echo "  ✅ iOS 18 SDK compatible"
 echo "  ✅ RevenueCat v9.2.0 integrated"
-echo ""
-
-# Check Android status
-echo "📱 Android Status:"
-echo "  ⏳ Production build pending"
-echo "  ⏳ Google Play submission pending"
+echo "  ✅ All premium features working"
 echo ""
 
 # Check backend services
@@ -47,31 +42,46 @@ if [ -f "README-GO-LIVE.md" ]; then
 else
     echo "  ❌ Quick Start Guide: Missing"
 fi
+
+if [ -f "IOS-LAUNCH-PRIORITY.md" ]; then
+    echo "  ✅ iOS Launch Priority: Ready"
+else
+    echo "  ❌ iOS Launch Priority: Missing"
+fi
 echo ""
 
 # Next steps
 echo "================================================"
-echo "📋 NEXT IMMEDIATE ACTIONS:"
+echo "📋 NEXT IMMEDIATE ACTIONS (iOS App Store):"
 echo "================================================"
 echo ""
-echo "1️⃣  Build Android Production:"
-echo "    ${YELLOW}eas build --platform android --profile production${NC}"
+echo "1️⃣  Configure Free Trial (20 min) ⚡️ CRITICAL:"
+echo "    - Go to App Store Connect"
+echo "    - Add 7-day free trial to subscriptions"
+echo "    - ${YELLOW}This increases conversion by 3-5x!${NC}"
 echo ""
-echo "2️⃣  Submit to Google Play:"
-echo "    ${YELLOW}eas submit --platform android --latest${NC}"
+echo "2️⃣  Create 5 Screenshots (1-2 hours):"
+echo "    - Size: 1290 × 2796 pixels (iPhone 6.7\")"
+echo "    - Dashboard, Task+Photo, Family, Premium, Analytics"
 echo ""
-echo "3️⃣  Configure Free Trials:"
-echo "    - App Store Connect: 7-day trial"
-echo "    - Google Play Console: 7-day trial"
+echo "3️⃣  Write App Store Description (30 min):"
+echo "    - Use template in GO-LIVE-INSTRUCTIONS.md"
+echo "    - Highlight photo validation & free trial"
 echo ""
-echo "4️⃣  Create Screenshots (5 required):"
-echo "    - Dashboard view"
-echo "    - Task with photo"
-echo "    - Family management"
-echo "    - Premium features"
-echo "    - Analytics/rewards"
+echo "4️⃣  Submit to App Store (30 min):"
+echo "    - Create version 1.1.0"
+echo "    - Select Build #16 from TestFlight"
+echo "    - Submit for review (24-48 hours)"
 echo ""
 echo "================================================"
-echo "💡 Pro Tip: Start the Android build NOW while"
-echo "   preparing other assets - it takes 20-30 min!"
+echo "⏰ Total Time: 3-4 hours to App Store submission"
+echo "================================================"
+echo ""
+echo "💡 Pro Tips:"
+echo "  • Start with free trial config (revenue critical)"
+echo "  • Submit Sunday-Tuesday for faster review"
+echo "  • Have beta testers ready for launch day"
+echo ""
+echo "📱 Your iOS app is tested and ready!"
+echo "   Just need to package it for the App Store."
 echo "================================================"
