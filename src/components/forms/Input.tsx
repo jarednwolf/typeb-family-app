@@ -239,7 +239,7 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.M,
+    marginBottom: spacing.S,
   },
   
   label: {

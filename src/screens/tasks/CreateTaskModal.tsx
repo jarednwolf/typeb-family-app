@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
-// import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/forms/Input';
 import Button from '../../components/common/Button';
@@ -39,6 +39,12 @@ const priorities: { value: TaskPriority; label: string; color: string }[] = [
   { value: 'low', label: 'Low', color: '#4CAF50' },
 ];
 
+// Helper function to check if an icon name is valid for Feather
+const isValidFeatherIcon = (iconName: string): boolean => {
+  const validIcons = ['home', 'book-open', 'heart', 'user', 'grid', 'repeat', 'folder', 'book'];
+  return validIcons.includes(iconName);
+};
+
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const familyMembers = useSelector(selectFamilyMembers);
@@ -48,38 +54,72 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
   
   // Get categories from family or use defaults
   const categories = useMemo(() => {
+    // Map invalid icons to valid Feather icons
+    const iconMapping: Record<string, string> = {
+      'academic-cap': 'book-open',  // Replace academic-cap with book-open icon
+      'dots-horizontal': 'grid',     // Replace dots-horizontal with grid icon
+    };
+    
     if (family?.taskCategories && family.taskCategories.length > 0) {
-      return family.taskCategories.map(cat => ({
-        id: cat.id,
-        label: cat.name,
-        icon: cat.icon || 'folder',
-        color: cat.color || '#6B7280',
-      }));
+      return family.taskCategories.map(cat => {
+        // Check if icon needs to be mapped to a valid one
+        const mappedIcon = iconMapping[cat.icon || ''] || cat.icon || 'folder';
+        return {
+          id: cat.id,
+          label: cat.name,
+          icon: mappedIcon,
+          color: cat.color || '#6B7280',
+        };
+      });
     }
     // Default categories
     return [
       { id: '1', label: 'Chores', icon: 'home', color: '#10B981' },
-      { id: '2', label: 'Homework', icon: 'book', color: '#3B82F6' },
+      { id: '2', label: 'Homework', icon: 'book-open', color: '#3B82F6' },
       { id: '3', label: 'Exercise', icon: 'heart', color: '#F59E0B' },
       { id: '4', label: 'Personal', icon: 'user', color: '#8B5CF6' },
-      { id: '5', label: 'Other', icon: 'more-horizontal', color: '#6B7280' },
+      { id: '5', label: 'Other', icon: 'grid', color: '#6B7280' },
     ];
   }, [family]);
+
+  // Helper function to get next 15-minute interval
+  const getNext15MinuteInterval = () => {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const remainder = minutes % 15;
+    
+    // Calculate next 15-minute mark
+    const minutesToAdd = remainder === 0 ? 15 : 15 - remainder;
+    
+    now.setMinutes(minutes + minutesToAdd);
+    now.setSeconds(0);
+    now.setMilliseconds(0);
+    
+    return now;
+  };
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || '1');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [assignedTo, setAssignedTo] = useState<string>(userProfile?.id || '');
-  const [dueDate, setDueDate] = useState<Date>(new Date());
+  const [dueDate, setDueDate] = useState<Date>(getNext15MinuteInterval());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [points, setPoints] = useState('10');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [enableReminder, setEnableReminder] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
+  const [showCategoryScrollIndicator, setShowCategoryScrollIndicator] = useState(true);
+  const categoryScrollRef = useRef<any>(null);
 
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+  
+  const handleCategoryScroll = (event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const isAtEnd = contentOffset.x >= contentSize.width - layoutMeasurement.width - 10;
+    setShowCategoryScrollIndicator(!isAtEnd);
+  };
 
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -94,20 +134,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       newErrors.description = 'Description must be less than 500 characters';
     }
 
-    const pointsNum = parseInt(points, 10);
-    if (!points || isNaN(pointsNum)) {
-      newErrors.points = 'Points must be a number';
-    } else if (pointsNum < 1 || pointsNum > 100) {
-      newErrors.points = 'Points must be between 1 and 100';
-    }
-
     if (!assignedTo) {
       newErrors.assignedTo = 'Please select a family member';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [title, description, points, assignedTo]);
+  }, [title, description, assignedTo]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
@@ -141,7 +174,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
         priority,
         assignedTo,
         dueDate: dueDate, // Keep as Date object
-        points: parseInt(points, 10),
+        points: 10, // Default points for now
         isRecurring: false,
         requiresPhoto: false,
         reminderEnabled: enableReminder,
@@ -162,8 +195,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       setCategoryId('1');
       setPriority('medium');
       setAssignedTo(userProfile?.id || '');
-      setDueDate(new Date());
-      setPoints('10');
+      setDueDate(getNext15MinuteInterval());
       setEnableReminder(true);
       setErrors({});
       
@@ -177,13 +209,61 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       // Always reset submitting state
       setIsSubmitting(false);
     }
-  }, [validateForm, title, description, categoryId, priority, assignedTo, dueDate, points, enableReminder, userProfile, dispatch, onClose, isSubmitting]);
+  }, [validateForm, title, description, categoryId, priority, assignedTo, dueDate, enableReminder, userProfile, dispatch, onClose, isSubmitting]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    // setShowDatePicker(Platform.OS === 'ios');
-    setShowDatePicker(false);
+    setShowDatePicker(Platform.OS === 'ios');
     if (selectedDate) {
-      setDueDate(selectedDate);
+      // Preserve the time when changing the date
+      const newDate = new Date(selectedDate);
+      newDate.setHours(dueDate.getHours());
+      newDate.setMinutes(dueDate.getMinutes());
+      setDueDate(newDate);
+    }
+  };
+  
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      // Preserve the date when changing the time
+      const newDate = new Date(dueDate);
+      newDate.setHours(selectedTime.getHours());
+      
+      // Round minutes to nearest 15-minute increment
+      const minutes = selectedTime.getMinutes();
+      const roundedMinutes = Math.round(minutes / 15) * 15;
+      
+      // Handle edge case where rounding to 60 minutes
+      if (roundedMinutes === 60) {
+        newDate.setHours(newDate.getHours() + 1);
+        newDate.setMinutes(0);
+      } else {
+        newDate.setMinutes(roundedMinutes);
+      }
+      
+      setDueDate(newDate);
+    }
+  };
+
+  const handleDateButtonPress = () => {
+    if (showDatePicker) {
+      // If date picker is already open, close it
+      setShowDatePicker(false);
+    } else {
+      // Open date picker and close time picker if it's open
+      setShowDatePicker(true);
+      setShowTimePicker(false);
+    }
+  };
+
+  const handleTimeButtonPress = () => {
+    if (showTimePicker) {
+      // If time picker is already open, close it
+      setShowTimePicker(false);
+    } else {
+      // Open time picker and close date picker if it's open
+      setShowTimePicker(true);
+      setShowDatePicker(false);
     }
   };
   
@@ -223,33 +303,29 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       scrollable={true}
     >
       <View style={styles.container} testID="create-task-screen">
-          {/* Title Input */}
-          <View style={styles.section}>
-            <Input
-              label="Task Title"
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Enter task title"
-              error={errors.title}
-              maxLength={100}
-              testID="task-title-input"
-            />
-          </View>
+          {/* Title Input - Input component has its own margin */}
+          <Input
+            label="Task Title"
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Enter task title"
+            error={errors.title}
+            maxLength={100}
+            testID="task-title-input"
+          />
 
-          {/* Description Input */}
-          <View style={styles.section}>
-            <Input
-              label="Description (Optional)"
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Add more details..."
-              multiline
-              numberOfLines={3}
-              maxLength={500}
-              error={errors.description}
-              testID="task-description-input"
-            />
-          </View>
+          {/* Description Input - Input component has its own margin */}
+          <Input
+            label="Description (Optional)"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add more details..."
+            multiline
+            numberOfLines={3}
+            maxLength={500}
+            error={errors.description}
+            testID="task-description-input"
+          />
 
           {/* Category Selector */}
           <View style={styles.section} testID="category-selector">
@@ -267,34 +343,53 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
                 </TouchableOpacity>
               )}
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoryScroll}
-            >
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    categoryId === cat.id && styles.categoryChipActive,
-                    { borderColor: categoryId === cat.id ? cat.color : theme.colors.textSecondary },
-                  ]}
-                  onPress={() => setCategoryId(cat.id)}
-                  testID={`category-${cat.id}`}
-                >
-                  <Text style={{ fontSize: 16 }}>{cat.icon}</Text>
-                  <Text
+            <View style={styles.categoryScrollContainer}>
+              <ScrollView
+                ref={categoryScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+                contentContainerStyle={styles.categoryScrollContent}
+                onScroll={handleCategoryScroll}
+                scrollEventThrottle={16}
+              >
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
                     style={[
-                      styles.categoryLabel,
-                      categoryId === cat.id && { color: cat.color },
+                      styles.categoryChip,
+                      categoryId === cat.id && styles.categoryChipActive,
+                      { borderColor: categoryId === cat.id ? cat.color : theme.colors.textSecondary },
                     ]}
+                    onPress={() => setCategoryId(cat.id)}
+                    testID={`category-${cat.id}`}
                   >
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                    {cat.icon ? (
+                      <Feather
+                        name={cat.icon as keyof typeof Feather.glyphMap}
+                        size={16}
+                        color={categoryId === cat.id ? cat.color : theme.colors.textSecondary}
+                      />
+                    ) : null}
+                    <Text
+                      style={[
+                        styles.categoryLabel,
+                        categoryId === cat.id && { color: cat.color },
+                        !cat.icon ? { marginLeft: 0 } : {}, // No margin if no icon
+                      ]}
+                    >
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {/* Scroll indicator - shows when there's more content */}
+              {showCategoryScrollIndicator && categories.length > 3 && (
+                <View style={styles.scrollIndicator} pointerEvents="none">
+                  <Text style={styles.scrollIndicatorText}>→</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Priority Selector */}
@@ -364,27 +459,60 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
             </ScrollView>
           </View>
 
-          {/* Due Date */}
+          {/* Due Date and Time */}
           <View style={styles.section} testID="due-date-picker">
-            <Text style={styles.label}>Due Date</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker(true)}
-              testID="due-date-button"
-            >
-              <Feather name="calendar" size={20} color={theme.colors.textTertiary} />
-              <Text style={styles.dateText}>
-                {dueDate.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </Text>
-            </TouchableOpacity>
-            {/* Date picker would be shown here when available */}
+            <Text style={styles.label}>Due Date & Time</Text>
+            <View style={styles.dateTimeContainer}>
+              <TouchableOpacity
+                style={[styles.dateButton, styles.dateButtonHalf, showDatePicker && styles.dateButtonActive]}
+                onPress={handleDateButtonPress}
+                testID="due-date-button"
+              >
+                <Feather name="calendar" size={20} color={showDatePicker ? theme.colors.primary : theme.colors.textTertiary} />
+                <Text style={[styles.dateText, showDatePicker && styles.dateTextActive]}>
+                  {dueDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.dateButton, styles.dateButtonHalf, showTimePicker && styles.dateButtonActive]}
+                onPress={handleTimeButtonPress}
+                testID="due-time-button"
+              >
+                <Feather name="clock" size={20} color={showTimePicker ? theme.colors.primary : theme.colors.textTertiary} />
+                <Text style={[styles.dateText, showTimePicker && styles.dateTextActive]}>
+                  {dueDate.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
             {showDatePicker && (
-              <Text style={styles.dateText}>Date picker not available in web</Text>
+              <DateTimePicker
+                value={dueDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                minimumDate={new Date()}
+                testID="date-picker"
+              />
+            )}
+            
+            {showTimePicker && (
+              <DateTimePicker
+                value={dueDate}
+                mode="time"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleTimeChange}
+                minuteInterval={15}
+                testID="time-picker"
+              />
             )}
           </View>
 
@@ -411,19 +539,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
                 testID="reminder-switch"
               />
             </View>
-          </View>
-
-          {/* Points */}
-          <View style={styles.section}>
-            <Input
-              label="Points"
-              value={points}
-              onChangeText={setPoints}
-              placeholder="10"
-              keyboardType="numeric"
-              error={errors.points}
-              testID="points-input"
-            />
           </View>
 
           {/* Action Buttons */}
@@ -465,7 +580,7 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: spacing.L,
+    marginBottom: spacing.XS,
   },
   label: {
     fontSize: 14,
@@ -478,8 +593,14 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     color: theme.colors.error,
     marginTop: spacing.XS,
   },
+  categoryScrollContainer: {
+    position: 'relative',
+  },
   categoryScroll: {
     flexDirection: 'row',
+  },
+  categoryScrollContent: {
+    paddingRight: spacing.XL, // Add padding to show there's more content
   },
   categoryChip: {
     flexDirection: 'row',
@@ -560,10 +681,25 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.separator,
   },
+  dateButtonActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: isDarkMode ? theme.colors.primary + '20' : theme.colors.primary + '10',
+  },
   dateText: {
     fontSize: 16,
     color: theme.colors.textPrimary,
     marginLeft: spacing.S,
+  },
+  dateTextActive: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    gap: spacing.S,
+  },
+  dateButtonHalf: {
+    flex: 1,
   },
   actions: {
     flexDirection: 'row',
@@ -617,6 +753,26 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: theme.colors.primary,
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: [{ translateY: -12 }],
+    backgroundColor: isDarkMode ? theme.colors.surface : theme.colors.background,
+    paddingHorizontal: spacing.XS,
+    paddingVertical: spacing.XXS,
+    borderRadius: borderRadius.round,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollIndicatorText: {
+    fontSize: 18,
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
   },
 });
 

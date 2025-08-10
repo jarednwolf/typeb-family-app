@@ -6,10 +6,10 @@
 
 ## 📋 Pre-Launch Checklist
 
-- [ ] Apple Developer Account ($99/year)
+- [x] Apple Developer Account ($99/year)
 - [ ] Google Play Developer Account ($25 one-time)
-- [ ] Credit card for service accounts
-- [ ] Access to email for verifications
+- [x] Credit card for service accounts
+- [x] Access to email for verifications
 
 ---
 

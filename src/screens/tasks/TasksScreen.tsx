@@ -170,7 +170,6 @@ export const TasksScreen: FC = () => {
       }
       await dispatch(completeTask({ taskId, userId: userProfile.id }) as any).unwrap();
     } catch (error) {
-      console.error('[TasksScreen] Failed to complete task', error);
       Alert.alert('Error', "Oops, something went wrong. Let's try again!");
     }
   };
@@ -284,7 +283,8 @@ export const TasksScreen: FC = () => {
   );
 
   // Create dynamic styles based on theme
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => {
+    return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
@@ -437,11 +437,8 @@ export const TasksScreen: FC = () => {
       fontWeight: '700',
       color: '#fff',
     },
-  }), [theme, isDarkMode]);
-
-  if (loading && tasks.length === 0) {
-    return <LoadingState variant="spinner" />;
-  }
+  });
+  }, [theme, isDarkMode]);
 
   // Check if user is a manager (parent)
   const isManager = userProfile?.role === 'parent';
@@ -456,6 +453,11 @@ export const TasksScreen: FC = () => {
     ).length;
   }, [tasks]);
 
+  // This conditional return must come AFTER all hooks
+  if (loading && tasks.length === 0) {
+    return <LoadingState variant="spinner" />;
+  }
+  
   return (
     <SafeAreaView style={styles.container} testID="tasks-screen">
       <View style={styles.headerContainer}>

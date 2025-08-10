@@ -16,6 +16,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Task, TaskCategory } from '../../types/models';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAppSelector } from '../../hooks/redux';
+import { selectFamilyMembers } from '../../store/slices/familySlice';
 
 // Task type that can handle both serialized (string dates) and non-serialized (Date objects)
 interface TaskCardTask {
@@ -61,25 +63,46 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   showAssignee = true
 }) => {
   const { theme, isDarkMode } = useTheme();
+  const familyMembers = useAppSelector(selectFamilyMembers);
+  
   const isOverdue = task.dueDate &&
     (typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate) < new Date() &&
     task.status !== 'completed';
   const isCompleted = task.status === 'completed';
   
+  // Get user display name from family members
+  const getUserName = (userId: string): string => {
+    const member = familyMembers.find(m => m.id === userId);
+    return member?.displayName || 'Unknown';
+  };
+  
   // Create dynamic styles based on theme
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
   
-  // Get category icon based on category name
+  // Get category icon based on category name or ID
   const getCategoryIcon = (category: TaskCategory): keyof typeof Feather.glyphMap => {
+    // Map both category IDs and names to icons
+    const categoryKey = category.id.toLowerCase();
+    const categoryName = category.name.toLowerCase();
+    
     const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
       'chores': 'home',
-      'homework': 'book',
+      'homework': 'book-open',
+      'academic-cap': 'book-open', // Handle the academic-cap case
       'exercise': 'heart',
       'personal': 'user',
       'routine': 'repeat',
-      'other': 'more-horizontal',
+      'other': 'grid',
+      'dots-horizontal': 'grid', // Handle dots-horizontal case
+      '1': 'home', // Map numeric IDs too
+      '2': 'book-open',
+      '3': 'heart',
+      '4': 'user',
+      '5': 'grid',
     };
-    return iconMap[category.id] || 'more-horizontal';
+    
+    // Try to match by ID first, then by name
+    return iconMap[categoryKey] || iconMap[categoryName] || iconMap[category.id] || 'grid';
   };
   
   // Format due date
@@ -194,7 +217,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               <View style={styles.assigneeContainer}>
                 <Feather name="user" size={12} color={theme.colors.textTertiary} />
                 <Text style={styles.assignee} numberOfLines={1}>
-                  {task.assignedTo}
+                  {getUserName(task.assignedTo)}
                 </Text>
               </View>
             )}

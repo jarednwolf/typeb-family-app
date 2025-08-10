@@ -71,8 +71,23 @@ export const signUp = createAsyncThunk(
       const userCredential = await firebaseSignUp(data);
       const userProfile = await getUserProfile(userCredential.user.uid);
       
+      // Safely serialize the user object
+      const serializedUser = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        emailVerified: userCredential.user.emailVerified,
+        phoneNumber: userCredential.user.phoneNumber,
+        photoURL: userCredential.user.photoURL,
+        providerId: userCredential.user.providerId,
+        metadata: {
+          creationTime: userCredential.user.metadata.creationTime,
+          lastSignInTime: userCredential.user.metadata.lastSignInTime,
+        }
+      };
+      
       return {
-        user: userCredential.user.toJSON(),
+        user: serializedUser,
         userProfile: serializeUserProfile(userProfile),
       };
     } catch (error: any) {
@@ -85,14 +100,35 @@ export const signIn = createAsyncThunk(
   'auth/signIn',
   async (data: SignInData, { rejectWithValue }) => {
     try {
+      console.log('[AUTH SLICE] Starting sign in thunk');
       const userCredential = await firebaseSignIn(data);
+      console.log('[AUTH SLICE] Firebase sign in successful, fetching profile');
       const userProfile = await getUserProfile(userCredential.user.uid);
+      console.log('[AUTH SLICE] User profile fetched');
+      
+      // Safely serialize the user object
+      const serializedUser = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        emailVerified: userCredential.user.emailVerified,
+        phoneNumber: userCredential.user.phoneNumber,
+        photoURL: userCredential.user.photoURL,
+        providerId: userCredential.user.providerId,
+        metadata: {
+          creationTime: userCredential.user.metadata.creationTime,
+          lastSignInTime: userCredential.user.metadata.lastSignInTime,
+        }
+      };
+      
+      console.log('[AUTH SLICE] User serialized successfully');
       
       return {
-        user: userCredential.user.toJSON(),
+        user: serializedUser,
         userProfile: serializeUserProfile(userProfile),
       };
     } catch (error: any) {
+      console.error('[AUTH SLICE] Sign in error:', error);
       return rejectWithValue(formatAuthError(error));
     }
   }

@@ -190,10 +190,10 @@ export interface FamilyInvite {
 // Default task categories
 export const DEFAULT_TASK_CATEGORIES: TaskCategory[] = [
   { id: '1', name: 'Chores', color: '#10B981', icon: 'home', order: 1 },
-  { id: '2', name: 'Homework', color: '#3B82F6', icon: 'academic-cap', order: 2 },
+  { id: '2', name: 'Homework', color: '#3B82F6', icon: 'book-open', order: 2 },
   { id: '3', name: 'Exercise', color: '#F59E0B', icon: 'heart', order: 3 },
   { id: '4', name: 'Personal', color: '#8B5CF6', icon: 'user', order: 4 },
-  { id: '5', name: 'Other', color: '#6B7280', icon: 'dots-horizontal', order: 5 },
+  { id: '5', name: 'Other', color: '#6B7280', icon: 'grid', order: 5 },
 ];
 
 // Validation schemas for forms

@@ -34,7 +34,7 @@ const OnboardingScreen: React.FC = () => {
     {
       id: 'welcome',
       title: 'Welcome to TypeB',
-      description: 'The smart way to manage family tasks and build better habits together',
+      description: 'More than checking the box - build better habits together',
       icon: 'home',
       color: isDarkMode ? theme.colors.info : theme.colors.primary,
     },

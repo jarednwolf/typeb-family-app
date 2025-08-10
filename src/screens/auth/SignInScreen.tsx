@@ -74,7 +74,7 @@ const SignInScreen: React.FC = () => {
               resizeMode="contain"
             />
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue with TypeB Family</Text>
+            <Text style={styles.subtitle}>More than checking the box</Text>
           </View>
 
           <View style={styles.form}>

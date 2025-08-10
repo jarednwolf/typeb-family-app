@@ -306,6 +306,8 @@ export const signUp = async ({ email, password, displayName }: SignUpData): Prom
 // Sign in existing user
 export const signIn = async ({ email, password }: SignInData): Promise<UserCredential> => {
   try {
+    console.log('[AUTH] Sign in started');
+    
     // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
@@ -313,14 +315,23 @@ export const signIn = async ({ email, password }: SignInData): Promise<UserCrede
     }
     
     const normalizedEmail = email.trim().toLowerCase();
+    console.log('[AUTH] Email validated:', normalizedEmail);
     
     // Check rate limit
     await checkRateLimit(normalizedEmail, 'signin');
+    console.log('[AUTH] Rate limit check passed');
     
-    // Add slight delay to prevent timing attacks
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+    // Add slight delay to prevent timing attacks - wrapped in try-catch
+    try {
+      const delay = Math.floor(Math.random() * 200) + 100;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } catch (delayError) {
+      console.warn('[AUTH] Delay error (non-critical):', delayError);
+    }
     
+    console.log('[AUTH] Attempting Firebase sign in...');
     const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+    console.log('[AUTH] Firebase sign in successful');
     
     // Check if email is verified (warning, not blocking for now)
     if (!userCredential.user.emailVerified) {
@@ -370,10 +381,21 @@ export const signIn = async ({ email, password }: SignInData): Promise<UserCrede
     
     return userCredential;
   } catch (error: any) {
-    console.error('Sign in error:', error);
+    console.error('[AUTH] Sign in error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+      name: error?.name,
+      fullError: error
+    });
     
-    // Add delay on failure to prevent timing attacks
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+    // Add delay on failure to prevent timing attacks - wrapped in try-catch
+    try {
+      const delay = Math.floor(Math.random() * 500) + 500;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } catch (delayError) {
+      console.warn('[AUTH] Post-error delay failed (non-critical):', delayError);
+    }
     
     throw error;
   }

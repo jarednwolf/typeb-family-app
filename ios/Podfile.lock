@@ -925,6 +925,8 @@ PODS:
   - React-Mapbuffer (0.73.4):
     - glog
     - React-debug
+  - react-native-get-random-values (1.11.0):
+    - React-Core
   - react-native-launch-arguments (4.1.0):
     - React
   - react-native-netinfo (11.1.0):
@@ -1171,6 +1173,7 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector-modern`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-launch-arguments (from `../node_modules/react-native-launch-arguments`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -1293,6 +1296,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-get-random-values:
+    :path: "../node_modules/react-native-get-random-values"
   react-native-launch-arguments:
     :path: "../node_modules/react-native-launch-arguments"
   react-native-netinfo:
@@ -1398,6 +1403,7 @@ SPEC CHECKSUMS:
   React-jsinspector: 9ac353eccf6ab54d1e0a33862ba91221d1e88460
   React-logger: 5295f5eac9d7624fe9a33a473442d8f4c1074197
   React-Mapbuffer: f7ba4d5459e546d741791a55664388e97b31df7c
+  react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-launch-arguments: 165260aba9544f00c66fae3e136b11484d0cb49b
   react-native-netinfo: 5364263f903da576bdef9c84a76fe243ab06812c
   react-native-safe-area-context: bf9d9d58f0f6726d4a6257088044c2595017579d

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TypeB Review Information Screenshots</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .info h2 {
+            color: #4F46E5;
+            margin-top: 0;
+        }
+        .warning {
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning h3 {
+            margin-top: 0;
+            color: #92400E;
+        }
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .screenshot-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .screenshot-card img {
+            max-width: 100%;
+            height: auto;
+            max-height: 600px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .screenshot-card h3 {
+            margin: 15px 0 5px 0;
+            color: #1f2937;
+        }
+        .screenshot-card p {
+            margin: 5px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .usage {
+            background: #EFF6FF;
+            border: 1px solid #3B82F6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 TypeB Review Information Screenshots</h1>
+        
+        <div class="info">
+            <h2>What are Review Information Screenshots?</h2>
+            <p>These screenshots are specifically for the <strong>Review Information</strong> section of each subscription in App Store Connect. They help Apple reviewers understand how your subscription appears to users in your app.</p>
+            
+            <div class="warning">
+                <h3>⚠️ Important Distinction</h3>
+                <p><strong>Review Information Screenshot</strong> ≠ <strong>Promotional Image</strong></p>
+                <ul>
+                    <li><strong>Promotional Image:</strong> 1024×1024 square image for App Store promotion</li>
+                    <li><strong>Review Screenshot:</strong> iPhone-sized screenshot showing the actual subscription UI in your app</li>
+                </ul>
+            </div>
+            
+            <div class="usage">
+                <h3>📍 Where to Upload These</h3>
+                <ol>
+                    <li>Go to <strong>Monetization → Subscriptions</strong></li>
+                    <li>Select your subscription (Premium Monthly or Premium Annual)</li>
+                    <li>Scroll to <strong>"Review Information"</strong> section</li>
+                    <li>Under <strong>"Screenshot"</strong>, click "Choose File"</li>
+                    <li>Upload the appropriate review screenshot</li>
+                    <li>Add Review Notes explaining the subscription</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="screenshots">
+            <div class="screenshot-card">
+                <img src="premium_monthly_review.png" alt="Premium Monthly Review">
+                <h3>Premium Monthly Review</h3>
+                <p>Use for: premium_monthly subscription</p>
+                <p>Shows: $4.99/month with 7-day trial</p>
+                <p>Dimensions: 1179×2556 (iPhone)</p>
+            </div>
+            
+            <div class="screenshot-card">
+                <img src="premium_annual_review.png" alt="Premium Annual Review">
+                <h3>Premium Annual Review</h3>
+                <p>Use for: premium_annual subscription</p>
+                <p>Shows: $39.99/year with 7-day trial</p>
+                <p>Highlights: 33% savings</p>
+                <p>Dimensions: 1179×2556 (iPhone)</p>
+            </div>
+            
+            <div class="screenshot-card">
+                <img src="subscription_selection_review.png" alt="Subscription Selection">
+                <h3>Subscription Selection Screen</h3>
+                <p>Alternative: Shows both options</p>
+                <p>Can be used for either subscription</p>
+                <p>Dimensions: 1179×2556 (iPhone)</p>
+            </div>
+        </div>
+        
+        <div class="info" style="margin-top: 30px;">
+            <h2>✅ Review Notes Template</h2>
+            <p>Copy and paste this into the "Review Notes" field:</p>
+            <code style="display: block; padding: 15px; white-space: pre-wrap;">This subscription unlocks premium features including:
+- Unlimited family members (free tier limited to 5)
+- Advanced analytics and insights
+- Custom reward systems
+- Priority support
+- Ad-free experience
+
+New users receive a 7-day free trial. The subscription auto-renews monthly at $4.99 (or annually at $39.99) unless cancelled 24 hours before the trial ends. Users can manage subscriptions in their Apple ID settings.</code>
+        </div>
+    </div>
+</body>
+</html>
