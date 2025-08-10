@@ -332,16 +332,111 @@ No Family: "Flying solo"
 
 ## Premium UI Elements
 
-### Badges
-- "PRO" badge on premium features
-- Gold star icon
-- Subtle gradient background
+### Premium Color Palette
+```
+Premium Gold: #FFD700
+Premium Gradient Start: #FFD700
+Premium Gradient End: #FFA500
+Premium Background: #FFF9E6 (light mode)
+Premium Background Dark: #3D3A2B (dark mode)
+```
+
+### Premium Badges
+```
+PremiumBadge {
+  background: linear-gradient(135deg, #FFD700, #FFA500)
+  padding: 4px 8px
+  borderRadius: 6px
+  fontSize: 11px
+  fontWeight: 700
+  color: #FFFFFF
+  text: "PREMIUM" or custom label
+}
+```
+
+### Role Badges
+```
+RoleBadge {
+  padding: 2px 6px
+  borderRadius: 4px
+  fontSize: 10px
+  fontWeight: 600
+  
+  // Admin role (Parent/Manager/etc)
+  admin: {
+    background: #34C75915 (success green 15%)
+    color: #34C759
+  }
+  
+  // Member role (Child/Member/etc)
+  member: {
+    background: #007AFF15 (info blue 15%)
+    color: #007AFF
+  }
+}
+```
 
 ### Upsell Cards
-- Soft gradient background
-- Feature comparison
-- Clear CTA button
-- Dismissible but reappears strategically
+```
+UpsellCard {
+  background: linear-gradient(135deg, #FFF9E6, #FFFFFF)
+  border: 1px solid #FFD70030
+  padding: 16px
+  borderRadius: 12px
+  shadow: 0 2px 8px rgba(255, 215, 0, 0.1)
+}
+```
+
+### Premium Feature Gates
+```
+FeatureGate {
+  overlay: rgba(0, 0, 0, 0.6)
+  backdropFilter: blur(4px)
+  icon: lock or star
+  message: clear upgrade prompt
+  CTA: prominent upgrade button
+}
+```
+
+### Upgrade Prompts
+```
+UpgradePrompt {
+  position: inline or modal
+  background: premium gradient
+  icon: star or crown
+  title: benefit-focused
+  subtitle: price mention
+  CTA: "Start Free Trial" or "Upgrade Now"
+}
+```
+
+## Role Customization UI
+
+### Role Selector
+```
+RoleSelector {
+  presets: [
+    { id: 'family', icon: '👨‍👩‍👧‍👦', label: 'Traditional Family' },
+    { id: 'roommates', icon: '🏠', label: 'Roommates' },
+    { id: 'team', icon: '👥', label: 'Team/Group' },
+    { id: 'custom', icon: '⚙️', label: 'Custom Roles' }
+  ]
+  selectedStyle: {
+    border: 2px solid primary
+    background: primary10
+  }
+}
+```
+
+### Custom Role Input
+```
+CustomRoleInput {
+  adminLabel: text input with placeholder
+  memberLabel: text input with placeholder
+  preview: live preview of role badges
+  validation: 2-20 characters
+}
+```
 
 ## Responsive Design
 

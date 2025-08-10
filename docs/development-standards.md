@@ -39,6 +39,7 @@
 - **Design Philosophy**: Clean, minimal, Apple-inspired
 - **Icon Library**: Feather Icons (clean, minimal icons matching our premium aesthetic)
 - **Target Audience**: Middle school through college age (Type B personalities)
+- **Role System**: Customizable roles with presets (Family, Roommates, Team, Custom)
 
 ## Technical Architecture
 
@@ -46,10 +47,12 @@
 - **Framework**: React Native with Expo
 - **Backend**: Firebase (Firestore, Auth, Storage, Functions)
 - **State Management**: Redux Toolkit with feature-based slices
-- **Testing**: Jest + React Native Testing Library + Detox
+- **Testing**: Jest + React Native Testing Library + Detox (v20.13.5)
 - **Analytics**: Firebase Analytics (comprehensive tracking)
 - **Payments**: RevenueCat for subscriptions
 - **Feature Flags**: Firebase Remote Config
+- **Component Testing**: 253 tests implemented (91-100% coverage on tested components)
+- **E2E Testing**: 60 tests written (auth, family, tasks flows)
 
 ### Code Organization
 ```
@@ -141,19 +144,24 @@
 ## Monetization
 
 ### Pricing
-- **Free Tier**: Single user, all basic features
-- **Premium**: $4.99/month
-  - Multiple family members
-  - Task validation
-  - Smart escalation
-  - Future: Custom categories, notification customization
+- **Free Tier**: 1 family member (personal use/trial)
+- **Premium**: $4.99/month with 7-day free trial
+  - Add family members (up to 10)
+  - Photo validation for tasks
+  - Smart notification escalation
+  - Advanced analytics
+  - Custom task categories
+  - Custom role names (beyond presets)
+  - Priority support
 
 ### Premium Gates
-- Family invitations
-- Photo/text validation
-- Advanced analytics
-- Custom categories (future)
-- Notification customization (future)
+- Adding family members (>1 member)
+- Photo validation for tasks
+- Advanced analytics dashboard
+- Custom task categories
+- Smart notification escalation
+- Role customization (beyond presets)
+- Priority support access
 
 ## Development Workflow
 
@@ -196,8 +204,11 @@
 ### Testing Requirements
 - **Coverage**: Minimum 80% overall, 95% for critical paths
 - **Types**: Unit, integration, E2E for critical flows
-- **Device Testing**: iPhone primary, iPad support, Android future
+- **Component Tests**: 253 passing tests across 8 core components
+- **E2E Tests**: 60 comprehensive tests written (P0: 11 critical, P1: 17 high priority)
+- **Device Testing**: iPhone primary, iPad support, Android testing
 - **Manual Testing**: Checklist before each release
+- **Testing Infrastructure**: Firebase emulators configured, Detox setup complete
 
 ## Performance Targets
 - **App Launch**: < 2 seconds
@@ -408,11 +419,21 @@ Brief description of what this service handles
 For detailed data models, naming conventions, and type definitions, see:
 - `typeb-family-app/docs/DATA-STANDARDS-AND-CONVENTIONS.md`
 
+### Role System Standards
+- **Internal Roles**: Always use 'parent'/'child' in code for consistency
+- **Display Labels**: Use family.roleConfig for user-facing text
+- **Presets**: Family, Roommates, Team, Custom
+- **Customization**: Premium feature for custom role names
+- **Backward Compatibility**: Default to Parent/Child if roleConfig not set
+
 ---
 
-**Last Updated**: January 7, 2025
-**Version**: 1.3.0
+**Last Updated**: January 9, 2025
+**Version**: 1.3.1
 **Owner**: Development Team
+**App Version**: v1.0.1 (UI Polish Complete)
+**Testing Status**: Infrastructure ready, 253 component tests passing
+**Premium Status**: Infrastructure complete, integration in progress
 
 **CRITICAL**:
 1. Always update MASTER-TRACKER.md - it's our single source of truth!
