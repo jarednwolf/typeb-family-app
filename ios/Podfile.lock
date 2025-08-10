@@ -52,8 +52,8 @@ PODS:
     - hermes-engine/Pre-built (= 0.73.4)
   - hermes-engine/Pre-built (0.73.4)
   - libevent (2.1.12)
-  - PurchasesHybridCommon (10.6.1):
-    - RevenueCat (= 4.41.2)
+  - PurchasesHybridCommon (16.2.0):
+    - RevenueCat (= 5.34.0)
   - RCT-Folly (2022.05.16.00):
     - boost
     - DoubleConversion
@@ -1098,7 +1098,7 @@ PODS:
     - React-jsi (= 0.73.4)
     - React-logger (= 0.73.4)
     - React-perflogger (= 0.73.4)
-  - RevenueCat (4.41.2)
+  - RevenueCat (5.34.0)
   - RNCAsyncStorage (1.21.0):
     - React-Core
   - RNDateTimePicker (7.7.0):
@@ -1107,8 +1107,8 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNPurchases (7.27.1):
-    - PurchasesHybridCommon (= 10.6.1)
+  - RNPurchases (9.2.0):
+    - PurchasesHybridCommon (= 16.2.0)
     - React-Core
   - RNReanimated (3.6.3):
     - glog
@@ -1376,7 +1376,7 @@ SPEC CHECKSUMS:
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: b2669ce35fc4ac14f523b307aff8896799829fe2
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  PurchasesHybridCommon: 465af21945a10dda051b725933a1fd7b7c2d2a07
+  PurchasesHybridCommon: 55e97b4e090015ed138988e6559def2bd4c50ebe
   RCT-Folly: cd21f1661364f975ae76b3308167ad66b09f53f5
   RCTRequired: ab7f915c15569f04a49669e573e6e319a53f9faa
   RCTTypeSafety: 63b97ced7b766865057e7154db0e81ce4ee6cf1e
@@ -1421,11 +1421,11 @@ SPEC CHECKSUMS:
   React-runtimescheduler: ceaeeb19e75912958625f72883d240640e8f40da
   React-utils: 8439db27c3745f6de9d67eb61f5600c8d624274c
   ReactCommon: cc18bd33c0fab03c67620da6a602dcc1704e66b4
-  RevenueCat: 0250867579677899de94f96ad9be342be865560f
+  RevenueCat: eb2aa042789d9c99ad5172bd96e28b96286d6ada
   RNCAsyncStorage: a03b770a50541a761447cea9c24536047832124d
   RNDateTimePicker: 590f2000e4272050b98689cee6c8abc66c25bb22
   RNGestureHandler: 55447e4051459b0b7f5f5173567f92286d01cf88
-  RNPurchases: 7f272d13974818bb4937f18817c5f82467b196a1
+  RNPurchases: 3befa8ec426c9ac2dad8eb1e0cc9756fa7f6c702
   RNReanimated: caa9c5eb308ba5b63f07c254949f2b8bfc1227b5
   RNScreens: 8d1521c6e375a79dbd4525efaf21704cc64ac0cf
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
