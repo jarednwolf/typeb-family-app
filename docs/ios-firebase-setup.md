@@ -96,13 +96,13 @@ Since we're using Expo with Firebase JS SDK, we need the web configuration from 
 Example:
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "typeb-family-app.firebaseapp.com",
-  projectId: "typeb-family-app",
-  storageBucket: "typeb-family-app.appspot.com",
-  messagingSenderId: "...",
-  appId: "...",
-  measurementId: "..." // optional
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID" // optional
 };
 ```
 

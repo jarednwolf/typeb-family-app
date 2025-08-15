@@ -98,12 +98,12 @@ After completing the above steps, your Firebase config will look like this:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "typeb-family-app.firebaseapp.com",
-  projectId: "typeb-family-app",
-  storageBucket: "typeb-family-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123def456",
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
   measurementId: "G-XXXXXXXXXX" // Optional
 };
 ```

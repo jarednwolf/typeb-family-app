@@ -73,13 +73,17 @@ Once your repository is on GitHub/GitLab/Bitbucket:
 3. **Add Environment Variables**:
    In Vercel dashboard, add these environment variables:
    ```
-   NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyB7J0bv6LIADDlgCWj_ZkovFON-gaoGt5w
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=typeb-family-app.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=typeb-family-app
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=typeb-family-app.firebasestorage.app
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1030430696382
-   NEXT_PUBLIC_FIREBASE_APP_ID=1:1030430696382:web:31fd0b7449fe8d9a098fef
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
    ```
+   
+   **Important**: Get these values from your Firebase Console:
+   - Go to Project Settings → General → Your apps → Web app
+   - Copy the configuration values
 
 4. **Deploy**:
    - Click "Deploy"
