@@ -1,0 +1,93 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.familyId == familyId;
+    }
+    
+    function isParentInFamily(familyId) {
+      return isFamilyMember(familyId) && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'parent';
+    }
+    
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidSize() {
+      return request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // Family folders - /families/{familyId}/...
+    match /families/{familyId}/{allPaths=**} {
+      allow read: if isFamilyMember(familyId);
+      
+      // Task photos - /families/{familyId}/tasks/{taskId}/{filename}
+      match /tasks/{taskId}/{filename} {
+        allow write: if isFamilyMember(familyId) && 
+          isValidImage() && 
+          isValidSize();
+      }
+      
+      // Profile photos - /families/{familyId}/profiles/{userId}/{filename}
+      match /profiles/{userId}/{filename} {
+        allow write: if (isOwner(userId) || isParentInFamily(familyId)) && 
+          isValidImage() && 
+          isValidSize();
+      }
+      
+      // Family shared photos - /families/{familyId}/shared/{filename}
+      match /shared/{filename} {
+        allow write: if isFamilyMember(familyId) && 
+          isValidImage() && 
+          isValidSize();
+      }
+      
+      // Reward images - /families/{familyId}/rewards/{rewardId}/{filename}
+      match /rewards/{rewardId}/{filename} {
+        allow write: if isParentInFamily(familyId) && 
+          isValidImage() && 
+          isValidSize();
+      }
+    }
+    
+    // User profile pictures - /users/{userId}/profile/{filename}
+    match /users/{userId}/profile/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && 
+        isValidImage() && 
+        request.resource.size < 5 * 1024 * 1024; // 5MB limit for profile pics
+    }
+    
+    // Public assets (app logos, default images, etc.)
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admin can upload public assets
+    }
+    
+    // Temporary uploads (for processing)
+    match /temp/{userId}/{filename} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && 
+        isValidImage() && 
+        isValidSize();
+      // Note: Implement Cloud Function to auto-delete temp files after 24 hours
+    }
+    
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}
