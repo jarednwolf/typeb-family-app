@@ -1,199 +1,229 @@
 # TypeB Family App
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+ADHD-Friendly Family Task Management System
 
-A modern family task management application built with React Native and Firebase. The TypeB Family App helps families organize, assign, and track household tasks while promoting responsibility and teamwork.
+## 🚀 Current Status
 
-## 🚀 Features
+**Version**: 1.1.0  
+**Build**: #24 (Successfully submitted to TestFlight)  
+**Status**: In Beta Testing  
+**TestFlight**: Available for internal testing  
+**App Store**: Preparing for submission after beta phase  
 
-- **Family Management**: Create family groups with unique invite codes
-- **Task Assignment**: Parents can create and assign tasks to family members
-- **Photo Validation**: Optional photo requirements for task completion
-- **Real-time Sync**: Live updates across all family devices
-- **Role-based Access**: Distinct permissions for parents and children
-- **Points & Rewards**: Gamification to motivate task completion
-- **Activity Tracking**: Complete audit trail of family activities
+## 📱 Demo Accounts
 
-## 📱 Screenshots
+For testing purposes, use these pre-configured accounts:
 
-<div align="center">
-  <img src="docs/screenshots/dashboard.png" width="250" alt="Dashboard" />
-  <img src="docs/screenshots/tasks.png" width="250" alt="Tasks" />
-  <img src="docs/screenshots/family.png" width="250" alt="Family" />
-</div>
+- **Parent Account**: demo@typebapp.com (Password: Demo123!)
+- **Child Account**: demo.child@typebapp.com (Password: Demo123!)
+- **Family Invite Code**: DEMO2025
 
-## 🛠️ Tech Stack
-
-- **Frontend**: React Native with Expo
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **State Management**: Redux Toolkit
-- **Language**: TypeScript
-- **UI/UX**: Custom component library with TypeB design system
-
-## 📋 Prerequisites
-
-- Node.js 16.x or higher
-- npm or yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Firebase project with enabled services
-
-## 🚀 Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/typeb-family-app.git
-   cd typeb-family-app
-   ```
-
-2. **Install dependencies**
-   ```bash
-   cd typeb-family-app
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Firebase configuration
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm start
-   ```
-
-5. **Run on your device**
-   - iOS: Press `i` to open iOS simulator
-   - Android: Press `a` to open Android emulator
-   - Web: Press `w` to open in browser
-
-## 📁 Project Structure
+## 🏗️ Project Structure
 
 ```
 typeb-family-app/
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── screens/        # Screen components
-│   ├── services/       # Firebase and API services
-│   ├── store/          # Redux store and slices
-│   ├── navigation/     # Navigation configuration
-│   ├── types/          # TypeScript type definitions
-│   └── utils/          # Utility functions
-├── assets/             # Images, fonts, and other assets
-├── docs/               # Documentation
-└── __tests__/          # Test files
+├── src/                    # Source code
+│   ├── screens/           # App screens
+│   ├── components/        # Reusable components
+│   ├── services/          # Firebase & API services
+│   ├── store/            # Redux state management
+│   ├── navigation/       # Navigation configuration
+│   └── utils/            # Utility functions
+├── ios/                   # iOS native code
+├── android/              # Android native code
+├── assets/               # Images and static assets
+├── docs/                 # Documentation
+├── scripts/              # Build and utility scripts
+└── functions/            # Firebase Cloud Functions
 ```
 
-## 🔧 Configuration
+## 🛠️ Tech Stack
 
-### Firebase Setup
+- **Frontend**: React Native with Expo SDK 50
+- **State Management**: Redux Toolkit
+- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
+- **Navigation**: React Navigation 6
+- **UI Components**: React Native Elements, Expo components
+- **Testing**: Jest, Detox (E2E)
+- **Build System**: EAS Build
+- **Distribution**: TestFlight (iOS), Google Play Console (Android)
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Authentication, Firestore, and Storage
-3. Add your configuration to `.env`:
-   ```
-   EXPO_PUBLIC_FIREBASE_API_KEY=your-api-key
-   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain
-   EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your-storage-bucket
-   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-   EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
-   ```
+## 🚦 Quick Start
 
-### Platform-specific Setup
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- EAS CLI (`npm install -g eas-cli`)
+- iOS Simulator (Mac only) or Android Emulator
 
-- **iOS**: Follow the [iOS setup guide](docs/ios-firebase-setup.md)
-- **Android**: Configuration is handled automatically by Expo
-
-## 🧪 Testing
+### Installation
 
 ```bash
-# Run all tests
+# Clone the repository
+git clone [repository-url]
+cd typeb-family-app
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your Firebase configuration
+
+# iOS specific setup (Mac only)
+cd ios && pod install && cd ..
+```
+
+### Development
+
+```bash
+# Start the development server
+npm start
+
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator
+npm run android
+
+# Run tests
 npm test
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
+# Run E2E tests
+npm run e2e:ios
 ```
 
-## 📦 Building for Production
-
-### Using EAS Build (Recommended)
+### Building for Production
 
 ```bash
-# Install EAS CLI
-npm install -g eas-cli
+# Build for iOS (TestFlight/App Store)
+eas build --platform ios --profile production
 
-# Configure your project
-eas build:configure
+# Build for Android (Google Play)
+eas build --platform android --profile production
 
-# Build for iOS
-eas build --platform ios
-
-# Build for Android
-eas build --platform android
+# Submit to stores
+eas submit --platform ios --latest
+eas submit --platform android --latest
 ```
 
-### Local Build
+## 📋 Key Features
 
-```bash
-# iOS (Mac only)
-expo build:ios
+### Core Functionality
+- ✅ User authentication (Email/Password)
+- ✅ Family creation and management
+- ✅ Task creation with categories and priorities
+- ✅ Photo validation for task completion
+- ✅ Real-time synchronization
+- ✅ Push notifications
+- ✅ Points and rewards system
+- ✅ Role-based permissions (Parent/Child)
 
-# Android
-expo build:android
-```
+### ADHD-Specific Features
+- ✅ Visual task cards with colors and icons
+- ✅ Smart reminders and escalation
+- ✅ Simple, uncluttered interface
+- ✅ Positive reinforcement system
+- ✅ Flexible scheduling options
 
-## 🚀 Deployment
+### Premium Features (In Development)
+- 🔄 Advanced analytics dashboard
+- 🔄 Custom categories and rewards
+- 🔄 Unlimited family members
+- 🔄 Priority support
 
-See our [deployment guide](docs/deployment-guide.md) for detailed instructions on deploying to:
-- App Store (iOS)
-- Google Play Store (Android)
-- Web hosting (Vercel, Netlify, etc.)
+## 📱 Platform Support
 
-## 📖 Documentation
+- **iOS**: 13.0+ (iPhone and iPad)
+- **Android**: API 21+ (Android 5.0+)
+- **Web**: Not currently supported
+
+## 🔐 Security & Privacy
+
+- End-to-end encryption for sensitive data
+- COPPA compliant for children under 13
+- GDPR compliant data handling
+- Secure photo storage with access controls
+- Regular security audits
+
+## 📚 Documentation
 
 - [Architecture Overview](docs/architecture.md)
 - [Development Standards](docs/development-standards.md)
-- [API Documentation](docs/api-documentation.md)
-- [Testing Strategy](docs/testing-strategy.md)
-- [Release Notes](docs/RELEASE-NOTES-v1.0.0.md)
+- [Firebase Setup Guide](docs/firebase-setup-guide.md)
+- [TestFlight Submission Guide](docs/TESTFLIGHT-SUBMISSION-GUIDE.md)
+- [App Store Submission Guide](docs/APP-STORE-SUBMISSION-GUIDE.md)
+
+## 🧪 Testing
+
+The app includes comprehensive testing:
+- Unit tests for utilities and services
+- Integration tests for Firebase operations
+- E2E tests for critical user flows
+- Manual testing checklist for releases
+
+## 🚀 Deployment
+
+### Current Environments
+- **Development**: Local development with Firebase emulators
+- **Staging**: TestFlight beta testing
+- **Production**: App Store (pending)
+
+### CI/CD Pipeline
+- GitHub Actions for automated testing
+- EAS Build for native builds
+- Automatic submission to TestFlight
+
+## 📈 Monitoring
+
+- Firebase Crashlytics for crash reporting
+- Firebase Analytics for usage metrics
+- Sentry for error tracking (configured)
+- Firebase Performance Monitoring
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 🐛 Known Issues
-
-- Push notifications require a development build (not available in Expo Go)
-- Background task execution is limited in the Expo Go environment
-- Maximum 10 members per family in the current implementation
+Please read our contributing guidelines before submitting PRs.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Team
-
-Built with ❤️ by the TypeB Development Team
+Proprietary - All rights reserved
 
 ## 📞 Support
 
-- Email: support@typebfamily.app
-- Documentation: [docs.typebfamily.app](https://docs.typebfamily.app)
-- Issues: [GitHub Issues](https://github.com/yourusername/typeb-family-app/issues)
+- Email: support@typebapp.com
+- Website: https://typebapp.com (coming soon)
+- Documentation: [docs/](docs/)
+
+## 🎯 Roadmap
+
+### Phase 1 (Complete) ✅
+- Core task management
+- Family system
+- Basic notifications
+- TestFlight release
+
+### Phase 2 (Current) 🚧
+- Beta testing feedback incorporation
+- Bug fixes and performance improvements
+- App Store submission preparation
+
+### Phase 3 (Upcoming) 📅
+- Website launch (typebapp.com)
+- Advanced analytics
+- Family photo sharing
+- Custom avatars
+- Android release
+
+### Phase 4 (Future) 🔮
+- Web app version
+- School integration
+- Therapist portal
+- AI-powered suggestions
 
 ---
 
-**Current Version**: 1.0.0  
-**Last Updated**: August 7, 2025
+**Last Updated**: February 10, 2025  
+**Build Status**: ✅ Passing  
+**TestFlight Status**: 🟢 Live (Build #24)

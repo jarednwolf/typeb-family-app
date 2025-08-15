@@ -49,25 +49,33 @@ export const seedTestData = async (): Promise<SeedDataResult> => {
     
     // Create Smith Family
     console.log('👨‍👩‍👧‍👦 Creating Smith family...');
-    const smithParent = await createTestUser('john.smith@test.com', 'Parent123!', {
+    const smithParent = await createTestUser({
+      email: 'john.smith@test.com',
+      password: 'Parent123!',
       displayName: 'John Smith',
       role: 'parent'
     });
     result.users.push({ email: 'john.smith@test.com', password: 'Parent123!', role: 'parent' });
     
-    const smithParent2 = await createTestUser('jane.smith@test.com', 'Parent123!', {
+    const smithParent2 = await createTestUser({
+      email: 'jane.smith@test.com',
+      password: 'Parent123!',
       displayName: 'Jane Smith',
       role: 'parent'
     });
     result.users.push({ email: 'jane.smith@test.com', password: 'Parent123!', role: 'parent' });
     
-    const smithChild1 = await createTestUser('emma.smith@test.com', 'Child123!', {
+    const smithChild1 = await createTestUser({
+      email: 'emma.smith@test.com',
+      password: 'Child123!',
       displayName: 'Emma Smith',
       role: 'child'
     });
     result.users.push({ email: 'emma.smith@test.com', password: 'Child123!', role: 'child' });
     
-    const smithChild2 = await createTestUser('liam.smith@test.com', 'Child123!', {
+    const smithChild2 = await createTestUser({
+      email: 'liam.smith@test.com',
+      password: 'Child123!',
       displayName: 'Liam Smith',
       role: 'child'
     });
@@ -181,13 +189,17 @@ export const seedTestData = async (): Promise<SeedDataResult> => {
     
     // Create Johnson Family (smaller family)
     console.log('👨‍👧 Creating Johnson family...');
-    const johnsonParent = await createTestUser('mike.johnson@test.com', 'Parent123!', {
+    const johnsonParent = await createTestUser({
+      email: 'mike.johnson@test.com',
+      password: 'Parent123!',
       displayName: 'Mike Johnson',
       role: 'parent'
     });
     result.users.push({ email: 'mike.johnson@test.com', password: 'Parent123!', role: 'parent' });
     
-    const johnsonChild = await createTestUser('sarah.johnson@test.com', 'Child123!', {
+    const johnsonChild = await createTestUser({
+      email: 'sarah.johnson@test.com',
+      password: 'Child123!',
       displayName: 'Sarah Johnson',
       role: 'child'
     });
@@ -246,13 +258,17 @@ export const seedTestData = async (): Promise<SeedDataResult> => {
     
     // Create a demo account
     console.log('🎭 Creating demo account...');
-    const demoParent = await createTestUser('demo@typebapp.com', 'Demo123!', {
+    const demoParent = await createTestUser({
+      email: 'demo@typebapp.com',
+      password: 'Demo123!',
       displayName: 'Demo Parent',
       role: 'parent'
     });
     result.users.push({ email: 'demo@typebapp.com', password: 'Demo123!', role: 'parent' });
     
-    const demoChild = await createTestUser('demo.child@typebapp.com', 'Demo123!', {
+    const demoChild = await createTestUser({
+      email: 'demo.child@typebapp.com',
+      password: 'Demo123!',
       displayName: 'Demo Child',
       role: 'child'
     });
