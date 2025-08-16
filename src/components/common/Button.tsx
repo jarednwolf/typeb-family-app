@@ -23,9 +23,19 @@ import {
   View,
   ViewStyle,
   TextStyle,
+  Pressable,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
+import { HapticFeedback } from '../../utils/haptics';
+import { useReduceMotion } from '../../contexts/AccessibilityContext';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -35,6 +45,9 @@ interface ButtonProps extends TouchableOpacityProps {
   icon?: keyof typeof Feather.glyphMap;
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  hapticFeedback?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -47,10 +60,20 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   disabled,
   style,
+  accessibilityLabel,
+  accessibilityHint,
+  hapticFeedback = true,
+  onPress,
   ...props
 }) => {
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
   const isDisabled = disabled || loading;
+  
+  // Animation values
+  const scale = useSharedValue(1);
+  const rippleOpacity = useSharedValue(0);
+  const rippleScale = useSharedValue(0);
   
   // Create dynamic styles based on theme
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
@@ -83,36 +106,123 @@ export const Button: React.FC<ButtonProps> = ({
   const contentColor = getContentColor();
   const iconSize = size === 'small' ? 16 : size === 'medium' ? 18 : 20;
   
+  // Handle press animations
+  const handlePressIn = () => {
+    if (!reduceMotion) {
+      scale.value = withSpring(0.96, {
+        damping: 15,
+        stiffness: 400,
+      });
+      
+      // Trigger ripple effect for primary buttons
+      if (variant === 'primary') {
+        rippleOpacity.value = withTiming(0.3, { duration: 200 });
+        rippleScale.value = withSpring(1, {
+          damping: 10,
+          stiffness: 200,
+        });
+      }
+    }
+    
+    if (hapticFeedback && !isDisabled) {
+      HapticFeedback.selection();
+    }
+  };
+  
+  const handlePressOut = () => {
+    if (!reduceMotion) {
+      scale.value = withSpring(1, {
+        damping: 15,
+        stiffness: 400,
+      });
+      
+      // Fade out ripple
+      if (variant === 'primary') {
+        rippleOpacity.value = withTiming(0, { duration: 300 });
+        rippleScale.value = withTiming(0, { duration: 300 });
+      }
+    }
+  };
+  
+  const handlePress = (event: any) => {
+    if (!isDisabled) {
+      onPress?.(event);
+      
+      // Reset ripple for next press
+      if (!reduceMotion && variant === 'primary') {
+        setTimeout(() => {
+          rippleScale.value = 0;
+        }, 400);
+      }
+    }
+  };
+  
+  // Animated styles
+  const animatedButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+  
+  const animatedRippleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: rippleOpacity.value,
+      transform: [
+        { scale: rippleScale.value },
+      ],
+    };
+  });
+  
   return (
-    <TouchableOpacity
-      style={buttonStyles}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-      {...props}
-    >
-      {loading ? (
-        <ActivityIndicator 
-          color={contentColor} 
-          size="small" 
-        />
-      ) : (
-        <View style={styles.content}>
-          {icon && iconPosition === 'left' && (
-            <View style={styles.iconLeft}>
-              <Feather name={icon} size={iconSize} color={contentColor} />
-            </View>
-          )}
-          <Text style={textStyles} numberOfLines={1}>
-            {title}
-          </Text>
-          {icon && iconPosition === 'right' && (
-            <View style={styles.iconRight}>
-              <Feather name={icon} size={iconSize} color={contentColor} />
-            </View>
-          )}
-        </View>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={animatedButtonStyle}>
+      <Pressable
+        style={buttonStyles}
+        disabled={isDisabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || title}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        {...props}
+      >
+        {/* Ripple effect overlay */}
+        {variant === 'primary' && !loading && !reduceMotion && (
+          <Animated.View
+            style={[
+              styles.ripple,
+              animatedRippleStyle,
+              { backgroundColor: theme.colors.white },
+            ]}
+            pointerEvents="none"
+          />
+        )}
+        
+        {loading ? (
+          <ActivityIndicator
+            color={contentColor}
+            size="small"
+          />
+        ) : (
+          <View style={styles.content}>
+            {icon && iconPosition === 'left' && (
+              <View style={styles.iconLeft}>
+                <Feather name={icon} size={iconSize} color={contentColor} />
+              </View>
+            )}
+            <Text style={textStyles} numberOfLines={1}>
+              {title}
+            </Text>
+            {icon && iconPosition === 'right' && (
+              <View style={styles.iconRight}>
+                <Feather name={icon} size={iconSize} color={contentColor} />
+              </View>
+            )}
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -123,12 +233,24 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     justifyContent: 'center',
     borderRadius: theme.borderRadius.medium,
     paddingHorizontal: theme.spacing.L,
+    overflow: 'hidden', // For ripple effect
   },
   
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  
+  ripple: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: '200%',
+    height: '200%',
+    marginLeft: '-100%',
+    marginTop: '-100%',
+    borderRadius: 999,
   },
   
   // Variants

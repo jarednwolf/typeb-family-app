@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Switch,
+  FlatList,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
@@ -26,6 +27,8 @@ import { selectFamilyMembers, addTaskCategory } from '../../store/slices/familyS
 import { TaskPriority, CreateTaskInput, TaskCategory } from '../../types/models';
 import notificationService from '../../services/notifications';
 import { useTheme } from '../../contexts/ThemeContext';
+import { MIDDLE_SCHOOL_TASK_TEMPLATES, TaskTemplate } from '../../data/MiddleSchoolTaskTemplates';
+import { recurringTaskScheduler } from '../../services/RecurringTaskScheduler';
 
 interface CreateTaskModalProps {
   visible: boolean;
@@ -51,6 +54,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
   const userProfile = useSelector((state: RootState) => state.auth.userProfile);
   const family = useSelector((state: RootState) => state.family.currentFamily);
   const { theme, isDarkMode } = useTheme();
+  
+  // State for template selection
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
   
   // Get categories from family or use defaults
   const categories = useMemo(() => {
@@ -107,6 +114,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [enableReminder, setEnableReminder] = useState(true);
+  const [requiresPhoto, setRequiresPhoto] = useState(false);
+  const [photoInstructions, setPhotoInstructions] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly'>('daily');
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  const [estimatedMinutes, setEstimatedMinutes] = useState<number>(15);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
@@ -142,6 +155,36 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
     return Object.keys(newErrors).length === 0;
   }, [title, description, assignedTo]);
 
+  // Handle template selection
+  const handleTemplateSelect = useCallback((template: TaskTemplate) => {
+    setSelectedTemplate(template);
+    setTitle(template.title);
+    setDescription(template.description);
+    setPriority(template.priority);
+    setRequiresPhoto(template.requiresPhoto);
+    setPhotoInstructions(template.photoInstructions || '');
+    setEstimatedMinutes(template.estimatedMinutes);
+    
+    // Set category if it exists
+    const matchingCategory = categories.find(cat =>
+      cat.label.toLowerCase() === template.category.name.toLowerCase()
+    );
+    if (matchingCategory) {
+      setCategoryId(matchingCategory.id);
+    }
+    
+    // Set recurrence if template has it
+    if (template.recurrence) {
+      setIsRecurring(true);
+      setRecurrenceType(template.recurrence.type as 'daily' | 'weekly');
+      if (template.recurrence.daysOfWeek) {
+        setRecurrenceDays(template.recurrence.daysOfWeek);
+      }
+    }
+    
+    setShowTemplates(false);
+  }, [categories]);
+
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
       return;
@@ -166,25 +209,42 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
     setIsSubmitting(true);
     
     try {
-      // Create task input matching the CreateTaskInput interface
-      const newTask: CreateTaskInput = {
-        title: title.trim(),
-        description: description.trim(),
-        categoryId: categoryId,
-        priority,
-        assignedTo,
-        dueDate: dueDate, // Keep as Date object
-        points: 10, // Default points for now
-        isRecurring: false,
-        requiresPhoto: false,
-        reminderEnabled: enableReminder,
-      };
+      // Handle recurring task separately
+      if (isRecurring && selectedTemplate) {
+        // Create recurring task using the scheduler
+        await recurringTaskScheduler.addRecurringTask(
+          familyId,
+          selectedTemplate.id,
+          assignedTo,
+          {
+            type: recurrenceType,
+            daysOfWeek: recurrenceType === 'weekly' ? recurrenceDays : undefined,
+            time: `${dueDate.getHours().toString().padStart(2, '0')}:${dueDate.getMinutes().toString().padStart(2, '0')}`,
+          }
+        );
+        
+        Alert.alert('Success', 'Recurring task scheduled successfully!');
+      } else {
+        // Create one-time task
+        const newTask: CreateTaskInput = {
+          title: title.trim(),
+          description: description.trim(),
+          categoryId: categoryId,
+          priority,
+          assignedTo,
+          dueDate: dueDate, // Keep as Date object
+          points: selectedTemplate?.points || 10,
+          isRecurring: false,
+          requiresPhoto: requiresPhoto,
+          reminderEnabled: enableReminder,
+        };
 
-      await dispatch(createTask({
-        familyId: familyId,
-        userId: userProfile?.id || '',
-        input: newTask
-      })).unwrap();
+        await dispatch(createTask({
+          familyId: familyId,
+          userId: userProfile?.id || '',
+          input: newTask
+        })).unwrap();
+      }
       
       // Don't schedule notifications - they might be causing issues
       // The backend should handle this
@@ -209,7 +269,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       // Always reset submitting state
       setIsSubmitting(false);
     }
-  }, [validateForm, title, description, categoryId, priority, assignedTo, dueDate, enableReminder, userProfile, dispatch, onClose, isSubmitting]);
+  }, [validateForm, title, description, categoryId, priority, assignedTo, dueDate, enableReminder,
+      requiresPhoto, isRecurring, selectedTemplate, recurrenceType, recurrenceDays, userProfile,
+      dispatch, onClose, isSubmitting]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
@@ -303,6 +365,60 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
       scrollable={true}
     >
       <View style={styles.container} testID="create-task-screen">
+          {/* Template Quick Start */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.templateButton}
+              onPress={() => setShowTemplates(!showTemplates)}
+              testID="template-button"
+            >
+              <Feather name="zap" size={20} color={theme.colors.warning} />
+              <Text style={styles.templateButtonText}>
+                {selectedTemplate ? `Using: ${selectedTemplate.title}` : 'Quick Start with Template'}
+              </Text>
+              <Feather
+                name={showTemplates ? "chevron-up" : "chevron-down"}
+                size={20}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+            
+            {showTemplates && (
+              <View style={styles.templateList}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.templateScroll}
+                >
+                  {MIDDLE_SCHOOL_TASK_TEMPLATES.map((template) => (
+                    <TouchableOpacity
+                      key={template.id}
+                      style={[
+                        styles.templateCard,
+                        selectedTemplate?.id === template.id && styles.templateCardActive
+                      ]}
+                      onPress={() => handleTemplateSelect(template)}
+                    >
+                      <View style={[styles.templateIcon, { backgroundColor: template.category.color + '20' }]}>
+                        <Feather name={template.category.icon as any} size={24} color={template.category.color} />
+                      </View>
+                      <Text style={styles.templateTitle} numberOfLines={2}>{template.title}</Text>
+                      <View style={styles.templateMeta}>
+                        <Feather name="clock" size={12} color={theme.colors.textTertiary} />
+                        <Text style={styles.templateMetaText}>{template.estimatedMinutes}m</Text>
+                        {template.requiresPhoto && (
+                          <>
+                            <Feather name="camera" size={12} color={theme.colors.textTertiary} />
+                          </>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
           {/* Title Input - Input component has its own margin */}
           <Input
             label="Task Title"
@@ -516,14 +632,119 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
             )}
           </View>
 
-          {/* Reminder Toggle */}
+          {/* Additional Options */}
           <View style={styles.section}>
-            <View style={styles.reminderContainer}>
-              <View style={styles.reminderLeft}>
+            {/* Photo Requirement */}
+            <View style={styles.optionContainer}>
+              <View style={styles.optionLeft}>
+                <Feather name="camera" size={20} color={theme.colors.textPrimary} />
+                <View style={styles.optionText}>
+                  <Text style={styles.label}>Photo Verification</Text>
+                  <Text style={styles.optionSubtext}>
+                    Require photo proof of completion
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={requiresPhoto}
+                onValueChange={setRequiresPhoto}
+                trackColor={{
+                  false: theme.colors.textSecondary,
+                  true: theme.colors.success
+                }}
+                thumbColor={isDarkMode ? '#FFFFFF' : theme.colors.surface}
+                testID="photo-switch"
+              />
+            </View>
+            
+            {requiresPhoto && (
+              <Input
+                label="Photo Instructions"
+                value={photoInstructions}
+                onChangeText={setPhotoInstructions}
+                placeholder="e.g., Take a photo of your clean room"
+                multiline
+                numberOfLines={2}
+                maxLength={200}
+                style={styles.photoInstructions}
+              />
+            )}
+
+            {/* Recurring Task */}
+            <View style={[styles.optionContainer, styles.marginTop]}>
+              <View style={styles.optionLeft}>
+                <Feather name="repeat" size={20} color={theme.colors.textPrimary} />
+                <View style={styles.optionText}>
+                  <Text style={styles.label}>Recurring Task</Text>
+                  <Text style={styles.optionSubtext}>
+                    Automatically create this task regularly
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isRecurring}
+                onValueChange={setIsRecurring}
+                trackColor={{
+                  false: theme.colors.textSecondary,
+                  true: theme.colors.success
+                }}
+                thumbColor={isDarkMode ? '#FFFFFF' : theme.colors.surface}
+                testID="recurring-switch"
+              />
+            </View>
+            
+            {isRecurring && (
+              <View style={styles.recurrenceOptions}>
+                <View style={styles.recurrenceTypeContainer}>
+                  <TouchableOpacity
+                    style={[styles.recurrenceType, recurrenceType === 'daily' && styles.recurrenceTypeActive]}
+                    onPress={() => setRecurrenceType('daily')}
+                  >
+                    <Text style={[styles.recurrenceTypeText, recurrenceType === 'daily' && styles.recurrenceTypeTextActive]}>
+                      Daily
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.recurrenceType, recurrenceType === 'weekly' && styles.recurrenceTypeActive]}
+                    onPress={() => setRecurrenceType('weekly')}
+                  >
+                    <Text style={[styles.recurrenceTypeText, recurrenceType === 'weekly' && styles.recurrenceTypeTextActive]}>
+                      Weekly
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {recurrenceType === 'weekly' && (
+                  <View style={styles.weekDays}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                      <TouchableOpacity
+                        key={day}
+                        style={[styles.weekDay, recurrenceDays.includes(index) && styles.weekDayActive]}
+                        onPress={() => {
+                          if (recurrenceDays.includes(index)) {
+                            setRecurrenceDays(recurrenceDays.filter(d => d !== index));
+                          } else {
+                            setRecurrenceDays([...recurrenceDays, index]);
+                          }
+                        }}
+                      >
+                        <Text style={[styles.weekDayText, recurrenceDays.includes(index) && styles.weekDayTextActive]}>
+                          {day}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Reminder Toggle */}
+            <View style={[styles.optionContainer, styles.marginTop]}>
+              <View style={styles.optionLeft}>
                 <Feather name="bell" size={20} color={theme.colors.textPrimary} />
-                <View style={styles.reminderText}>
+                <View style={styles.optionText}>
                   <Text style={styles.label}>Task Reminder</Text>
-                  <Text style={styles.reminderSubtext}>
+                  <Text style={styles.optionSubtext}>
                     Get notified before the task is due
                   </Text>
                 </View>
@@ -552,7 +773,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
               testID="cancel-button"
             />
             <Button
-              title={isSubmitting ? 'Creating...' : 'Create Task'}
+              title={isSubmitting ? 'Creating...' : isRecurring ? 'Schedule Task' : 'Create Task'}
               onPress={handleSubmit}
               style={styles.actionButton}
               loading={isSubmitting}
@@ -710,7 +931,7 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  reminderContainer: {
+  optionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -720,19 +941,141 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.separator,
   },
-  reminderLeft: {
+  optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  reminderText: {
+  optionText: {
     marginLeft: spacing.M,
     flex: 1,
   },
-  reminderSubtext: {
+  optionSubtext: {
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: spacing.XXS,
+  },
+  marginTop: {
+    marginTop: spacing.M,
+  },
+  photoInstructions: {
+    marginTop: spacing.S,
+  },
+  recurrenceOptions: {
+    marginTop: spacing.S,
+    padding: spacing.M,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
+    borderRadius: borderRadius.medium,
+  },
+  recurrenceTypeContainer: {
+    flexDirection: 'row',
+    gap: spacing.S,
+  },
+  recurrenceType: {
+    flex: 1,
+    padding: spacing.S,
+    borderRadius: borderRadius.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.separator,
+    alignItems: 'center',
+  },
+  recurrenceTypeActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  recurrenceTypeText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  recurrenceTypeTextActive: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  weekDays: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.M,
+  },
+  weekDay: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: theme.colors.separator,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekDayActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
+  },
+  weekDayText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  weekDayTextActive: {
+    color: theme.colors.white,
+    fontWeight: '600',
+  },
+  templateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.M,
+    backgroundColor: theme.colors.warning + '10',
+    borderRadius: borderRadius.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.warning + '30',
+  },
+  templateButtonText: {
+    flex: 1,
+    marginLeft: spacing.S,
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+  },
+  templateList: {
+    marginTop: spacing.M,
+  },
+  templateScroll: {
+    flexDirection: 'row',
+  },
+  templateCard: {
+    width: 120,
+    padding: spacing.M,
+    marginRight: spacing.S,
+    backgroundColor: isDarkMode ? theme.colors.backgroundTexture : theme.colors.surface,
+    borderRadius: borderRadius.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.separator,
+    alignItems: 'center',
+  },
+  templateCardActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  templateIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.S,
+  },
+  templateTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.XS,
+  },
+  templateMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.XS,
+  },
+  templateMetaText: {
+    fontSize: 10,
+    color: theme.colors.textTertiary,
   },
   categoryHeader: {
     flexDirection: 'row',

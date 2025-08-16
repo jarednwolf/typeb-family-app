@@ -14,10 +14,13 @@ import {
   Text,
   StyleSheet,
   Animated,
+  AccessibilityInfo,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Button, TextButton } from './Button';
+import { useAccessibility } from '../../contexts/AccessibilityContext';
+import { getErrorMessage } from '../../services/errorMessages';
 
 interface EmptyStateProps {
   icon?: keyof typeof Feather.glyphMap;
@@ -40,6 +43,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onSecondaryAction,
   variant = 'default',
 }) => {
+  const { theme } = useTheme();
+  const { announce } = useAccessibility();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -57,54 +62,82 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+    
+    // Announce empty state to screen readers
+    const announcement = `${title}. ${message || ''}`;
+    announce(announcement, { delay: 100 });
+  }, [title, message]);
 
   const iconSize = variant === 'large' ? 64 : variant === 'compact' ? 32 : 48;
+  
+  // Generate alt text for the icon
+  const iconAltTextMap: Record<string, string> = {
+    'inbox': 'Empty inbox',
+    'check-circle': 'Tasks completed',
+    'users': 'People',
+    'bell': 'Notifications bell',
+    'search': 'Search magnifying glass',
+    'alert-circle': 'Warning alert',
+    'wifi-off': 'No connection',
+  };
+  const iconAltText = iconAltTextMap[icon] || 'Status icon';
 
   return (
     <Animated.View
       style={[
-        styles.container,
-        variant === 'compact' && styles.containerCompact,
-        variant === 'large' && styles.containerLarge,
+        getStyles(theme).container,
+        variant === 'compact' && getStyles(theme).containerCompact,
+        variant === 'large' && getStyles(theme).containerLarge,
         {
           opacity: fadeAnim,
           transform: [{ scale: scaleAnim }],
         },
       ]}
+      accessibilityLabel={`${title}. ${message || ''}`}
     >
-      <View style={[
-        styles.iconContainer,
-        variant === 'compact' && styles.iconContainerCompact,
-      ]}>
-        <Feather name={icon} size={iconSize} color={colors.textTertiary} />
+      <View
+        style={[
+          getStyles(theme).iconContainer,
+          variant === 'compact' && getStyles(theme).iconContainerCompact,
+        ]}
+        accessibilityLabel={iconAltText}
+        accessibilityRole="image"
+      >
+        <Feather name={icon} size={iconSize} color={theme.colors.textTertiary} />
       </View>
 
-      <Text style={[
-        styles.title,
-        variant === 'compact' && styles.titleCompact,
-        variant === 'large' && styles.titleLarge,
-      ]}>
+      <Text
+        style={[
+          getStyles(theme).title,
+          variant === 'compact' && getStyles(theme).titleCompact,
+          variant === 'large' && getStyles(theme).titleLarge,
+        ]}
+        accessibilityRole="header"
+      >
         {title}
       </Text>
 
       {message && (
-        <Text style={[
-          styles.message,
-          variant === 'compact' && styles.messageCompact,
-        ]}>
+        <Text
+          style={[
+            getStyles(theme).message,
+            variant === 'compact' && getStyles(theme).messageCompact,
+          ]}
+          accessibilityRole="text"
+        >
           {message}
         </Text>
       )}
 
       {(actionLabel || secondaryActionLabel) && (
-        <View style={styles.actions}>
+        <View style={getStyles(theme).actions}>
           {actionLabel && onAction && (
             <Button
               title={actionLabel}
               onPress={onAction}
               size={variant === 'compact' ? 'small' : 'medium'}
-              style={styles.primaryAction}
+              style={getStyles(theme).primaryAction}
+              accessibilityHint={`Tap to ${actionLabel.toLowerCase()}`}
             />
           )}
           {secondaryActionLabel && onSecondaryAction && (
@@ -112,6 +145,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               title={secondaryActionLabel}
               onPress={onSecondaryAction}
               size={variant === 'compact' ? 'small' : 'medium'}
+              accessibilityHint={`Tap to ${secondaryActionLabel.toLowerCase()}`}
             />
           )}
         </View>
@@ -120,15 +154,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   );
 };
 
-// Preset empty states for common scenarios
+// Preset empty states for common scenarios with improved CTAs
 export const NoTasksEmpty: React.FC<{
   onCreateTask: () => void;
 }> = ({ onCreateTask }) => (
   <EmptyState
     icon="check-circle"
-    title="No tasks yet"
-    message="Create your first task to get started with your family's productivity journey"
-    actionLabel="Create Task"
+    title="Ready to get started?"
+    message="Create your first task and begin building productive habits with your family"
+    actionLabel="Create Your First Task"
     onAction={onCreateTask}
   />
 );
@@ -139,11 +173,11 @@ export const NoFamilyEmpty: React.FC<{
 }> = ({ onCreate, onJoin }) => (
   <EmptyState
     icon="users"
-    title="Welcome to TypeB"
-    message="Start by creating a new family or joining an existing one"
-    actionLabel="Create Family"
+    title="Welcome to TypeB Family"
+    message="Connect with your family to start managing tasks and building accountability together"
+    actionLabel="Start a New Family"
     onAction={onCreate}
-    secondaryActionLabel="Join Family"
+    secondaryActionLabel="Join Existing Family"
     onSecondaryAction={onJoin}
   />
 );
@@ -151,8 +185,8 @@ export const NoFamilyEmpty: React.FC<{
 export const NoNotificationsEmpty: React.FC = () => (
   <EmptyState
     icon="bell"
-    title="No notifications"
-    message="You're all caught up! Check back later for updates"
+    title="All caught up!"
+    message="No new notifications right now. We'll let you know when something needs your attention"
     variant="compact"
   />
 );
@@ -163,9 +197,9 @@ export const SearchEmpty: React.FC<{
 }> = ({ searchTerm, onClear }) => (
   <EmptyState
     icon="search"
-    title="No results found"
-    message={`We couldn't find anything matching "${searchTerm}"`}
-    actionLabel="Clear Search"
+    title="No matches found"
+    message={`Try adjusting your search terms or filters for "${searchTerm}"`}
+    actionLabel="Clear and Try Again"
     onAction={onClear}
     variant="compact"
   />
@@ -173,80 +207,95 @@ export const SearchEmpty: React.FC<{
 
 export const ErrorState: React.FC<{
   message?: string;
+  errorCode?: string;
   onRetry?: () => void;
-}> = ({ message = "Something went wrong", onRetry }) => (
-  <EmptyState
-    icon="alert-circle"
-    title="Oops!"
-    message={message}
-    actionLabel="Try Again"
-    onAction={onRetry}
-  />
-);
+}> = ({ message, errorCode, onRetry }) => {
+  let finalMessage: string;
+  
+  if (errorCode) {
+    const errorMessage = getErrorMessage(errorCode as any);
+    finalMessage = typeof errorMessage === 'string'
+      ? errorMessage
+      : errorMessage.message;
+  } else {
+    finalMessage = message || "We encountered an unexpected issue. Please try again.";
+  }
+    
+  return (
+    <EmptyState
+      icon="alert-circle"
+      title="Something went wrong"
+      message={finalMessage}
+      actionLabel="Retry"
+      onAction={onRetry}
+    />
+  );
+};
 
 export const OfflineState: React.FC<{
   onRetry?: () => void;
 }> = ({ onRetry }) => (
   <EmptyState
     icon="wifi-off"
-    title="No connection"
-    message="Please check your internet connection and try again"
-    actionLabel="Retry"
+    title="You're offline"
+    message="Check your internet connection to sync your data and continue"
+    actionLabel="Retry Connection"
     onAction={onRetry}
     variant="compact"
   />
 );
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.XL,
+    padding: theme.spacing.XL,
   },
 
   containerCompact: {
-    padding: spacing.L,
+    padding: theme.spacing.L,
   },
 
   containerLarge: {
-    padding: spacing.XXL,
+    padding: theme.spacing.XXL,
   },
 
   iconContainer: {
-    marginBottom: spacing.L,
+    marginBottom: theme.spacing.L,
   },
 
   iconContainerCompact: {
-    marginBottom: spacing.M,
+    marginBottom: theme.spacing.M,
   },
 
   title: {
-    ...typography.title3,
-    color: colors.textPrimary,
+    ...theme.typography.title3,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginBottom: spacing.XS,
+    marginBottom: theme.spacing.XS,
   },
 
   titleCompact: {
-    ...typography.headline,
+    ...theme.typography.headline,
   },
 
   titleLarge: {
-    ...typography.title1,
+    ...theme.typography.title1,
   },
 
   message: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.L,
+    marginBottom: theme.spacing.L,
     maxWidth: 280,
+    lineHeight: 22,
   },
 
   messageCompact: {
-    ...typography.subheadline,
-    marginBottom: spacing.M,
+    ...theme.typography.subheadline,
+    marginBottom: theme.spacing.M,
   },
 
   actions: {
@@ -254,8 +303,8 @@ const styles = StyleSheet.create({
   },
 
   primaryAction: {
-    marginBottom: spacing.S,
-    minWidth: 140,
+    marginBottom: theme.spacing.S,
+    minWidth: 160,
   },
 });
 

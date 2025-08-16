@@ -11,7 +11,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
+import { colors, typography, spacing, borderRadius, elevation } from '../../constants/theme';
+import { useReduceMotion } from '../../contexts/AccessibilityContext';
 
 interface StatsCardProps {
   title: string;
@@ -35,16 +36,30 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   compact = false,
 }) => {
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    // Subtle entrance animation
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 50,
-      friction: 7,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    if (reduceMotion) {
+      scaleAnim.setValue(1);
+      fadeAnim.setValue(1);
+    } else {
+      // Subtle entrance animation
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [reduceMotion]);
 
   const getTrendIcon = (): keyof typeof Feather.glyphMap => {
     if (trend === 'up') return 'trending-up';
@@ -63,7 +78,10 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       style={[
         styles.container,
         compact && styles.containerCompact,
-        { transform: [{ scale: scaleAnim }] }
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: fadeAnim,
+        }
       ]}
     >
       {icon && (
@@ -107,21 +125,38 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 // Grid Stats Card for dashboard overview
 export const GridStatsCard: React.FC<StatsCardProps> = (props) => {
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 50,
-      friction: 7,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    if (reduceMotion) {
+      scaleAnim.setValue(1);
+      fadeAnim.setValue(1);
+    } else {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [reduceMotion]);
 
   return (
     <Animated.View 
       style={[
         styles.gridContainer,
-        { transform: [{ scale: scaleAnim }] }
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: fadeAnim,
+        }
       ]}
     >
       <Text style={styles.gridTitle}>{props.title}</Text>
@@ -152,7 +187,7 @@ const styles = StyleSheet.create({
     padding: spacing.M,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.small,
+    ...elevation[2], // Use elevation system instead of shadows
   },
   
   containerCompact: {
@@ -219,7 +254,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 100,
     justifyContent: 'space-between',
-    ...shadows.small,
+    ...elevation[2], // Use elevation system instead of shadows
   },
   
   gridTitle: {

@@ -19,6 +19,7 @@ import { selectUserProfile } from '../../store/slices/authSlice';
 import { TaskCard } from '../../components/cards/TaskCard';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { TasksScreenSkeleton } from '../../components/common/Skeletons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Task, TaskStatus, TaskPriority, DEFAULT_TASK_CATEGORIES } from '../../types/models';
 
@@ -64,7 +65,10 @@ export const TasksScreen: FC = () => {
     try {
       await dispatch(fetchFamilyTasks({ familyId: family.id, userId: userProfile.id }) as any).unwrap();
     } catch (error) {
-      console.error('Failed to refresh tasks:', error);
+      handleTaskError(error, {
+        showAlert: false, // Don't show alert since we're in a refresh
+        context: { familyId: family.id, userId: userProfile.id }
+      });
     } finally {
       setRefreshing(false);
     }
@@ -170,7 +174,10 @@ export const TasksScreen: FC = () => {
       }
       await dispatch(completeTask({ taskId, userId: userProfile.id }) as any).unwrap();
     } catch (error) {
-      Alert.alert('Error', "Oops, something went wrong. Let's try again!");
+      handleTaskError(error, {
+        context: { taskId, userId: userProfile?.id },
+        onRetry: () => handleTaskComplete(taskId)
+      });
     }
   };
 
@@ -455,7 +462,7 @@ export const TasksScreen: FC = () => {
 
   // This conditional return must come AFTER all hooks
   if (loading && tasks.length === 0) {
-    return <LoadingState variant="spinner" />;
+    return <TasksScreenSkeleton />;
   }
   
   return (

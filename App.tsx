@@ -7,6 +7,7 @@ import notificationService from './src/services/notifications';
 import backgroundTaskService from './src/services/backgroundTasks';
 import { useRealtimeSyncManager } from './src/hooks/useRealtimeSync';
 import { ThemeProvider } from './src/contexts/ThemeContext';
+import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
 import { revenueCat } from './src/services/revenueCat';
 
 // Ignore specific warnings that are not critical for development
@@ -73,7 +74,9 @@ export default function App() {
   return (
     <Provider store={store}>
       <ThemeProvider>
-        <AppContent />
+        <AccessibilityProvider>
+          <AppContent />
+        </AccessibilityProvider>
       </ThemeProvider>
     </Provider>
   );

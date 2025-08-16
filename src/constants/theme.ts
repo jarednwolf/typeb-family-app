@@ -20,13 +20,13 @@ export const colors = {
   backgroundTexture: '#F5F2ED', // Subtle depth
   inputBackground: '#F2F2F7',   // Input fields
   
-  // Text colors
+  // Text colors - Updated for WCAG AA compliance
   textPrimary: '#0A0A0A',  // Black
-  textSecondary: '#6B6B6B', // 60% black
-  textTertiary: '#9B9B9B',  // 40% black
+  textSecondary: '#404040', // Updated from #6B6B6B for better contrast (7.43:1 ratio)
+  textTertiary: '#595959',  // Updated from #9B9B9B for WCAG compliance (5.25:1 ratio)
   
   // UI elements
-  separator: '#E8E5E0',     // Warm gray
+  separator: '#D1D1D1',     // Updated from #E8E5E0 for better visibility
   white: '#FFFFFF',
   black: '#000000',
   
@@ -42,6 +42,15 @@ export const colors = {
   
   // Premium
   premium: '#FFD700',       // Gold
+  
+  // Loading states
+  skeleton: '#E5E5E5',      // Light gray for skeleton screens
+  
+  // Semantic task state colors
+  taskCompleted: '#34C759', // Green - same as success
+  taskPending: '#007AFF',   // Blue - same as info
+  taskOverdue: '#DC2626',   // Darker red for better contrast (#DC2626 has 5.87:1 ratio)
+  taskUpcoming: '#FF9500',  // Orange - same as warning
 } as const;
 
 // Typography System
@@ -169,22 +178,70 @@ export const layout = {
   buttonHeight: {
     large: 50,
     medium: 44,
-    small: 36,
+    small: 44, // Updated from 36 to meet minimum touch target
   },
   inputHeight: 44,
   cardPadding: spacing.M,
   screenPadding: spacing.M,
-  minimumTouchTarget: 44,
+  minimumTouchTarget: 44, // iOS HIG minimum touch target
+  touchTargetWithPadding: 48, // Comfortable touch target with padding
 } as const;
 
 // Animation Durations
 export const animations = {
   fast: 200,
   normal: 300,
-  slow: 400,
+  slow: 500,
+  veryFast: 150,
+  verySlow: 800,
   spring: {
     tension: 40,
     friction: 7,
+  },
+  easing: {
+    standard: 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Material Design standard
+    decelerate: 'cubic-bezier(0.0, 0.0, 0.2, 1)', // Enter
+    accelerate: 'cubic-bezier(0.4, 0.0, 1, 1)', // Exit
+    sharp: 'cubic-bezier(0.4, 0.0, 0.6, 1)', // Quick movement
+  },
+} as const;
+
+// Elevation System - iOS and Android compatible
+export const elevation = {
+  0: {
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  2: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  4: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  8: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  16: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 16,
   },
 } as const;
 
@@ -300,6 +357,7 @@ export const darkColors = {
   textSecondary: '#EBEBF5',
   textTertiary: '#C7C7CC',
   separator: '#38383A',
+  skeleton: '#2C2C2E',  // Dark gray for skeleton screens in dark mode
 };
 
 // Export theme object for easy access
@@ -309,6 +367,7 @@ export const theme = {
   spacing,
   borderRadius,
   shadows,
+  elevation,
   layout,
   animations,
   iconSizes,

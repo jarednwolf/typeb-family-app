@@ -27,6 +27,7 @@ import {
   runTransaction,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { checkAndRecordMilestone } from './milestones';
 import {
   Task,
   TaskStatus,
@@ -470,6 +471,18 @@ export const completeTask = async (
         await createNextRecurrence(transaction, task);
       }
     });
+
+    // Check for milestone achievements after successful completion
+    try {
+      // Calculate user's current accountability score
+      const userStats = await getTaskStats(family.id, userId, userId);
+      const accountabilityScore = userStats.completionRate; // This is already 0-100
+      
+      await checkAndRecordMilestone(userId, accountabilityScore);
+    } catch (milestoneError) {
+      // Log but don't fail the task completion if milestone check fails
+      console.error('Error checking milestones:', milestoneError);
+    }
   } catch (error: any) {
     console.error('Error completing task:', error);
     throw new Error(error.message || 'Failed to complete task');

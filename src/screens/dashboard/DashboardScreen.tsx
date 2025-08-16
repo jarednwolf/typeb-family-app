@@ -2,16 +2,18 @@ import React, { FC, useState, useCallback, useMemo, useEffect, useRef } from 're
 import {
   View,
   Text,
-  ScrollView,
   RefreshControl,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
   Animated,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux';
 import { selectUserProfile } from '../../store/slices/authSlice';
 import { selectTasks, selectTaskStats, completeTask } from '../../store/slices/tasksSlice';
@@ -22,9 +24,17 @@ import { FilterTabs, FilterTab } from '../../components/common/FilterTabs';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Button } from '../../components/common/Button';
+import { DashboardScreenSkeleton } from '../../components/common/Skeletons';
 import PremiumBadge from '../../components/premium/PremiumBadge';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useReduceMotion } from '../../contexts/AccessibilityContext';
 import { TaskStatus } from '../../types/models';
+import { elevation } from '../../constants/theme';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HEADER_MAX_HEIGHT = 200;
+const HEADER_MIN_HEIGHT = 100;
+const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 type FilterType = 'all' | 'today' | 'overdue' | 'upcoming';
 
@@ -32,6 +42,8 @@ export const DashboardScreen: FC = () => {
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const insets = useSafeAreaInsets();
   
   // Redux state
   const userProfile = useAppSelector(selectUserProfile);
@@ -46,6 +58,10 @@ export const DashboardScreen: FC = () => {
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const confettiRef = useRef<any>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  
+  // Parallax animation values
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollYClamped = Animated.diffClamp(scrollY, 0, HEADER_SCROLL_DISTANCE);
 
   // Load initial data
   useEffect(() => {
@@ -153,11 +169,15 @@ export const DashboardScreen: FC = () => {
 
   // Animate progress bar
   useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: completionPercentage / 100,
-      duration: 1000,
-      useNativeDriver: false,
-    }).start();
+    if (!reduceMotion) {
+      Animated.timing(progressAnim, {
+        toValue: completionPercentage / 100,
+        duration: 1000,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      progressAnim.setValue(completionPercentage / 100);
+    }
 
     // Trigger confetti at 100%
     if (completionPercentage === 100 && !showConfetti && todaysTasks.length > 0) {
@@ -203,6 +223,43 @@ export const DashboardScreen: FC = () => {
     }
   }, [dispatch, userProfile]);
 
+  // Parallax animated styles
+  const headerTranslateY = reduceMotion ? 0 : scrollYClamped.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, -HEADER_SCROLL_DISTANCE / 2],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = reduceMotion ? 1 : scrollYClamped.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 1, 0.3],
+    extrapolate: 'clamp',
+  });
+
+  const titleScale = reduceMotion ? 1 : scrollYClamped.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 0.8],
+    extrapolate: 'clamp',
+  });
+
+  const progressScale = reduceMotion ? 1 : scrollY.interpolate({
+    inputRange: [-100, 0, 100],
+    outputRange: [1.1, 1, 0.95],
+    extrapolate: 'clamp',
+  });
+
+  const progressTranslateY = reduceMotion ? 0 : scrollY.interpolate({
+    inputRange: [-100, 0, HEADER_SCROLL_DISTANCE],
+    outputRange: [-20, 0, -30],
+    extrapolate: 'clamp',
+  });
+
+  const fabScale = reduceMotion ? 1 : scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.8],
+    extrapolate: 'clamp',
+  });
+
   // Create dynamic styles based on theme
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -210,15 +267,30 @@ export const DashboardScreen: FC = () => {
       backgroundColor: theme.colors.background,
     },
     scrollContent: {
+      paddingTop: HEADER_MAX_HEIGHT,
       paddingBottom: 100,
     },
     header: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: HEADER_MAX_HEIGHT,
+      paddingTop: insets.top,
+      backgroundColor: theme.colors.background,
+      overflow: 'hidden',
+      zIndex: 1,
+    },
+    headerContent: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.L,
+      paddingTop: theme.spacing.L,
+      justifyContent: 'center',
+    },
+    headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      paddingHorizontal: theme.spacing.L,
-      paddingTop: theme.spacing.L,
-      paddingBottom: theme.spacing.M,
     },
     greeting: {
       fontSize: theme.typography.title1.fontSize,
@@ -240,7 +312,7 @@ export const DashboardScreen: FC = () => {
       padding: theme.spacing.M,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
-      ...theme.shadows.small,
+      ...elevation[4],
     },
     progressHeader: {
       flexDirection: 'row',
@@ -327,11 +399,7 @@ export const DashboardScreen: FC = () => {
       backgroundColor: isDarkMode ? theme.colors.info : theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.5 : 0.25,
-      shadowRadius: 4,
-      elevation: 5,
+      ...elevation[8],
     },
     analyticsContainer: {
       marginTop: theme.spacing.XL,
@@ -341,7 +409,7 @@ export const DashboardScreen: FC = () => {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
       padding: theme.spacing.L,
-      ...theme.shadows.small,
+      ...elevation[2],
     },
     analyticsHeader: {
       flexDirection: 'row',
@@ -388,51 +456,102 @@ export const DashboardScreen: FC = () => {
       textAlign: 'center',
       fontStyle: 'italic',
     },
-  }), [theme, isDarkMode]);
+    headerBackground: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: 0.05,
+    },
+    headerGradient: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 100,
+      backgroundColor: theme.colors.primary,
+      opacity: 0.1,
+    },
+  }), [theme, isDarkMode, insets]);
 
   if (loading) {
-    return <LoadingState variant="spinner" />;
+    return <DashboardScreenSkeleton />;
   }
 
   return (
     <SafeAreaView style={styles.container} testID="dashboard-screen">
-      <ScrollView
+      {/* Animated Header */}
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            transform: [{ translateY: headerTranslateY }],
+            opacity: headerOpacity,
+          },
+        ]}
+      >
+        {/* Background decoration */}
+        <View style={styles.headerBackground}>
+          <View style={styles.headerGradient} />
+        </View>
+        
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <Animated.View style={{ transform: [{ scale: titleScale }] }}>
+              <Text style={styles.greeting} accessibilityRole="header">
+                {getGreeting}
+              </Text>
+              {family && (
+                <Text style={styles.familyName}>
+                  {family.name}
+                </Text>
+              )}
+            </Animated.View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Settings')}
+              style={styles.settingsButton}
+              testID="settings-button"
+              accessibilityLabel="Settings"
+              accessibilityRole="button"
+            >
+              <Feather name="settings" size={24} color={theme.colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* Scrollable Content */}
+      <Animated.ScrollView
         contentContainerStyle={styles.scrollContent}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.colors.primary}
             testID="dashboard-refresh"
+            progressViewOffset={HEADER_MAX_HEIGHT}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header} testID="dashboard-header">
-          <View>
-            <Text style={styles.greeting} accessibilityRole="header">
-              {getGreeting}
-            </Text>
-            {family && (
-              <Text style={styles.familyName}>
-                {family.name}
-              </Text>
-            )}
-          </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Settings')}
-            style={styles.settingsButton}
-            testID="settings-button"
-            accessibilityLabel="Settings"
-            accessibilityRole="button"
-          >
-            <Feather name="settings" size={24} color={theme.colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Daily Progress */}
-        <View style={styles.progressContainer}>
+        {/* Daily Progress with parallax */}
+        <Animated.View
+          style={[
+            styles.progressContainer,
+            {
+              transform: [
+                { scale: progressScale },
+                { translateY: progressTranslateY },
+              ],
+            },
+          ]}
+        >
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Today's Progress</Text>
             <Text style={styles.progressPercentage}>{completionPercentage}%</Text>
@@ -459,10 +578,30 @@ export const DashboardScreen: FC = () => {
               <Text style={styles.congratsText}>All tasks completed! Great job!</Text>
             </View>
           )}
-        </View>
+        </Animated.View>
         
-        {/* Analytics Preview Card */}
-        <View style={styles.analyticsContainer}>
+        {/* Analytics Preview Card with entrance animation */}
+        <Animated.View
+          style={[
+            styles.analyticsContainer,
+            {
+              opacity: scrollY.interpolate({
+                inputRange: [0, 200],
+                outputRange: [0.7, 1],
+                extrapolate: 'clamp',
+              }),
+              transform: [
+                {
+                  translateY: scrollY.interpolate({
+                    inputRange: [0, 200],
+                    outputRange: [30, 0],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.analyticsCard}
             onPress={() => navigation.navigate('Analytics')}
@@ -500,7 +639,7 @@ export const DashboardScreen: FC = () => {
               </View>
             )}
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {/* Today's Tasks */}
         <View style={styles.tasksContainer}>
@@ -524,13 +663,32 @@ export const DashboardScreen: FC = () => {
             />
           ) : (
             <View style={styles.tasksList}>
-              {todaysTasks.map((task) => (
-                <TaskCard
+              {todaysTasks.map((task, index) => (
+                <Animated.View
                   key={task.id}
-                  task={task}
-                  onPress={() => handleTaskPress(task)}
-                  onComplete={() => handleCompleteTask(task.id)}
-                />
+                  style={{
+                    opacity: scrollY.interpolate({
+                      inputRange: [200 + index * 50, 250 + index * 50],
+                      outputRange: [0, 1],
+                      extrapolate: 'clamp',
+                    }),
+                    transform: [
+                      {
+                        translateY: scrollY.interpolate({
+                          inputRange: [200 + index * 50, 250 + index * 50],
+                          outputRange: [20, 0],
+                          extrapolate: 'clamp',
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <TaskCard
+                    task={task}
+                    onPress={() => handleTaskPress(task)}
+                    onComplete={() => handleCompleteTask(task.id)}
+                  />
+                </Animated.View>
               ))}
             </View>
           )}
@@ -548,19 +706,27 @@ export const DashboardScreen: FC = () => {
             </View>
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleCreateTask}
-        activeOpacity={0.8}
-        testID="create-task-fab"
-        accessibilityLabel="Create new task"
-        accessibilityRole="button"
+      {/* Floating Action Button with scale animation */}
+      <Animated.View
+        style={[
+          styles.fab,
+          {
+            transform: [{ scale: fabScale }],
+          },
+        ]}
       >
-        <Feather name="plus" size={24} color={theme.colors.surface} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleCreateTask}
+          activeOpacity={0.8}
+          testID="create-task-fab"
+          accessibilityLabel="Create new task"
+          accessibilityRole="button"
+        >
+          <Feather name="plus" size={24} color={theme.colors.surface} />
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Confetti Animation */}
       {showConfetti && (

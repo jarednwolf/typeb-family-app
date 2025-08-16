@@ -3,6 +3,8 @@
  * Following zero-tech-debt policy with complete type safety
  */
 
+import { ParentReaction } from '../services/reactions';
+
 // User model - extends Firebase Auth user
 export interface User {
   id: string;
@@ -98,6 +100,8 @@ export interface Task {
   priority: TaskPriority;
   // Points/rewards (for gamification)
   points?: number;
+  // Parent reactions (engagement feature)
+  parentReactions?: Record<string, ParentReaction>;
 }
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';

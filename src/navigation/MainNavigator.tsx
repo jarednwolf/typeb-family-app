@@ -1,4 +1,5 @@
 import React from 'react';
+import { AccessibilityInfo } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Feather } from '@expo/vector-icons';
@@ -21,6 +22,13 @@ import TermsScreen from '../screens/legal/TermsScreen';
 import AboutScreen from '../screens/settings/AboutScreen';
 import FamilySettingsScreen from '../screens/family/FamilySettingsScreen';
 import { useTheme } from '../contexts/ThemeContext';
+import { useReduceMotion } from '../contexts/AccessibilityContext';
+import {
+  getNavigationAnimationConfig,
+  getModalAnimationConfig,
+  customTransitionPresets
+} from './navigationAnimations';
+import AnimatedTabBar from './AnimatedTabBar';
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -68,6 +76,9 @@ const SettingsStack = createStackNavigator<SettingsStackParamList>();
 // Stack navigators for each tab
 const DashboardStackNavigator = () => {
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const navigationAnimation = getNavigationAnimationConfig(reduceMotion);
+  const modalAnimation = getModalAnimationConfig(reduceMotion);
   
   return (
     <DashboardStack.Navigator
@@ -84,19 +95,25 @@ const DashboardStackNavigator = () => {
           fontWeight: '600',
           fontSize: 17,
         },
+        ...navigationAnimation,
       }}
     >
       <DashboardStack.Screen
         name="DashboardHome"
         component={DashboardScreen}
-        options={{ title: 'Dashboard' }}
+        options={{
+          title: 'Dashboard',
+          headerAccessibilityLabel: 'Dashboard Screen',
+        }}
       />
       <DashboardStack.Screen
         name="Analytics"
         component={AnalyticsDashboard}
         options={{
           headerShown: false,
-          presentation: 'modal' as any
+          presentation: 'modal' as any,
+          headerAccessibilityLabel: 'Analytics Dashboard',
+          ...modalAnimation,
         }}
       />
     </DashboardStack.Navigator>
@@ -105,6 +122,9 @@ const DashboardStackNavigator = () => {
 
 const TasksStackNavigator = () => {
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const navigationAnimation = getNavigationAnimationConfig(reduceMotion);
+  const modalAnimation = getModalAnimationConfig(reduceMotion);
   
   return (
     <TasksStack.Navigator
@@ -121,19 +141,25 @@ const TasksStackNavigator = () => {
           fontWeight: '600',
           fontSize: 17,
         },
+        ...navigationAnimation,
       }}
     >
       <TasksStack.Screen
         name="TasksList"
         component={TasksScreen}
-        options={{ title: 'Tasks' }}
+        options={{
+          title: 'Tasks',
+          headerAccessibilityLabel: 'Tasks List',
+        }}
       />
       <TasksStack.Screen
         name="CreateTask"
         component={CreateTaskScreen}
         options={{
           title: 'Create Task',
-          presentation: 'modal' as any
+          presentation: 'modal' as any,
+          headerAccessibilityLabel: 'Create New Task',
+          ...modalAnimation,
         }}
       />
       <TasksStack.Screen
@@ -141,7 +167,9 @@ const TasksStackNavigator = () => {
         component={TaskDetailScreen}
         options={{
           title: 'Task Details',
-          presentation: 'modal' as any
+          presentation: 'modal' as any,
+          headerAccessibilityLabel: 'Task Details',
+          ...modalAnimation,
         }}
       />
       <TasksStack.Screen
@@ -149,7 +177,9 @@ const TasksStackNavigator = () => {
         component={PhotoValidationScreen}
         options={{
           headerShown: false,
-          presentation: 'modal' as any
+          presentation: 'modal' as any,
+          headerAccessibilityLabel: 'Photo Validation',
+          ...modalAnimation,
         }}
       />
     </TasksStack.Navigator>
@@ -158,6 +188,8 @@ const TasksStackNavigator = () => {
 
 const FamilyStackNavigator = () => {
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const navigationAnimation = getNavigationAnimationConfig(reduceMotion);
   
   return (
     <FamilyStack.Navigator
@@ -174,27 +206,40 @@ const FamilyStackNavigator = () => {
           fontWeight: '600',
           fontSize: 17,
         },
+        ...navigationAnimation,
       }}
     >
       <FamilyStack.Screen
         name="FamilyHome"
         component={FamilyScreen}
-        options={{ title: 'Family' }}
+        options={{
+          title: 'Family',
+          headerAccessibilityLabel: 'Family Members',
+        }}
       />
       <FamilyStack.Screen
         name="CreateFamily"
         component={CreateFamilyScreen}
-        options={{ title: 'Create Family' }}
+        options={{
+          title: 'Create Family',
+          headerAccessibilityLabel: 'Create New Family',
+        }}
       />
       <FamilyStack.Screen
         name="JoinFamily"
         component={JoinFamilyScreen}
-        options={{ title: 'Join Family' }}
+        options={{
+          title: 'Join Family',
+          headerAccessibilityLabel: 'Join Existing Family',
+        }}
       />
       <FamilyStack.Screen
         name="FamilySettings"
         component={FamilySettingsScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Family Settings',
+        }}
       />
     </FamilyStack.Navigator>
   );
@@ -202,6 +247,9 @@ const FamilyStackNavigator = () => {
 
 const SettingsStackNavigator = () => {
   const { theme, isDarkMode } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const navigationAnimation = getNavigationAnimationConfig(reduceMotion);
+  const modalAnimation = getModalAnimationConfig(reduceMotion);
   
   return (
     <SettingsStack.Navigator
@@ -218,42 +266,66 @@ const SettingsStackNavigator = () => {
           fontWeight: '600',
           fontSize: 17,
         },
+        ...navigationAnimation,
       }}
     >
       <SettingsStack.Screen
         name="SettingsHome"
         component={SettingsScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Settings',
+        }}
       />
       <SettingsStack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Edit Profile',
+        }}
       />
       <SettingsStack.Screen
         name="Premium"
         component={PremiumScreen}
-        options={{ headerShown: false, presentation: 'modal' as any }}
+        options={{
+          headerShown: false,
+          presentation: 'modal' as any,
+          headerAccessibilityLabel: 'Premium Features',
+          ...modalAnimation,
+        }}
       />
       <SettingsStack.Screen
         name="Support"
         component={SupportScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Support',
+        }}
       />
       <SettingsStack.Screen
         name="Privacy"
         component={PrivacyScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Privacy Policy',
+        }}
       />
       <SettingsStack.Screen
         name="Terms"
         component={TermsScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Terms of Service',
+        }}
       />
       <SettingsStack.Screen
         name="About"
         component={AboutScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'About',
+        }}
       />
     </SettingsStack.Navigator>
   );
@@ -263,62 +335,36 @@ const MainNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { theme, isDarkMode } = useTheme();
   
+  // Announce screen changes to screen readers
+  const announceScreenChange = (screenName: string) => {
+    AccessibilityInfo.announceForAccessibility(`Navigated to ${screenName}`);
+  };
+  
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          const iconSize = 24;
-          const iconColor = focused ? theme.colors.primary : theme.colors.textTertiary;
-          let iconName: string;
-
-          switch (route.name) {
-            case 'Dashboard':
-              iconName = 'home';
-              break;
-            case 'Tasks':
-              iconName = 'clipboard';
-              break;
-            case 'Family':
-              iconName = 'users';
-              break;
-            case 'Settings':
-              iconName = 'settings';
-              break;
-            default:
-              iconName = 'circle';
-          }
-
-          return (
-            <Feather
-              name={iconName as any}
-              size={iconSize}
-              color={iconColor}
-            />
-          );
-        },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textTertiary,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.separator,
-          paddingBottom: insets.bottom > 0 ? insets.bottom - 10 : 5,
-          paddingTop: 8,
-          height: 60 + (insets.bottom > 0 ? insets.bottom - 10 : 0),
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
+      tabBar={props => <AnimatedTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-      })}
+      }}
     >
       <Tab.Screen
         name="Dashboard"
         component={DashboardStackNavigator}
         options={{
           title: 'Home',
-          tabBarTestID: 'dashboard-tab'
+          tabBarTestID: 'dashboard-tab',
+          tabBarAccessibilityLabel: 'Home Dashboard',
+          tabBarButton: (props) => (
+            <props.Component
+              {...props}
+              accessibilityRole="button"
+              accessibilityLabel="Home Dashboard tab"
+              accessibilityHint="Double tap to navigate to your dashboard"
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => announceScreenChange('Home Dashboard'),
         }}
       />
       <Tab.Screen
@@ -326,7 +372,19 @@ const MainNavigator: React.FC = () => {
         component={TasksStackNavigator}
         options={{
           title: 'Tasks',
-          tabBarTestID: 'tasks-tab'
+          tabBarTestID: 'tasks-tab',
+          tabBarAccessibilityLabel: 'Tasks',
+          tabBarButton: (props) => (
+            <props.Component
+              {...props}
+              accessibilityRole="button"
+              accessibilityLabel="Tasks tab"
+              accessibilityHint="Double tap to view and manage your tasks"
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => announceScreenChange('Tasks'),
         }}
       />
       <Tab.Screen
@@ -334,7 +392,19 @@ const MainNavigator: React.FC = () => {
         component={FamilyStackNavigator}
         options={{
           title: 'Family',
-          tabBarTestID: 'family-tab'
+          tabBarTestID: 'family-tab',
+          tabBarAccessibilityLabel: 'Family',
+          tabBarButton: (props) => (
+            <props.Component
+              {...props}
+              accessibilityRole="button"
+              accessibilityLabel="Family tab"
+              accessibilityHint="Double tap to view family members and settings"
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => announceScreenChange('Family'),
         }}
       />
       <Tab.Screen
@@ -342,7 +412,19 @@ const MainNavigator: React.FC = () => {
         component={SettingsStackNavigator}
         options={{
           title: 'Settings',
-          tabBarTestID: 'settings-tab'
+          tabBarTestID: 'settings-tab',
+          tabBarAccessibilityLabel: 'Settings',
+          tabBarButton: (props) => (
+            <props.Component
+              {...props}
+              accessibilityRole="button"
+              accessibilityLabel="Settings tab"
+              accessibilityHint="Double tap to access app settings"
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => announceScreenChange('Settings'),
         }}
       />
     </Tab.Navigator>

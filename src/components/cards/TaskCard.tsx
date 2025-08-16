@@ -1,23 +1,43 @@
 /**
- * TaskCard Component - Premium task display card
+ * TaskCard Component - Premium task display card with engagement features
  * 
  * Features:
  * - Clean, minimal design
- * - Task completion checkbox
+ * - Task completion checkbox with animation
  * - Category badge with icon
  * - Priority indicator
  * - Due date display
  * - Assignee information
  * - Photo validation badge
+ * - Completion celebration animation
  */
 
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, AccessibilityInfo, Animated as RNAnimated } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  interpolate,
+} from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { Task, TaskCategory } from '../../types/models';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppSelector } from '../../hooks/redux';
 import { selectFamilyMembers } from '../../store/slices/familySlice';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import CompletionAnimation from '../animations/CompletionAnimation';
+import ParentReactionComponent from '../engagement/ParentReaction';
+import { useHaptics } from '../../utils/haptics';
+import { usePressAnimation, useFadeAnimation, usePulseAnimation } from '../../utils/animations';
+import {
+  useAccessibility,
+  getAccessibilityLabel,
+  getAccessibilityHint,
+  useReduceMotion,
+} from '../../contexts/AccessibilityContext';
 
 // Task type that can handle both serialized (string dates) and non-serialized (Date objects)
 interface TaskCardTask {
@@ -47,6 +67,7 @@ interface TaskCardTask {
   updatedAt: string | Date;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   points?: number;
+  parentReactions?: Record<string, any>;
 }
 
 interface TaskCardProps {
@@ -64,11 +85,100 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   const { theme, isDarkMode } = useTheme();
   const familyMembers = useAppSelector(selectFamilyMembers);
+  const userProfile = useAppSelector(selectUserProfile);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const haptics = useHaptics();
+  const { settings, announce } = useAccessibility();
+  const reduceMotion = useReduceMotion();
   
-  const isOverdue = task.dueDate &&
-    (typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate) < new Date() &&
-    task.status !== 'completed';
+  // Animation hooks
+  const { animatedStyle: pressAnimatedStyle, handlePressIn, handlePressOut } = usePressAnimation(0.97);
+  const { animatedStyle: fadeAnimatedStyle, fadeIn } = useFadeAnimation(0, 1, 300);
+  
+  // Urgency pulse animation for urgent/overdue tasks
+  const urgencyPulse = useSharedValue(0);
+  const borderGlow = useSharedValue(0);
+  
+  // Trigger fade in on mount
+  React.useEffect(() => {
+    fadeIn();
+  }, []);
+  
+  // Calculate urgency levels
+  const now = new Date();
+  const dueDate = task.dueDate ? (typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate) : null;
+  const hoursUntilDue = dueDate ? (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60) : null;
+  
+  const isOverdue = dueDate && dueDate < now && task.status !== 'completed';
+  const isDueSoon = !isOverdue && hoursUntilDue !== null && hoursUntilDue <= 24 && task.status !== 'completed';
+  const isUrgent = task.priority === 'urgent' || (task.priority === 'high' && isDueSoon);
   const isCompleted = task.status === 'completed';
+  
+  // Priority color mapping
+  const getPriorityColor = () => {
+    if (isCompleted) return theme.colors.success;
+    if (isOverdue) return theme.colors.error;
+    if (isUrgent) return theme.colors.error;
+    if (task.priority === 'high') return theme.colors.warning;
+    if (isDueSoon) return theme.colors.info;
+    return theme.colors.separator;
+  };
+  
+  // Setup urgency animations
+  useEffect(() => {
+    if (!reduceMotion && (isUrgent || isOverdue) && !isCompleted) {
+      // Pulse animation for urgent tasks
+      urgencyPulse.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1000 }),
+          withTiming(0, { duration: 1000 })
+        ),
+        -1,
+        false
+      );
+      
+      // Border glow animation
+      borderGlow.value = withRepeat(
+        withTiming(1, { duration: 2000 }),
+        -1,
+        true
+      );
+    }
+  }, [isUrgent, isOverdue, isCompleted, reduceMotion]);
+  
+  // Animated styles for urgency
+  const urgencyAnimatedStyle = useAnimatedStyle(() => {
+    if (!isUrgent && !isOverdue) return {};
+    
+    return {
+      borderWidth: interpolate(borderGlow.value, [0, 1], [2, 3]),
+      borderColor: getPriorityColor(),
+      shadowOpacity: interpolate(urgencyPulse.value, [0, 1], [0.1, 0.3]),
+      shadowRadius: interpolate(urgencyPulse.value, [0, 1], [4, 8]),
+    };
+  });
+  
+  // Priority indicator pulse
+  const priorityPulse = useRef(new RNAnimated.Value(1)).current;
+  
+  useEffect(() => {
+    if (!reduceMotion && (isUrgent || task.priority === 'high') && !isCompleted) {
+      RNAnimated.loop(
+        RNAnimated.sequence([
+          RNAnimated.timing(priorityPulse, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          RNAnimated.timing(priorityPulse, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [isUrgent, task.priority, isCompleted, reduceMotion]);
   
   // Get user display name from family members
   const getUserName = (userId: string): string => {
@@ -139,25 +249,78 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       });
     }
   };
+
+  // Handle task completion with animation and accessibility announcement
+  const handleComplete = () => {
+    if (!isCompleted) {
+      haptics.taskComplete(); // Add haptic feedback
+      setShowAnimation(true);
+      
+      // Announce task completion for screen readers
+      if (settings.announceStateChanges) {
+        announce(`Task ${task.title} completed. Great job!`, { delay: 300 });
+      }
+    }
+    onComplete();
+  };
+
+  const handleAnimationEnd = () => {
+    setShowAnimation(false);
+  };
+  
+  // Generate accessibility label for the task card
+  const taskAccessibilityLabel = getAccessibilityLabel('Task', task.title, {
+    isCompleted,
+    isOverdue,
+    priority: task.priority === 'high' ? 'high' : undefined,
+    dueDate: task.dueDate ? formatDueDate(task.dueDate) : undefined,
+  });
+  
+  const taskAccessibilityHint = getAccessibilityHint('view task details');
+  
+  const handlePress = () => {
+    handlePressOut();
+    onPress();
+  };
   
   return (
-    <TouchableOpacity 
-      style={[styles.container, isCompleted && styles.containerCompleted]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <Animated.View style={[pressAnimatedStyle, fadeAnimatedStyle, urgencyAnimatedStyle]}>
+      <TouchableOpacity
+        style={[
+          styles.container,
+          isCompleted && styles.containerCompleted,
+          isOverdue && !isCompleted && styles.containerOverdue,
+          isUrgent && !isCompleted && styles.containerUrgent,
+        ]}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1} // We're handling opacity with animations
+        accessibilityLabel={taskAccessibilityLabel}
+        accessibilityHint={taskAccessibilityHint}
+        accessibilityRole="button"
+        accessibilityState={{
+          checked: isCompleted,
+        }}
+      >
       <View style={styles.leftSection}>
         {/* Checkbox */}
-        <TouchableOpacity 
-          onPress={onComplete}
+        <TouchableOpacity
+          onPress={handleComplete}
           style={[
             styles.checkbox,
             isCompleted && styles.checkboxCompleted
           ]}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={isCompleted ? 'Task completed' : 'Mark task as complete'}
+          accessibilityHint={isCompleted ? 'Task is already completed' : 'Double tap to complete this task'}
+          accessibilityRole="checkbox"
+          accessibilityState={{
+            checked: isCompleted,
+          }}
         >
           {isCompleted && (
-            <Feather name="check" size={16} color={theme.colors.white} />
+            <Feather name="check" size={24} color={theme.colors.white} />
           )}
         </TouchableOpacity>
         
@@ -177,11 +340,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {/* Metadata Row */}
           <View style={styles.metadata}>
             {/* Category Badge */}
-            <View 
+            <View
               style={[
-                styles.categoryBadge, 
+                styles.categoryBadge,
                 { backgroundColor: task.category.color + '20' }
               ]}
+              accessibilityLabel={`Category: ${task.category.name}`}
             >
               <Feather
                 name={getCategoryIcon(task.category)}
@@ -194,17 +358,60 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </Text>
             </View>
             
-            {/* Priority Indicator */}
-            {task.priority === 'high' && !isCompleted && (
-              <View style={styles.priorityBadge}>
-                <Feather name="alert-circle" size={12} color={theme.colors.error} />
-                <Text style={styles.priorityText}>High</Text>
-              </View>
+            {/* Enhanced Priority Indicator */}
+            {(task.priority !== 'low' || isOverdue || isDueSoon) && !isCompleted && (
+              <RNAnimated.View
+                style={[
+                  styles.priorityBadge,
+                  task.priority === 'urgent' && styles.priorityBadgeUrgent,
+                  task.priority === 'high' && styles.priorityBadgeHigh,
+                  task.priority === 'medium' && styles.priorityBadgeMedium,
+                  isOverdue && styles.priorityBadgeOverdue,
+                  {
+                    transform: [{ scale: priorityPulse }],
+                  },
+                ]}
+                accessibilityLabel={`${
+                  isOverdue ? 'Overdue' :
+                  isDueSoon ? 'Due soon' :
+                  task.priority
+                } priority task`}
+              >
+                <Feather
+                  name={
+                    isOverdue ? 'alert-triangle' :
+                    task.priority === 'urgent' ? 'zap' :
+                    task.priority === 'high' ? 'alert-circle' :
+                    isDueSoon ? 'clock' :
+                    'flag'
+                  }
+                  size={12}
+                  color={
+                    isOverdue || task.priority === 'urgent' ? theme.colors.white :
+                    task.priority === 'high' ? theme.colors.error :
+                    isDueSoon ? theme.colors.info :
+                    theme.colors.warning
+                  }
+                />
+                <Text style={[
+                  styles.priorityText,
+                  (isOverdue || task.priority === 'urgent') && styles.priorityTextWhite,
+                ]}>
+                  {isOverdue ? 'Overdue' :
+                   isDueSoon ? 'Due Soon' :
+                   task.priority === 'urgent' ? 'Urgent' :
+                   task.priority === 'high' ? 'High' :
+                   'Medium'}
+                </Text>
+              </RNAnimated.View>
             )}
             
             {/* Recurring Indicator */}
             {task.isRecurring && (
-              <View style={styles.recurringBadge}>
+              <View
+                style={styles.recurringBadge}
+                accessibilityLabel="Recurring task"
+              >
                 <Feather name="repeat" size={12} color={theme.colors.textSecondary} />
               </View>
             )}
@@ -214,7 +421,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <View style={styles.footer}>
             {/* Assignee */}
             {showAssignee && task.assignedTo && (
-              <View style={styles.assigneeContainer}>
+              <View
+                style={styles.assigneeContainer}
+                accessibilityLabel={`Assigned to ${getUserName(task.assignedTo)}`}
+              >
                 <Feather name="user" size={12} color={theme.colors.textTertiary} />
                 <Text style={styles.assignee} numberOfLines={1}>
                   {getUserName(task.assignedTo)}
@@ -224,7 +434,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             
             {/* Due Date */}
             {task.dueDate && (
-              <View style={styles.dueDateContainer}>
+              <View
+                style={styles.dueDateContainer}
+                accessibilityLabel={`Due ${formatDueDate(task.dueDate)}${isOverdue && !isCompleted ? ', overdue' : ''}`}
+              >
                 <Feather
                   name="calendar"
                   size={12}
@@ -244,9 +457,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </View>
       </View>
       
+      {/* Priority side indicator */}
+      {(task.priority === 'urgent' || task.priority === 'high' || isOverdue) && !isCompleted && (
+        <View
+          style={[
+            styles.prioritySideIndicator,
+            { backgroundColor: getPriorityColor() }
+          ]}
+        />
+      )}
+      
       {/* Right Section - Validation Badge */}
       {task.requiresPhoto && isCompleted && (
-        <View style={styles.validationBadge}>
+        <View
+          style={styles.validationBadge}
+          accessibilityLabel={
+            task.validationStatus === 'approved' ? 'Photo approved' :
+            task.validationStatus === 'rejected' ? 'Photo rejected' :
+            'Photo pending validation'
+          }
+        >
           <Feather
             name={task.validationStatus === 'approved' ? 'check-circle' :
                   task.validationStatus === 'rejected' ? 'x-circle' : 'clock'}
@@ -259,11 +489,36 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       
       {/* Premium Badge for photo tasks */}
       {task.requiresPhoto && !isCompleted && (
-        <View style={styles.premiumBadge}>
+        <View
+          style={styles.premiumBadge}
+          accessibilityLabel="Photo required for completion"
+        >
           <Feather name="camera" size={16} color={theme.colors.premium} />
         </View>
       )}
-    </TouchableOpacity>
+
+      {/* Completion Animation Overlay */}
+      {showAnimation && (
+        <View style={styles.animationOverlay}>
+          <CompletionAnimation
+            onAnimationEnd={handleAnimationEnd}
+            showStarburst={true}
+          />
+        </View>
+      )}
+      
+      {/* Parent Reaction Component */}
+      {isCompleted && userProfile && (
+        <View style={styles.reactionContainer}>
+          <ParentReactionComponent
+            taskId={task.id}
+            reactions={task.parentReactions}
+            readonly={true}
+          />
+        </View>
+      )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -273,13 +528,24 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     borderRadius: theme.borderRadius.large,
     padding: theme.spacing.M,
     marginHorizontal: theme.spacing.M,
+    marginVertical: theme.spacing.XS,
     flexDirection: 'row',
     alignItems: 'center',
-    ...theme.shadows.small,
+    ...theme.elevation[4], // Use new elevation system
+    position: 'relative',
   },
   
   containerCompleted: {
     opacity: 0.7,
+  },
+  
+  containerOverdue: {
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.error,
+  },
+  
+  containerUrgent: {
+    backgroundColor: isDarkMode ? theme.colors.error + '10' : theme.colors.error + '05',
   },
   
   leftSection: {
@@ -289,9 +555,9 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   },
   
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: theme.borderRadius.large,
+    width: 44, // Updated to meet minimum touch target
+    height: 44, // Updated to meet minimum touch target
+    borderRadius: 22, // Half of width/height
     borderWidth: 2,
     borderColor: theme.colors.separator,
     marginRight: theme.spacing.S,
@@ -350,15 +616,49 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   priorityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: theme.spacing.XS,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.small,
     marginRight: theme.spacing.XS,
     marginBottom: 2,
+    backgroundColor: theme.colors.warning + '20',
+  },
+  
+  priorityBadgeUrgent: {
+    backgroundColor: theme.colors.error,
+  },
+  
+  priorityBadgeHigh: {
+    backgroundColor: theme.colors.error + '20',
+  },
+  
+  priorityBadgeMedium: {
+    backgroundColor: theme.colors.warning + '20',
+  },
+  
+  priorityBadgeOverdue: {
+    backgroundColor: theme.colors.error,
   },
   
   priorityText: {
     ...theme.typography.caption1,
-    color: theme.colors.error,
+    color: theme.colors.warning,
     fontWeight: '600',
     marginLeft: 4,
+  },
+  
+  priorityTextWhite: {
+    color: theme.colors.white,
+  },
+  
+  prioritySideIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: '20%',
+    bottom: '20%',
+    width: 4,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
   },
   
   recurringBadge: {
@@ -407,6 +707,23 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   
   premiumBadge: {
     marginLeft: theme.spacing.S,
+  },
+
+  animationOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: theme.borderRadius.large,
+    overflow: 'hidden',
+  },
+  
+  reactionContainer: {
+    position: 'absolute',
+    bottom: theme.spacing.XS,
+    right: theme.spacing.M,
+    zIndex: 10,
   },
 });
 
