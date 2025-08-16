@@ -73,3 +73,4 @@ SubscriptionKey*.p8
 *.tmp
 temp/
 tmp/
+.vercel
