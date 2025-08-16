@@ -113,56 +113,107 @@ export const FeatureGrid: React.FC = () => {
   };
 
   return (
-    <section className="py-16 sm:py-24 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+    <section className="py-20 sm:py-32 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-green-500 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto">
           {/* Section Header */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-4">
-              Everything Your Family Needs to Succeed
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              Everything Your Family Needs to{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                Succeed Together
+              </span>
             </h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Powerful features designed to make family task management enjoyable and effective
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Powerful features designed to make family task management enjoyable, effective, and rewarding for everyone
             </p>
           </div>
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => {
+            {features.map((feature, index) => {
               const colors = getColorClasses(feature.color);
               return (
                 <div
                   key={feature.id}
-                  className="group hover:shadow-lg transition-shadow duration-300 rounded-xl p-6 border border-neutral-100"
+                  className="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className={`w-12 h-12 ${colors.bg} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    <div className={colors.text}>
-                      {feature.icon}
+                  {/* Hover gradient border effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                  
+                  <div className="relative z-10">
+                    {/* Icon with enhanced styling */}
+                    <div className={`w-14 h-14 ${colors.bg} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                      <div className={`${colors.text} transform group-hover:rotate-3 transition-transform duration-300`}>
+                        {feature.icon}
+                      </div>
+                    </div>
+                    
+                    {/* Title with better typography */}
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                      {feature.title}
+                    </h3>
+                    
+                    {/* Description with improved readability */}
+                    <p className="text-gray-600 leading-relaxed text-base">
+                      {feature.description}
+                    </p>
+                    
+                    {/* Learn more link (subtle) */}
+                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className={`text-sm font-medium ${colors.text} flex items-center gap-1`}>
+                        Learn more
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-neutral-600">
-                    {feature.description}
-                  </p>
                 </div>
               );
             })}
           </div>
 
-          {/* CTA Section */}
-          <div className="mt-12 text-center">
-            <p className="text-lg text-neutral-700 mb-6">
-              Ready to transform your family's daily routine?
-            </p>
-            <a
-              href="/signup"
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors duration-200 shadow-lg hover:shadow-xl"
-              data-analytics="features-cta"
-            >
-              Start Your Free Trial
-            </a>
+          {/* Enhanced CTA Section */}
+          <div className="mt-20 text-center">
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-3xl p-12 max-w-4xl mx-auto">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Ready to bring your family closer together?
+              </h3>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                Join thousands of families who are building stronger bonds through shared responsibilities and achievements
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="/signup"
+                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  data-analytics="features-cta-primary"
+                >
+                  Start Your Free Trial
+                  <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </a>
+                <a
+                  href="/demo"
+                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+                  data-analytics="features-cta-secondary"
+                >
+                  Watch Demo
+                  <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

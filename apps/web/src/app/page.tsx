@@ -6,6 +6,7 @@ import { DemoVideo } from '@/components/landing/DemoVideo';
 import { Testimonials } from '@/components/landing/Testimonials';
 import { FeatureGrid } from '@/components/landing/FeatureGrid';
 import { SocialProof } from '@/components/landing/SocialProof';
+import { AppScreenshots } from '@/components/landing/AppScreenshots';
 import { EmailCaptureModal } from '@/components/modals/EmailCaptureModal';
 import { useConversionTracking } from '@/hooks/useConversionTracking';
 
@@ -54,11 +55,14 @@ export default function LandingPage() {
         {/* Social Proof Bar */}
         <SocialProof />
 
+        {/* Features Grid - Moved up for better flow */}
+        <FeatureGrid />
+
         {/* Demo Video */}
         <DemoVideo />
 
-        {/* Features Grid */}
-        <FeatureGrid />
+        {/* App Screenshots - New section showing actual interface */}
+        <AppScreenshots />
 
         {/* Testimonials */}
         <Testimonials />
