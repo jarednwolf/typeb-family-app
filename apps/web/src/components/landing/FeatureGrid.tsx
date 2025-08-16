@@ -26,7 +26,7 @@ export const FeatureGrid: React.FC = () => {
     {
       id: 'task-management',
       title: 'Smart Task Management',
-      description: 'Create age-appropriate tasks that grow with your children. Set schedules, priorities, and watch as responsibilities become habits.',
+      description: 'Create age-appropriate responsibilities that grow with your children. Set schedules, priorities, and watch as daily tasks become lifelong habits.',
       color: 'primary',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,13 +35,13 @@ export const FeatureGrid: React.FC = () => {
       ),
     },
     {
-      id: 'reward-system',
-      title: 'Motivating Rewards',
-      description: 'Points, badges, and real rewards that children can work towards. Transform chores into achievements worth celebrating.',
+      id: 'accountability-tracking',
+      title: 'Accountability System',
+      description: 'Track completion rates and build consistency. Help your children develop personal responsibility through clear expectations and follow-through.',
       color: 'accent',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },
@@ -58,20 +58,20 @@ export const FeatureGrid: React.FC = () => {
       ),
     },
     {
-      id: 'family-bonding',
-      title: 'Family Bonding Activities',
-      description: 'Discover weekly challenges and activities designed to bring families closer together through shared experiences.',
+      id: 'habit-building',
+      title: 'Habit Development',
+      description: 'Build lasting routines through daily practice and consistency tracking. Watch as one-time tasks evolve into automatic behaviors.',
       color: 'primary',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },
     {
       id: 'progress-tracking',
-      title: 'Insightful Analytics',
-      description: 'Track progress, identify patterns, and celebrate milestones. See how your family grows stronger together.',
+      title: 'Progress Monitoring',
+      description: 'Track completion rates, identify areas for improvement, and celebrate consistency. Watch your children develop stronger work ethic over time.',
       color: 'secondary',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,8 +81,8 @@ export const FeatureGrid: React.FC = () => {
     },
     {
       id: 'smart-reminders',
-      title: 'Intelligent Reminders',
-      description: 'Never miss a task with smart notifications that adapt to your family schedule and preferences.',
+      title: 'Smart Scheduling',
+      description: 'Set up recurring tasks and reminders that fit your family\'s routine. Ensure nothing falls through the cracks with timely notifications.',
       color: 'accent',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,13 +125,13 @@ export const FeatureGrid: React.FC = () => {
           {/* Section Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-              Everything Your Family Needs to{' '}
+              Get Complete{' '}
               <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                Succeed Together
+                Peace of Mind
               </span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Powerful features designed to make family task management enjoyable, effective, and rewarding for everyone
+              Know exactly what's getting done in your home with real-time tracking, photo verification, and instant accountability
             </p>
           </div>
 
@@ -185,10 +185,10 @@ export const FeatureGrid: React.FC = () => {
           <div className="mt-20 text-center">
             <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-3xl p-12 max-w-4xl mx-auto">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Ready to bring your family closer together?
+                Ready for real accountability in your home?
               </h3>
               <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-                Join thousands of families who are building stronger bonds through shared responsibilities and achievements
+                Join thousands of families who finally have peace of mind knowing tasks are actually getting done
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a

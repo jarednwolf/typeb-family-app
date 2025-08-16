@@ -40,9 +40,9 @@ export const HeroSection: React.FC = () => {
             
             {/* Main Headline */}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              {isNewHeroEnabled 
-                ? <>Turn Chores into <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">Adventures</span></>
-                : <>Family Tasks Made <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">Simple</span></>}
+              {isNewHeroEnabled
+                ? <>Build <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">Accountability</span></>
+                : <>Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">Peace of Mind</span></>}
             </h1>
             
             {/* Tagline */}
@@ -53,8 +53,8 @@ export const HeroSection: React.FC = () => {
             {/* Subheadline */}
             <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
               {isNewHeroEnabled
-                ? "Transform everyday tasks into exciting family challenges. Build responsibility, earn rewards, and strengthen bonds together."
-                : "The smart way for families to manage tasks, build habits, and grow together."}
+                ? "Know your kids are doing what they should. Track responsibilities, verify completion, and build trust through accountability."
+                : "Finally relax knowing chores are getting done. Get notifications, photo proof, and real-time updates on your family's tasks."}
             </p>
 
             {/* CTA Buttons */}
@@ -97,7 +97,7 @@ export const HeroSection: React.FC = () => {
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="font-medium">Bank-level security</span>
+                <span className="font-medium">Safe & family-friendly</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -114,8 +114,8 @@ export const HeroSection: React.FC = () => {
               {/* Hero Image with Unsplash open-source image */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1609220136736-443140cffec6?q=80&w=2070&auto=format&fit=crop"
-                  alt="Happy family using technology together"
+                  src="https://images.unsplash.com/photo-1512428559087-560fa5ceab42?q=80&w=2070&auto=format&fit=crop"
+                  alt="Young person focused on smartphone screen"
                   className="w-full h-auto object-cover rounded-2xl"
                 />
                 
@@ -129,16 +129,16 @@ export const HeroSection: React.FC = () => {
                       ✓
                     </div>
                     <div>
-                      <div className="text-xs text-gray-600">Task Completed</div>
-                      <div className="text-sm font-bold text-gray-900">Clean Room</div>
+                      <div className="text-xs text-gray-600">Daily Habit</div>
+                      <div className="text-sm font-bold text-gray-900">Make Bed - 7 Day Streak!</div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Points earned badge */}
-                <div className="absolute top-6 right-6 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-xl p-4 shadow-lg">
-                  <div className="text-2xl font-bold">+50</div>
-                  <div className="text-xs">Points Earned!</div>
+                {/* Accountability tracking */}
+                <div className="absolute top-6 right-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
+                  <div className="text-2xl font-bold">85%</div>
+                  <div className="text-xs">This Week's Tasks</div>
                 </div>
                 
                 {/* Progress indicator */}
@@ -152,11 +152,11 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Achievement notification */}
-                <div className="absolute bottom-24 right-6 bg-purple-600 text-white rounded-lg p-3 shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+                {/* Responsibility milestone */}
+                <div className="absolute bottom-24 right-6 bg-blue-600 text-white rounded-lg p-3 shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">🏆</span>
-                    <span className="text-xs font-medium">New Achievement!</span>
+                    <span className="text-lg">⭐</span>
+                    <span className="text-xs font-medium">30 Days Consistent!</span>
                   </div>
                 </div>
               </div>
