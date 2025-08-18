@@ -104,3 +104,4 @@ eas-build-*.tar.gz
 # Temporary files
 tmp/
 temp/
+.env.production
