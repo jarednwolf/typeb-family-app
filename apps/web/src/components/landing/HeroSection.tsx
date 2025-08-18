@@ -135,36 +135,15 @@ export const HeroSection: React.FC = () => {
             <div className="relative">
               {/* Hero Image Container */}
               <div className="relative rounded-2xl overflow-hidden shadow-lg bg-white">
-                {/* Using the actual hero image from the user */}
-                <div 
-                  className="w-full relative rounded-xl overflow-hidden"
+                {/* Hero image from the user */}
+                <img
+                  src="/hero-image.png"
+                  alt="Parent using TypeB app on smartphone"
+                  className="w-full h-full object-cover"
                   style={{ 
                     aspectRatio: '4/3',
-                    background: 'linear-gradient(135deg, #F5F2ED 0%, #FAF8F5 100%)'
                   }}
-                >
-                  {/* Placeholder text for the actual image */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <p style={{ color: '#595959', marginBottom: '1rem' }}>
-                        [Hero Image Placeholder]
-                      </p>
-                      <p style={{ color: '#595959', fontSize: '0.875rem' }}>
-                        The image you provided should be displayed here.
-                        <br />
-                        Please ensure the image file is properly saved to:
-                        <br />
-                        <code style={{ 
-                          backgroundColor: '#F2F2F7', 
-                          padding: '2px 6px', 
-                          borderRadius: '4px',
-                          fontSize: '0.75rem'
-                        }}>
-                          apps/web/public/hero-image.jpg
-                        </code>
-                      </p>
-                    </div>
-                  </div>
+                />
                   
                   {/* Floating UI elements with minimal design */}
                   <div className="absolute top-6 left-6 backdrop-blur rounded-xl p-4 shadow-md animate-fade-in" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
