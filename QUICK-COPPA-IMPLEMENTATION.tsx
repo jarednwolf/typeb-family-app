@@ -1,0 +1,261 @@
+// QUICK COPPA IMPLEMENTATION - Copy this to your signup screen
+// File: typeb-family-app/src/screens/auth/SignUpScreen.tsx
+
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import { auth, firestore } from '../../services/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
+export const SignUpScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [isUnder13, setIsUnder13] = useState(false);
+  const [parentConsent, setParentConsent] = useState(false);
+
+  const checkAge = (year: string) => {
+    setBirthYear(year);
+    if (year.length === 4) {
+      const age = new Date().getFullYear() - parseInt(year);
+      setIsUnder13(age < 13);
+    }
+  };
+
+  const handleSignUp = async () => {
+    try {
+      // COPPA Check
+      const age = new Date().getFullYear() - parseInt(birthYear);
+      
+      if (age < 13 && !parentConsent) {
+        Alert.alert(
+          'Parental Consent Required',
+          'Users under 13 need parental consent. Please have a parent check the consent box.'
+        );
+        return;
+      }
+
+      // Create auth account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Store user data with COPPA compliance
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+        firstName,
+        email,
+        birthYear: parseInt(birthYear),
+        age,
+        createdAt: new Date(),
+        parentEmail: isUnder13 ? parentEmail : null,
+        parentConsentGiven: isUnder13 ? parentConsent : null,
+        consentTimestamp: isUnder13 ? new Date() : null,
+      });
+
+      // If under 13, also store parental consent record
+      if (isUnder13 && parentConsent) {
+        await setDoc(
+          doc(firestore, 'parentalConsents', userCredential.user.uid),
+          {
+            childId: userCredential.user.uid,
+            childEmail: email,
+            parentEmail,
+            consentGiven: true,
+            timestamp: new Date(),
+            ipAddress: 'user-ip', // In production, get actual IP
+          }
+        );
+      }
+
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.navigate('Dashboard');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Create Account</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Birth Year (YYYY)"
+        value={birthYear}
+        onChangeText={checkAge}
+        keyboardType="numeric"
+        maxLength={4}
+      />
+
+      {/* COPPA: Show parental consent for under 13 */}
+      {isUnder13 && (
+        <View style={styles.coppaSection}>
+          <Text style={styles.coppaTitle}>⚠️ Parental Consent Required</Text>
+          <Text style={styles.coppaText}>
+            Users under 13 need parental permission to use TypeB.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Parent/Guardian Email"
+            value={parentEmail}
+            onChangeText={setParentEmail}
+            keyboardType="email-address"
+          />
+
+          <TouchableOpacity
+            style={styles.consentBox}
+            onPress={() => setParentConsent(!parentConsent)}
+          >
+            <View style={[styles.checkbox, parentConsent && styles.checked]} />
+            <Text style={styles.consentText}>
+              I am the parent/guardian and I consent to my child using TypeB.
+              I understand data will be collected as described in the Privacy Policy.
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.button, (!birthYear || (isUnder13 && !parentConsent)) && styles.disabled]}
+        onPress={handleSignUp}
+        disabled={!birthYear || (isUnder13 && !parentConsent)}
+      >
+        <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.link}>Already have an account? Log in</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.privacy}>
+        By signing up, you agree to our Terms of Service and Privacy Policy.
+        {'\n'}Users under 13 require parental consent.
+      </Text>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 15,
+    marginBottom: 15,
+    borderRadius: 8,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  disabled: {
+    backgroundColor: '#ccc',
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  link: {
+    color: '#007AFF',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  privacy: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 30,
+    paddingHorizontal: 20,
+  },
+  coppaSection: {
+    backgroundColor: '#FFF9E6',
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 15,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  coppaTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  coppaText: {
+    fontSize: 14,
+    marginBottom: 15,
+    color: '#666',
+  },
+  consentBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    marginRight: 10,
+    borderRadius: 4,
+  },
+  checked: {
+    backgroundColor: '#007AFF',
+  },
+  consentText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#333',
+  },
+});

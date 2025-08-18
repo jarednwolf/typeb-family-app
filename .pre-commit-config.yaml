@@ -1,0 +1,57 @@
+# Pre-commit hooks for TypeB
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=5000']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Security - detect secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+  # JavaScript/TypeScript
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: pnpm lint
+        language: system
+        types: [javascript, jsx, typescript, tsx]
+        files: \.(js|jsx|ts|tsx)$
+        pass_filenames: false
+
+      - id: prettier
+        name: Prettier
+        entry: pnpm format
+        language: system
+        types: [javascript, jsx, typescript, tsx, json, markdown]
+        pass_filenames: false
+
+      - id: type-check
+        name: TypeScript
+        entry: pnpm type-check
+        language: system
+        types: [typescript, tsx]
+        pass_filenames: false
+
+  # Commit message
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

@@ -1,216 +1,201 @@
-# TypeB Family App - Monorepo
+# TypeB Family App
 
-🌐 **Live Production:** https://typebapp.com
+**Transform household chaos into organized success** - A task management platform for families with photo validation and rewards.
 
-A monorepo structure for the TypeB Family App, supporting both mobile (React Native) and web (Next.js) applications with shared code packages.
+🌐 **Production Web**: https://typebapp.com  
+📱 **Mobile**: iOS TestFlight (Beta) | Android (Coming Soon)  
+📊 **Status**: Beta Testing → Production Launch (1 week)  
 
-## 🏗️ Architecture
-
-```
-tybeb_b/
-├── packages/           # Shared packages
-│   ├── types/         # TypeScript type definitions
-│   ├── core/          # Business logic and validators
-│   └── store/         # Redux store
-├── apps/              # Applications
-│   └── web/           # Next.js web app (Live at typebapp.com)
-└── typeb-family-app/  # React Native mobile app
-```
-
-## 📦 Packages
-
-### @typeb/types
-Shared TypeScript type definitions used across all applications:
-- Data models (User, Family, Task, etc.)
-- API request/response types
-- WebSocket event types
-
-### @typeb/core
-Shared business logic and utilities:
-- Service interfaces for platform abstraction
-- Input validators (auth, tasks, etc.)
-- Date/time utilities
-- Common helper functions
-
-### @typeb/store
-Shared Redux store configuration:
-- Redux slices
-- Middleware
-- Selectors
-
-## 🚀 Getting Started
+## Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- pnpm 8+
+- Node.js 18+ and pnpm 8+
+- Firebase project (with Blaze plan)
+- Apple Developer account (for iOS)
+- RevenueCat account (for payments)
 
 ### Installation
 
 ```bash
-# Install pnpm if you haven't already
-npm install -g pnpm
+# Clone repository
+git clone [repository-url]
+cd tybeb_b
 
 # Install dependencies
 pnpm install
 
-# Build all packages
+# Build shared packages
 pnpm build
+
+# Set up environment
+cp .env.example .env.local
+# Edit .env.local with your values
 ```
 
 ### Development
 
 ```bash
-# Run all packages in watch mode
+# Run everything in dev mode
 pnpm dev
 
-# Run specific app
-pnpm dev:mobile  # React Native app
-pnpm dev:web     # Next.js web app
+# Run specific apps
+pnpm dev:web    # Next.js web app
+pnpm dev:mobile # React Native app
 
 # Run tests
 pnpm test
 
 # Type checking
 pnpm type-check
-
-# Linting
-pnpm lint
 ```
 
-## 🛠️ Technology Stack
+### Deployment
 
-- **Monorepo Tool**: pnpm workspaces + Turborepo
-- **Build Tool**: tsup
-- **Mobile App**: React Native + Expo SDK 50
-- **Web App**: Next.js 15.4.6 (Live at typebapp.com)
-- **Shared Code**: TypeScript
-- **State Management**: Redux Toolkit
-- **Backend**: Firebase (Firestore, Auth, Storage)
+```bash
+# Deploy web to production
+pnpm deploy:web:prod
 
-## 📝 Development Workflow
+# Build mobile for TestFlight
+cd typeb-family-app
+eas build --platform ios --profile production
 
-1. **Shared Code Changes**: 
-   - Make changes in `packages/` directory
-   - Run `pnpm build` to compile packages
-   - Changes automatically available to apps
+# Deploy Firebase rules
+firebase deploy --only firestore:rules
+```
 
-2. **Mobile Development**:
-   - Work in `typeb-family-app/` directory
-   - Import from `@typeb/types` and `@typeb/core`
-   - Run `pnpm dev:mobile`
+## Architecture
 
-3. **Web Development**:
-   - Work in `apps/web/` directory
-   - Import from shared packages
-   - Run `pnpm dev:web`
-   - Deploy with `vercel --prod --archive=tgz`
+```
+tybeb_b/
+├── apps/
+│   └── web/              # Next.js web application
+├── typeb-family-app/     # React Native mobile app (to be moved)
+├── packages/
+│   ├── core/             # Business logic & validators  
+│   ├── store/            # Redux configuration
+│   └── types/            # TypeScript definitions
+└── docs/                 # Documentation
+```
 
-## 🔄 Code Sharing Strategy
+### Tech Stack
+- **Frontend**: React Native (Expo SDK 50), Next.js 15.4
+- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
+- **Payments**: RevenueCat
+- **State**: Redux Toolkit
+- **Deployment**: Vercel (web), EAS Build (mobile)
 
-### What's Shared
-- TypeScript type definitions
-- Validation logic
-- Business rules
-- Utility functions
-- Redux store configuration
+## Features
 
-### Platform-Specific
-- UI components
-- Navigation
-- Platform APIs (camera, notifications, etc.)
-- Build configurations
+### Core (Free)
+- ✅ Family management (up to 5 members)
+- ✅ Task creation and assignment
+- ✅ Photo validation
+- ✅ Points and basic rewards
+- ✅ Push notifications
 
-## 📚 Documentation
+### Premium ($4.99/mo or $39.99/yr)
+- 📸 Priority photo validation queue
+- 🏷️ Unlimited custom categories
+- 📊 Advanced analytics dashboard
+- 🔔 Smart notifications with escalation
+- 👥 Unlimited family members
+- 🎯 Priority support (2-hour response)
 
-- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
-- [Architecture Overview](docs/architecture.md)
-- [Development Standards](docs/development-standards.md)
-- [Project Structure](docs/project-structure.md)
+## Documentation
 
-## 🚀 Upcoming Features - User Engagement Focus
+| Document | Purpose |
+|----------|---------|
+| [Architecture](./docs/ARCHITECTURE.md) | System design and technical decisions |
+| [Operations](./docs/OPERATIONS.md) | Deployment, monitoring, and maintenance |
+| [Security](./docs/SECURITY.md) | Security policies and compliance (COPPA) |
+| [Contributing](./docs/CONTRIBUTING.md) | Development workflow and guidelines |
+| [Roadmap](./docs/ROADMAP.md) | Product timeline and milestones |
 
-### Phase 1: Core Engagement (Q3 2025)
-- [ ] **Gamification Enhancements**
-  - Achievement badges system
-  - Streak tracking for consistent task completion
-  - Family leaderboards with weekly/monthly views
-  - XP levels and progression system
-  
-- [ ] **Enhanced Rewards System**
-  - Custom reward creation by parents
-  - Reward marketplace
-  - Point multipliers for difficult tasks
-  - Bonus points for early completion
+### Quick Links
+- [Production Checklist](./docs/PRODUCTION-READINESS-TRACKER.md)
+- [API Documentation](./docs/API.md)
+- [Troubleshooting](./docs/TROUBLESHOOTING.md)
 
-### Phase 2: Social & Interactive Features (Q4 2025)
-- [ ] **Family Communication**
-  - In-app family chat
-  - Task comments and discussions
-  - Photo reactions and stickers
-  - Celebration animations for completed tasks
-  
-- [ ] **Collaborative Features**
-  - Team tasks for siblings
-  - Family challenges
-  - Shared goals and milestones
-  - Progress sharing with extended family
+## Environment Configuration
 
-### Phase 3: Smart Features (Q1 2026)
-- [ ] **AI-Powered Enhancements**
-  - Smart task suggestions based on history
-  - Personalized difficulty adjustment
-  - Predictive task scheduling
-  - Natural language task creation
-  
-- [ ] **Integration & Automation**
-  - Calendar sync (Google, Apple)
-  - Voice commands via Siri/Google Assistant
-  - Smart home integration
-  - School schedule integration
+### Required Environment Variables
 
-### Phase 4: Advanced Analytics (Q2 2026)
-- [ ] **Parent Dashboard Improvements**
-  - Detailed child progress analytics
-  - Behavioral pattern insights
-  - Task completion trends
-  - Customizable reports
-  
-- [ ] **Child Motivation Tools**
-  - Personal best tracking
-  - Growth visualization
-  - Peer comparison (optional)
-  - Achievement showcase
+```bash
+# Firebase
+FIREBASE_PROJECT_ID=typeb-family-app
+FIREBASE_API_KEY=your_api_key
+FIREBASE_AUTH_DOMAIN=your_auth_domain
 
-## 🧪 User Testing Plan
+# RevenueCat
+EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=appl_xxxxx
+EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_xxxxx
 
-1. **Alpha Testing** (Current)
-   - Internal team testing
-   - Core functionality validation
-   
-2. **Beta Testing** (September 2025)
-   - 50 family pilot program
-   - Feedback collection system
-   - A/B testing framework
-   
-3. **Public Launch** (October 2025)
-   - Gradual rollout
-   - Performance monitoring
-   - User feedback integration
+# Monitoring
+EXPO_PUBLIC_SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
 
-## 🤝 Contributing
+# Environment
+EXPO_PUBLIC_ENVIRONMENT=development|staging|production
+```
 
-1. Create a feature branch
-2. Make your changes
-3. Ensure all tests pass
-4. Submit a pull request
+See [Operations Guide](./docs/OPERATIONS.md) for complete configuration.
 
-## 📄 License
+## Testing
 
-MIT
+```bash
+# Unit tests
+pnpm test
 
-## 🔗 Links
+# E2E tests (mobile)
+cd typeb-family-app
+pnpm e2e:ios
 
-- [TypeB Website](https://typebapp.com) - Live Production
-- [Mobile App (TestFlight)](https://testflight.apple.com/join/YOUR_CODE)
-- [Firebase Console](https://console.firebase.google.com/project/typeb-family-app)
-- [Vercel Dashboard](https://vercel.com/jareds-projects-247fc15d/tybeb_b)
+# E2E tests (web)
+cd apps/web
+pnpm test:e2e
+```
+
+## Production Launch Status
+
+### ✅ Completed
+- Feature development (100%)
+- Firebase configuration
+- Payment integration
+- Web deployment
+
+### 🚧 In Progress (Week 1 Sprint)
+- CI/CD pipeline setup
+- COPPA compliance implementation
+- Staging environment configuration
+- Google SSO integration
+
+### 📋 Pending
+- Android app build
+- App Store submission
+- Load testing
+- Customer support setup
+
+See [Production Tracker](./docs/PRODUCTION-READINESS-TRACKER.md) for detailed status.
+
+## Support
+
+### Development
+- GitHub Issues: [Link to issues]
+- Discord: [Development channel]
+
+### Production
+- Email: support@typebapp.com
+- Premium: 2-hour response SLA
+- Status Page: https://status.typebapp.com (coming soon)
+
+## License
+
+Copyright © 2025 TypeB. All rights reserved.
+
+---
+
+**Version**: 1.0.1-beta  
+**Last Updated**: January 2025  
+**Maintainers**: TypeB Team  
+
+For detailed setup instructions, see [Operations Guide](./docs/OPERATIONS.md).  
+For contribution guidelines, see [Contributing](./docs/CONTRIBUTING.md).
