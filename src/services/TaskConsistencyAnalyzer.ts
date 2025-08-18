@@ -1,4 +1,15 @@
 import { firestore } from '../config/firebase';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  QueryDocumentSnapshot
+} from 'firebase/firestore';
 import { Task, User, Family } from '../types/models';
 
 interface ConsistencyPattern {
@@ -911,26 +922,28 @@ class TaskConsistencyAnalyzer {
    * Helper methods
    */
   private async getFamily(familyId: string): Promise<Family> {
-    const doc = await firestore()
-      .collection('families')
-      .doc(familyId)
-      .get();
+    const docRef = doc(firestore, 'families', familyId);
+    const docSnap = await getDoc(docRef);
     
-    return doc.data() as Family;
+    if (!docSnap.exists()) {
+      throw new Error('Family not found');
+    }
+    
+    return docSnap.data() as Family;
   }
   
   private async getChildren(family: Family): Promise<User[]> {
     const children: User[] = [];
     
     for (const memberId of family.memberIds || []) {
-      const doc = await firestore()
-        .collection('users')
-        .doc(memberId)
-        .get();
+      const userRef = doc(firestore, 'users', memberId);
+      const userDoc = await getDoc(userRef);
       
-      const user = doc.data() as User;
-      if (user.role === 'child') {
-        children.push(user);
+      if (userDoc.exists()) {
+        const user = userDoc.data() as User;
+        if (user.role === 'child') {
+          children.push(user);
+        }
       }
     }
     
@@ -943,16 +956,16 @@ class TaskConsistencyAnalyzer {
     startDate: Date,
     endDate: Date
   ): Promise<any[]> {
-    const snapshot = await firestore()
-      .collection('families')
-      .doc(familyId)
-      .collection('tasks')
-      .where('assignedTo', '==', childId)
-      .where('dueDate', '>=', startDate.toISOString())
-      .where('dueDate', '<=', endDate.toISOString())
-      .get();
+    const tasksRef = collection(firestore, 'families', familyId, 'tasks');
+    const q = query(
+      tasksRef,
+      where('assignedTo', '==', childId),
+      where('dueDate', '>=', startDate.toISOString()),
+      where('dueDate', '<=', endDate.toISOString())
+    );
     
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc: QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() }));
   }
   
   private getTimeSlot(hour: number): string {

@@ -21,6 +21,9 @@ import PrivacyScreen from '../screens/legal/PrivacyScreen';
 import TermsScreen from '../screens/legal/TermsScreen';
 import AboutScreen from '../screens/settings/AboutScreen';
 import FamilySettingsScreen from '../screens/family/FamilySettingsScreen';
+import NotificationSettings from '../screens/settings/NotificationSettings';
+import PerformanceDebugScreen from '../screens/settings/PerformanceDebugScreen';
+import PrivacySettings from '../screens/settings/PrivacySettings';
 import { useTheme } from '../contexts/ThemeContext';
 import { useReduceMotion } from '../contexts/AccessibilityContext';
 import {
@@ -65,6 +68,9 @@ export type SettingsStackParamList = {
   Privacy: undefined;
   Terms: undefined;
   About: undefined;
+  NotificationSettings: undefined;
+  PerformanceDebug: undefined;
+  PrivacySettings: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -325,6 +331,30 @@ const SettingsStackNavigator = () => {
         options={{
           headerShown: false,
           headerAccessibilityLabel: 'About',
+        }}
+      />
+      <SettingsStack.Screen
+        name="NotificationSettings"
+        component={NotificationSettings}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Notification Settings',
+        }}
+      />
+      <SettingsStack.Screen
+        name="PerformanceDebug"
+        component={PerformanceDebugScreen}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Performance Debug',
+        }}
+      />
+      <SettingsStack.Screen
+        name="PrivacySettings"
+        component={PrivacySettings}
+        options={{
+          headerShown: false,
+          headerAccessibilityLabel: 'Privacy Settings',
         }}
       />
     </SettingsStack.Navigator>

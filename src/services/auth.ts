@@ -22,7 +22,11 @@ import {
   onAuthStateChanged,
   User,
   UserCredential,
+  signInWithCredential,
+  GoogleAuthProvider,
 } from 'firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 import { auth, db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { createUserProfile, getUserProfile as getUserProfileFromDb, userProfileExists } from './userProfile';
@@ -50,6 +54,21 @@ const userSecurityCollection = 'userSecurity';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Configure Google Sign-In
+export const configureGoogleSignIn = () => {
+  try {
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '388132461668-9q5v8u1i3b8j9q5v8u1i3b8j9q5v.apps.googleusercontent.com', // You'll need to get this from Firebase Console
+      offlineAccess: true,
+      scopes: ['email', 'profile'],
+      forceCodeForRefreshToken: true,
+    });
+    console.log('[AUTH] Google Sign-In configured');
+  } catch (error) {
+    console.error('[AUTH] Error configuring Google Sign-In:', error);
+  }
+};
 
 // Input validation
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
@@ -610,6 +629,143 @@ export const refreshSession = async (): Promise<void> => {
     await user.getIdToken(true); // Force refresh
   } catch (error) {
     console.error('Error refreshing session:', error);
+    throw error;
+  }
+};
+
+// Google Sign-In
+export const signInWithGoogle = async (): Promise<UserCredential | null> => {
+  try {
+    console.log('[AUTH] Starting Google Sign-In');
+    
+    // Check if device supports Google Play Services (Android only)
+    if (Platform.OS === 'android') {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    }
+    
+    // Get the user's ID token
+    const userInfo = await GoogleSignin.signIn();
+    console.log('[AUTH] Google Sign-In successful, got user info');
+    
+    // Create a Google credential with the token
+    const googleCredential = GoogleAuthProvider.credential(userInfo.idToken);
+    
+    // Sign in to Firebase with the Google credential
+    const userCredential = await signInWithCredential(auth, googleCredential);
+    console.log('[AUTH] Firebase sign-in with Google successful');
+    
+    // Check if user profile exists in Firestore
+    const profileExists = await userProfileExists(userCredential.user.uid);
+    
+    if (!profileExists) {
+      // Create profile if it doesn't exist
+      const email = userCredential.user.email || userInfo.user.email;
+      const displayName = userCredential.user.displayName || userInfo.user.name || 'User';
+      const photoURL = userCredential.user.photoURL || userInfo.user.photo || null;
+      
+      await createUserProfile(
+        userCredential.user.uid,
+        email,
+        displayName,
+        {
+          photoURL,
+          provider: 'google',
+          googleId: userInfo.user.id,
+        }
+      );
+      console.log('[AUTH] Created new user profile for Google user');
+    } else {
+      // Update last login
+      await updateDoc(doc(db, userSecurityCollection, userCredential.user.uid), {
+        lastLogin: serverTimestamp(),
+        emailVerified: true, // Google accounts are pre-verified
+        provider: 'google',
+      }).catch(() => {
+        // Create security profile if it doesn't exist
+        setDoc(doc(db, userSecurityCollection, userCredential.user.uid), {
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          emailVerified: true,
+          provider: 'google',
+          loginCount: 1,
+        });
+      });
+    }
+    
+    return userCredential;
+  } catch (error: any) {
+    console.error('[AUTH] Google Sign-In error:', error);
+    
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      console.log('[AUTH] User cancelled Google Sign-In');
+      return null;
+    } else if (error.code === statusCodes.IN_PROGRESS) {
+      throw new Error('Google Sign-In is already in progress');
+    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      throw new Error('Google Play Services not available or outdated');
+    } else {
+      throw new Error(error.message || 'Failed to sign in with Google');
+    }
+  }
+};
+
+// Check if Google Sign-In is available
+export const isGoogleSignInAvailable = async (): Promise<boolean> => {
+  try {
+    if (Platform.OS === 'web') {
+      // Google Sign-In is always available on web
+      return true;
+    }
+    
+    if (Platform.OS === 'android') {
+      // Check for Google Play Services on Android
+      const hasPlayServices = await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false });
+      return hasPlayServices;
+    }
+    
+    // On iOS, Google Sign-In is always available if configured
+    return true;
+  } catch (error) {
+    console.error('[AUTH] Error checking Google Sign-In availability:', error);
+    return false;
+  }
+};
+
+// Sign out (updated to handle Google Sign-In)
+export const signOutUser = async (): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    
+    if (user) {
+      // Update last activity
+      try {
+        await updateDoc(doc(db, userSecurityCollection, user.uid), {
+          lastLogout: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error('Error updating logout time:', error);
+      }
+    }
+    
+    // Sign out from Google if signed in with Google
+    try {
+      const isSignedInWithGoogle = await GoogleSignin.isSignedIn();
+      if (isSignedInWithGoogle) {
+        await GoogleSignin.signOut();
+        console.log('[AUTH] Signed out from Google');
+      }
+    } catch (error) {
+      console.error('[AUTH] Error signing out from Google:', error);
+    }
+    
+    // Clean up real-time sync listeners before signing out
+    realtimeSyncService.cleanup();
+    
+    // Sign out from Firebase
+    await signOut(auth);
+    console.log('[AUTH] Signed out from Firebase');
+  } catch (error: any) {
+    console.error('[AUTH] Sign out error:', error);
     throw error;
   }
 };

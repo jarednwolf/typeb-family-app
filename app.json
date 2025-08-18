@@ -55,13 +55,6 @@
       "**/*"
     ],
     "plugins": [
-      [
-        "@config-plugins/detox",
-        {
-          "skipProguard": false,
-          "subdomains": "*"
-        }
-      ],
       "expo-notifications",
       "expo-camera",
       "expo-image-picker"

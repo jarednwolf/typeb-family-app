@@ -1,411 +1,309 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  Alert,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   ActivityIndicator,
-  Alert,
-  Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/redux';
-import { signUp, selectIsLoading, selectAuthError, clearError } from '../../store/slices/authSlice';
-import { validatePassword } from '../../services/auth';
-import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { auth, db as firestore } from '../../services/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { configureGoogleSignIn } from '../../services/auth';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
 
-type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
-
-const SignUpScreen: React.FC = () => {
-  const navigation = useNavigation<SignUpScreenNavigationProp>();
-  const dispatch = useAppDispatch();
-  const isLoading = useAppSelector(selectIsLoading);
-  const error = useAppSelector(selectAuthError);
+export const SignUpScreen = () => {
+  const navigation = useNavigation();
   const { theme, isDarkMode } = useTheme();
-
-  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const [firstName, setFirstName] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [isUnder13, setIsUnder13] = useState(false);
+  const [parentConsent, setParentConsent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+  useEffect(() => {
+    // Configure Google Sign-In when component mounts
+    configureGoogleSignIn();
+  }, []);
 
-  const handlePasswordChange = (text: string) => {
-    setPassword(text);
-    
-    // Validate password in real-time
-    const validation = validatePassword(text);
-    setPasswordErrors(validation.errors);
+  const checkAge = (year: string) => {
+    setBirthYear(year);
+    if (year.length === 4) {
+      const age = new Date().getFullYear() - parseInt(year);
+      setIsUnder13(age < 13);
+    }
   };
 
   const handleSignUp = async () => {
-    // Validate all fields
-    if (!firstName || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
+    setIsLoading(true);
+    try {
+      // COPPA Check
+      const age = new Date().getFullYear() - parseInt(birthYear);
+      
+      if (age < 13 && !parentConsent) {
+        Alert.alert(
+          'Parental Consent Required',
+          'Users under 13 need parental consent. Please have a parent check the consent box.'
+        );
+        return;
+      }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
-    }
-
-    // Validate password
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      Alert.alert('Password Requirements', passwordValidation.errors.join('\n'));
-      return;
-    }
-
-    // Check password match
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    dispatch(clearError());
-    const result = await dispatch(signUp({ email, password, displayName: firstName }));
-    
-    if (signUp.rejected.match(result)) {
-      Alert.alert('Sign Up Failed', result.payload as string);
-    } else {
-      Alert.alert(
-        'Verification Email Sent',
-        'Please check your email to verify your account.',
-        [{ text: 'OK' }]
+      // Create auth account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
       );
+
+      // Store user data with COPPA compliance
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+        firstName,
+        email,
+        birthYear: parseInt(birthYear),
+        age,
+        createdAt: new Date(),
+        parentEmail: isUnder13 ? parentEmail : null,
+        parentConsentGiven: isUnder13 ? parentConsent : null,
+        consentTimestamp: isUnder13 ? new Date() : null,
+      });
+
+      // If under 13, also store parental consent record
+      if (isUnder13 && parentConsent) {
+        await setDoc(
+          doc(firestore, 'parentalConsents', userCredential.user.uid),
+          {
+            childId: userCredential.user.uid,
+            childEmail: email,
+            parentEmail,
+            consentGiven: true,
+            timestamp: new Date(),
+            ipAddress: 'user-ip', // In production, get actual IP
+          }
+        );
+      }
+
+      Alert.alert('Success', 'Account created successfully!');
+      // Navigation will be handled by auth state change
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} testID="signup-screen">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Create Account</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Birth Year (YYYY)"
+        value={birthYear}
+        onChangeText={checkAge}
+        keyboardType="numeric"
+        maxLength={4}
+      />
+
+      {/* COPPA: Show parental consent for under 13 */}
+      {isUnder13 && (
+        <View style={styles.coppaSection}>
+          <Text style={styles.coppaTitle}>⚠️ Parental Consent Required</Text>
+          <Text style={styles.coppaText}>
+            Users under 13 need parental permission to use TypeB.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Parent/Guardian Email"
+            value={parentEmail}
+            onChangeText={setParentEmail}
+            keyboardType="email-address"
+          />
+
           <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            style={styles.consentBox}
+            onPress={() => setParentConsent(!parentConsent)}
           >
-            <Ionicons name="chevron-back" size={28} color={theme.colors.textPrimary} />
-            <Text style={styles.backText}>Back</Text>
+            <View style={[styles.checkbox, parentConsent && styles.checked]} />
+            <Text style={styles.consentText}>
+              I am the parent/guardian and I consent to my child using TypeB.
+              I understand data will be collected as described in the Privacy Policy.
+            </Text>
           </TouchableOpacity>
-          
-          <View style={styles.header}>
-            <Image
-              source={require('../../../assets/type_b_logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join the TypeB Family community</Text>
-          </View>
+        </View>
+      )}
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>First Name</Text>
-              <TextInput
-                testID="display-name-input"
-                style={styles.input}
-                placeholder="Enter your first name"
-                placeholderTextColor={theme.colors.textTertiary}
-                value={firstName}
-                onChangeText={setFirstName}
-                autoCapitalize="words"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
+      <TouchableOpacity
+        style={[styles.button, (isLoading || !birthYear || (isUnder13 && !parentConsent)) && styles.disabled]}
+        onPress={handleSignUp}
+        disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Sign Up</Text>
+        )}
+      </TouchableOpacity>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                testID="email-input"
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={theme.colors.textTertiary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
+      <View style={styles.dividerContainer}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>OR</Text>
+        <View style={styles.dividerLine} />
+      </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  testID="password-input"
-                  style={[styles.input, styles.passwordInput]}
-                  placeholder="Create a password"
-                  placeholderTextColor={theme.colors.textTertiary}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  textContentType="none"
-                  editable={!isLoading}
-                />
-                <TouchableOpacity
-                  style={styles.showPasswordButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Text style={styles.showPasswordText}>
-                    {showPassword ? 'Hide' : 'Show'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              {password.length > 0 && (
-                <View style={styles.passwordRequirements}>
-                  <Text style={[
-                    styles.requirement,
-                    password.length >= 8 ? styles.requirementMet : styles.requirementUnmet
-                  ]}>
-                    • At least 8 characters
-                  </Text>
-                  <Text style={[
-                    styles.requirement,
-                    /[A-Z]/.test(password) ? styles.requirementMet : styles.requirementUnmet
-                  ]}>
-                    • One uppercase letter
-                  </Text>
-                  <Text style={[
-                    styles.requirement,
-                    /[a-z]/.test(password) ? styles.requirementMet : styles.requirementUnmet
-                  ]}>
-                    • One lowercase letter
-                  </Text>
-                  <Text style={[
-                    styles.requirement,
-                    /[0-9]/.test(password) ? styles.requirementMet : styles.requirementUnmet
-                  ]}>
-                    • One number
-                  </Text>
-                  <Text style={[
-                    styles.requirement,
-                    /[!@#$%^&*(),.?":{}|<>]/.test(password) ? styles.requirementMet : styles.requirementUnmet
-                  ]}>
-                    • One special character
-                  </Text>
-                </View>
-              )}
-            </View>
+      <GoogleSignInButton
+        variant="signup"
+        onSuccess={() => {
+          // Navigation will be handled by auth state change
+          console.log('Google Sign-Up successful');
+        }}
+        disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
+      />
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                testID="confirm-password-input"
-                style={styles.input}
-                placeholder="Confirm your password"
-                placeholderTextColor={theme.colors.textTertiary}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-                textContentType="none"
-                editable={!isLoading}
-                onFocus={() => {
-                  // Scroll to make confirm password field visible
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollTo({ y: 500, animated: true });
-                  }, 100);
-                }}
-              />
-              {confirmPassword.length > 0 && password !== confirmPassword && (
-                <Text style={styles.errorText}>Passwords do not match</Text>
-              )}
-            </View>
+      <TouchableOpacity onPress={() => navigation.navigate('SignIn')} disabled={isLoading}>
+        <Text style={styles.link}>Already have an account? Log in</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              testID="create-account-button"
-              style={[styles.signUpButton, isLoading && styles.disabledButton]}
-              onPress={handleSignUp}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color={theme.colors.background} />
-              ) : (
-                <Text style={styles.signUpButtonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.signInContainer}>
-              <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity testID="signin-link" onPress={() => navigation.goBack()} disabled={isLoading}>
-                <Text style={styles.signInLink}>Sign In</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <Text style={styles.privacy}>
+        By signing up, you agree to our Terms of Service and Privacy Policy.
+        {'\n'}Users under 13 require parental consent.
+      </Text>
+    </ScrollView>
   );
 };
 
-const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: Platform.OS === 'ios' ? 150 : 32, // Extra padding for iOS keyboard and confirm password field
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  backText: {
-    fontSize: 17,
-    color: theme.colors.textPrimary,
-    marginLeft: 4,
-  },
-  header: {
-    marginBottom: 32,
-    alignItems: 'center',
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 32,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    padding: 20,
+    backgroundColor: '#fff',
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 30,
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: theme.colors.textTertiary,
-    textAlign: 'center',
-  },
-  form: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#ddd',
+    padding: 15,
+    marginBottom: 15,
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     fontSize: 16,
-    color: theme.colors.textPrimary,
-    backgroundColor: isDarkMode ? theme.colors.surface : '#F9FAFB',
   },
-  passwordContainer: {
-    position: 'relative',
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
   },
-  passwordInput: {
-    paddingRight: 60,
+  disabled: {
+    backgroundColor: '#ccc',
   },
-  showPasswordButton: {
-    position: 'absolute',
-    right: 16,
-    top: '50%',
-    transform: [{ translateY: -10 }],
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
   },
-  showPasswordText: {
-    color: theme.colors.textTertiary,
+  link: {
+    color: '#007AFF',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  privacy: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 30,
+    paddingHorizontal: 20,
+  },
+  coppaSection: {
+    backgroundColor: '#FFF9E6',
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 15,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  coppaTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  coppaText: {
     fontSize: 14,
+    marginBottom: 15,
+    color: '#666',
+  },
+  consentBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    marginRight: 10,
+    borderRadius: 4,
+  },
+  checked: {
+    backgroundColor: '#007AFF',
+  },
+  consentText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#333',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#666',
+    fontSize: 12,
     fontWeight: '500',
   },
-  passwordRequirements: {
-    marginTop: 8,
-    paddingHorizontal: 4,
-  },
-  requirement: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  requirementMet: {
-    color: theme.colors.success,
-  },
-  requirementUnmet: {
-    color: theme.colors.textTertiary,
-  },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  signUpButton: {
-    backgroundColor: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  signUpButtonText: {
-    color: theme.colors.background,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  signInContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  signInText: {
-    color: theme.colors.textTertiary,
-    fontSize: 14,
-  },
-  signInLink: {
-    color: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
 });
-
-export default SignUpScreen;

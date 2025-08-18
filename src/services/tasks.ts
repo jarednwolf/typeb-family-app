@@ -28,6 +28,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { checkAndRecordMilestone } from './milestones';
+import { checkAchievementsOnTaskComplete } from './celebrations';
 import {
   Task,
   TaskStatus,
@@ -482,6 +483,14 @@ export const completeTask = async (
     } catch (milestoneError) {
       // Log but don't fail the task completion if milestone check fails
       console.error('Error checking milestones:', milestoneError);
+    }
+
+    // Check for achievements and trigger celebrations
+    try {
+      await checkAchievementsOnTaskComplete(userId, family.id, task);
+    } catch (achievementError) {
+      // Log but don't fail the task completion if achievement check fails
+      console.error('Error checking achievements:', achievementError);
     }
   } catch (error: any) {
     console.error('Error completing task:', error);

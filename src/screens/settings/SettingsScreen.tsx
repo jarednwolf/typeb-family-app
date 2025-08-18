@@ -232,6 +232,22 @@ const SettingsScreen: React.FC = () => {
       type: 'navigation',
       onPress: () => setShowLanguageSelector(true),
     },
+    {
+      id: 'notification-settings',
+      title: 'Advanced Notifications',
+      subtitle: 'Configure detailed notification preferences',
+      icon: 'bell',
+      type: 'navigation',
+      onPress: () => navigation.navigate('NotificationSettings' as never),
+    },
+    {
+      id: 'privacy-settings',
+      title: 'Privacy & Security',
+      subtitle: 'Manage your data and privacy settings',
+      icon: 'lock',
+      type: 'navigation',
+      onPress: () => navigation.navigate('PrivacySettings' as never),
+    },
   ];
 
   const supportSettings: SettingItem[] = [
@@ -264,6 +280,14 @@ const SettingsScreen: React.FC = () => {
       type: 'navigation',
       onPress: () => navigation.navigate('About' as never),
     },
+    ...(__DEV__ ? [{
+      id: 'performance-debug',
+      title: 'Performance Monitor',
+      subtitle: 'View app performance metrics',
+      icon: 'activity' as const,
+      type: 'navigation' as const,
+      onPress: () => navigation.navigate('PerformanceDebug' as never),
+    }] : []),
   ];
 
   const renderSettingItem = (item: SettingItem) => {

@@ -1,166 +1,114 @@
-import { db } from './firebase';
-import { ReactionType } from '../components/engagement/ParentReaction';
-import { deleteField, DocumentSnapshot, doc, setDoc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
+/**
+ * Reactions Service
+ * Bridges emoji reactions with the social integration system
+ */
 
-export interface ParentReaction {
-  userId: string;
-  userName: string;
-  reactionType: ReactionType;
-  timestamp: number;
-}
+import { ReactionType } from './socialIntegration';
+import { addReaction as addSocialReaction, removeReaction as removeSocialReaction } from './socialIntegration';
+import { ReactionEmoji, TASK_REACTION_EMOJIS } from '../types/reactions';
+
+// Map emoji reactions to social reaction types
+export const EMOJI_TO_REACTION_TYPE: Record<ReactionEmoji, ReactionType> = {
+  '👏': 'applause',
+  '🎉': 'celebrate',
+  '💪': 'support',
+  '⭐': 'star',
+  '🔥': 'fire',
+  '❤️': 'love',
+  '😊': 'like',
+  '🚀': 'trophy',
+};
+
+// Reverse mapping
+export const REACTION_TYPE_TO_EMOJI: Record<ReactionType, ReactionEmoji> = Object.entries(
+  EMOJI_TO_REACTION_TYPE
+).reduce((acc, [emoji, type]) => {
+  acc[type] = emoji as ReactionEmoji;
+  return acc;
+}, {} as Record<ReactionType, ReactionEmoji>);
+
+// Reaction metadata for display
+export const REACTION_METADATA: Record<ReactionType, { emoji: string; label: string; color: string; category: string; animationType?: 'bounce' | 'float' | 'pulse' | 'rotate' | 'scale' }> = {
+  like: { emoji: '😊', label: 'Like', color: '#3B82F6', category: 'positive', animationType: 'bounce' },
+  love: { emoji: '❤️', label: 'Love', color: '#EF4444', category: 'positive', animationType: 'pulse' },
+  celebrate: { emoji: '🎉', label: 'Celebrate', color: '#8B5CF6', category: 'celebration', animationType: 'rotate' },
+  support: { emoji: '💪', label: 'Support', color: '#10B981', category: 'positive', animationType: 'bounce' },
+  applause: { emoji: '👏', label: 'Applause', color: '#F59E0B', category: 'positive', animationType: 'bounce' },
+  fire: { emoji: '🔥', label: 'Fire', color: '#F97316', category: 'positive', animationType: 'pulse' },
+  star: { emoji: '⭐', label: 'Star', color: '#FCD34D', category: 'positive', animationType: 'scale' },
+  trophy: { emoji: '🚀', label: 'Amazing', color: '#6366F1', category: 'positive', animationType: 'scale' },
+};
+
+export type { ReactionType };
 
 /**
- * Add or update a parent reaction on a task
- * @param taskId The ID of the task to react to
- * @param userId The ID of the parent adding the reaction
- * @param userName The name of the parent
- * @param reactionType The type of reaction
- * @returns Promise that resolves when the reaction is added
+ * Add emoji reaction to a task
  */
-export const addParentReaction = async (
-  taskId: string,
+export const addEmojiReaction = async (
   userId: string,
   userName: string,
-  reactionType: ReactionType
-): Promise<void> => {
-  try {
-    const reaction: ParentReaction = {
-      userId,
-      userName,
-      reactionType,
-      timestamp: Date.now(),
-    };
-
-    // Use set with merge to update or create the reaction
-    await setDoc(
-      doc(db, 'tasks', taskId),
-      {
-        parentReactions: {
-          [userId]: reaction,
-        },
-      },
-      { merge: true }
-    );
-  } catch (error) {
-    console.error('Error adding parent reaction:', error);
-    throw error;
-  }
-};
-
-/**
- * Remove a parent reaction from a task
- * @param taskId The ID of the task to remove reaction from
- * @param userId The ID of the parent removing their reaction
- * @returns Promise that resolves when the reaction is removed
- */
-export const removeParentReaction = async (
   taskId: string,
-  userId: string
+  emoji: ReactionEmoji,
+  userAvatar?: string
 ): Promise<void> => {
-  try {
-    await updateDoc(doc(db, 'tasks', taskId), {
-      [`parentReactions.${userId}`]: deleteField(),
-    });
-  } catch (error) {
-    console.error('Error removing parent reaction:', error);
-    throw error;
+  const reactionType = EMOJI_TO_REACTION_TYPE[emoji];
+  if (!reactionType) {
+    throw new Error(`Invalid emoji reaction: ${emoji}`);
   }
-};
 
-/**
- * Get all parent reactions for a task
- * @param taskId The ID of the task
- * @returns Promise that resolves with the parent reactions map
- */
-export const getParentReactions = async (
-  taskId: string
-): Promise<Record<string, ParentReaction> | null> => {
-  try {
-    const taskDoc = await getDoc(doc(db, 'tasks', taskId));
-
-    const taskData = taskDoc.data();
-    return taskData?.parentReactions || null;
-  } catch (error) {
-    console.error('Error fetching parent reactions:', error);
-    return null;
-  }
-};
-
-/**
- * Listen to parent reactions for a task in real-time
- * @param taskId The ID of the task
- * @param onUpdate Callback function when reactions change
- * @returns Unsubscribe function
- */
-export const subscribeToParentReactions = (
-  taskId: string,
-  onUpdate: (reactions: Record<string, ParentReaction> | null) => void
-): (() => void) => {
-  return onSnapshot(
-    doc(db, 'tasks', taskId),
-    (docSnapshot: DocumentSnapshot) => {
-      const taskData = docSnapshot.data();
-      onUpdate(taskData?.parentReactions || null);
-    },
-    (error: Error) => {
-      console.error('Error listening to parent reactions:', error);
-      onUpdate(null);
-    }
+  return addSocialReaction(
+    userId,
+    userName,
+    taskId,
+    'task',
+    reactionType,
+    userAvatar
   );
 };
 
 /**
- * Check if a user has reacted to a task
- * @param taskId The ID of the task
- * @param userId The ID of the user to check
- * @returns Promise that resolves with the reaction type or null
+ * Remove emoji reaction from a task
  */
-export const getUserReaction = async (
+export const removeEmojiReaction = async (
+  userId: string,
   taskId: string,
-  userId: string
-): Promise<ReactionType | null> => {
-  try {
-    const reactions = await getParentReactions(taskId);
-    return reactions?.[userId]?.reactionType || null;
-  } catch (error) {
-    console.error('Error checking user reaction:', error);
-    return null;
+  emoji: ReactionEmoji
+): Promise<void> => {
+  const reactionType = EMOJI_TO_REACTION_TYPE[emoji];
+  if (!reactionType) {
+    throw new Error(`Invalid emoji reaction: ${emoji}`);
   }
+
+  return removeSocialReaction(userId, taskId, reactionType);
 };
 
 /**
- * Get reaction counts for a task
- * @param taskId The ID of the task
- * @returns Promise that resolves with counts by reaction type
+ * Get available emoji reactions
  */
-export const getReactionCounts = async (
-  taskId: string
-): Promise<Record<ReactionType, number>> => {
-  try {
-    const reactions = await getParentReactions(taskId);
-    const counts: Record<ReactionType, number> = {
-      STAR: 0,
-      FIRE: 0,
-      CLAP: 0,
-      HEART: 0,
-      THUMBS_UP: 0,
-    };
-
-    if (reactions) {
-      Object.values(reactions).forEach((reaction) => {
-        counts[reaction.reactionType]++;
-      });
-    }
-
-    return counts;
-  } catch (error) {
-    console.error('Error getting reaction counts:', error);
-    return {
-      STAR: 0,
-      FIRE: 0,
-      CLAP: 0,
-      HEART: 0,
-      THUMBS_UP: 0,
-    };
-  }
+export const getAvailableEmojis = (): ReactionEmoji[] => {
+  return [...TASK_REACTION_EMOJIS];
 };
+
+/**
+ * Get reaction type from emoji
+ */
+export const getReactionTypeFromEmoji = (emoji: ReactionEmoji): ReactionType | null => {
+  return EMOJI_TO_REACTION_TYPE[emoji] || null;
+};
+
+/**
+ * Get emoji from reaction type
+ */
+export const getEmojiFromReactionType = (type: ReactionType): ReactionEmoji | null => {
+  return REACTION_TYPE_TO_EMOJI[type] || null;
+};
+
+// Re-export social integration functions for compatibility
+export { 
+  addReaction,
+  removeReaction,
+  getReactions 
+} from './socialIntegration';
+
+// Parent reaction type for compatibility
+export type ParentReaction = ReactionType;

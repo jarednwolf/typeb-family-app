@@ -1,156 +1,153 @@
+/**
+ * Error Monitoring Service
+ * Configures and manages Sentry error tracking
+ */
+
 import * as Sentry from '@sentry/react-native';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 class ErrorMonitoringService {
-  private isInitialized = false;
-  private isProduction = process.env.EXPO_PUBLIC_ENVIRONMENT === 'production';
-  private enableCrashReporting = process.env.EXPO_PUBLIC_ENABLE_CRASH_REPORTING === 'true';
+  private initialized = false;
 
-  async initialize() {
-    // Only initialize in production or if explicitly enabled
-    if (!this.isProduction && !this.enableCrashReporting) {
-      console.log('Error monitoring disabled in development mode');
+  /**
+   * Initialize Sentry
+   */
+  initialize() {
+    if (this.initialized) {
+      console.log('[ErrorMonitoring] Already initialized');
       return;
     }
 
-    const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-    if (!sentryDsn) {
-      console.warn('Sentry DSN not configured');
+    const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN || Constants.expoConfig?.extra?.sentryDsn;
+
+    if (!dsn) {
+      console.warn('[ErrorMonitoring] Sentry DSN not configured');
       return;
     }
 
     try {
       Sentry.init({
-        dsn: sentryDsn,
-        environment: process.env.EXPO_PUBLIC_ENVIRONMENT || 'development',
-        debug: !this.isProduction,
-        tracesSampleRate: this.isProduction ? 0.2 : 1.0, // 20% in production, 100% in dev
+        dsn,
+        debug: __DEV__, // Enable debug mode in development
+        environment: __DEV__ ? 'development' : 'production',
+        tracesSampleRate: __DEV__ ? 1.0 : 0.1, // 100% in dev, 10% in production
         attachStacktrace: true,
-        attachScreenshot: true, // Attach screenshots to errors
-        
-        // Release tracking
-        release: `${Constants.expoConfig?.slug}@${Constants.expoConfig?.version}`,
-        dist: Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString(),
+        autoSessionTracking: true,
+        sessionTrackingIntervalMillis: 30000, // 30 seconds
         
         // Integration configuration
         integrations: [
           new Sentry.ReactNativeTracing({
-            tracingOrigins: ['localhost', /^\//],
-            routingInstrumentation: new Sentry.ReactNavigationInstrumentation(),
+            routingInstrumentation: Sentry.reactNavigationInstrumentation,
+            tracingOrigins: ['localhost', /^https:\/\/yourserver\.io\/api/],
+            beforeNavigate: (context) => {
+              // Add additional context to navigation transactions
+              return {
+                ...context,
+                tags: {
+                  ...context.tags,
+                  platform: Platform.OS,
+                },
+              };
+            },
           }),
         ],
         
-        // Before sending event
+        // Before sending error to Sentry
         beforeSend: (event, hint) => {
-          // Filter out non-critical errors in production
-          if (this.isProduction) {
-            // Don't send network errors that are expected
+          // Filter out certain errors in production
+          if (!__DEV__) {
+            // Don't send network errors in production
             if (event.exception?.values?.[0]?.type === 'NetworkError') {
               return null;
             }
             
-            // Sanitize sensitive data
-            if (event.request?.cookies) {
-              delete event.request.cookies;
-            }
-            if (event.user?.email) {
-              event.user.email = '***';
+            // Don't send cancelled promise errors
+            if (event.exception?.values?.[0]?.value?.includes('cancelled')) {
+              return null;
             }
           }
           
-          // Log to console in development
-          if (!this.isProduction) {
-            console.error('Sentry Event:', event, hint);
+          // Remove sensitive data
+          if (event.request) {
+            delete event.request.cookies;
+            delete event.request.headers;
           }
+          
+          // Add custom tags
+          event.tags = {
+            ...event.tags,
+            app_version: Constants.expoConfig?.version || '1.0.0',
+            platform: Platform.OS,
+            platform_version: Platform.Version,
+          };
           
           return event;
         },
         
-        // Breadcrumb filtering
-        beforeBreadcrumb: (breadcrumb) => {
-          // Filter out sensitive breadcrumbs
+        // Before breadcrumb is added
+        beforeBreadcrumb: (breadcrumb, hint) => {
+          // Filter out certain breadcrumbs
           if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
             return null;
           }
           
-          // Sanitize data in breadcrumbs
-          if (breadcrumb.data?.password) {
-            breadcrumb.data.password = '***';
+          // Sanitize breadcrumb data
+          if (breadcrumb.data) {
+            // Remove any potential sensitive data from breadcrumbs
+            delete breadcrumb.data.password;
+            delete breadcrumb.data.token;
+            delete breadcrumb.data.apiKey;
           }
           
           return breadcrumb;
         },
       });
 
-      this.isInitialized = true;
-      console.log('Error monitoring initialized');
+      this.initialized = true;
+      console.log('[ErrorMonitoring] Sentry initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Sentry:', error);
+      console.error('[ErrorMonitoring] Failed to initialize Sentry:', error);
     }
   }
 
-  // Capture exception with context
-  captureException(error: Error | string, context?: Record<string, any>) {
-    if (!this.isInitialized) {
-      console.error('Error (not sent to Sentry):', error, context);
-      return;
-    }
-
-    const errorObj = typeof error === 'string' ? new Error(error) : error;
-    
-    Sentry.withScope((scope) => {
-      if (context) {
-        scope.setContext('additional', context);
-      }
-      Sentry.captureException(errorObj);
-    });
-  }
-
-  // Capture message (for non-error events)
-  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, any>) {
-    if (!this.isInitialized) {
-      console.log(`Message (${level}):`, message, context);
-      return;
-    }
-
-    Sentry.withScope((scope) => {
-      if (context) {
-        scope.setContext('additional', context);
-      }
-      Sentry.captureMessage(message, level);
-    });
-  }
-
-  // Set user context
-  setUser(user: { id: string; email?: string; username?: string; familyId?: string } | null) {
-    if (!this.isInitialized) return;
+  /**
+   * Set user context for error tracking
+   */
+  setUser(user: { id: string; email?: string; username?: string } | null) {
+    if (!this.initialized) return;
 
     if (user) {
       Sentry.setUser({
         id: user.id,
         email: user.email,
         username: user.username,
-        // Add custom attributes
-        familyId: user.familyId,
       });
     } else {
       Sentry.setUser(null);
     }
   }
 
-  // Add breadcrumb for tracking user actions
+  /**
+   * Add custom context
+   */
+  setContext(key: string, context: any) {
+    if (!this.initialized) return;
+    Sentry.setContext(key, context);
+  }
+
+  /**
+   * Add breadcrumb
+   */
   addBreadcrumb(breadcrumb: {
     message: string;
     category?: string;
     level?: Sentry.SeverityLevel;
-    data?: Record<string, any>;
+    data?: any;
   }) {
-    if (!this.isInitialized) {
-      console.log('Breadcrumb:', breadcrumb);
-      return;
-    }
-
+    if (!this.initialized) return;
+    
     Sentry.addBreadcrumb({
       message: breadcrumb.message,
       category: breadcrumb.category || 'custom',
@@ -160,203 +157,185 @@ class ErrorMonitoringService {
     });
   }
 
-  // Set tag for categorization
-  setTag(key: string, value: string | number | boolean) {
-    if (!this.isInitialized) return;
-    Sentry.setTag(key, value);
+  /**
+   * Capture exception
+   */
+  captureException(error: Error | string, context?: any) {
+    if (!this.initialized) {
+      console.error('[ErrorMonitoring] Error captured (Sentry not initialized):', error);
+      return;
+    }
+
+    if (context) {
+      Sentry.withScope((scope) => {
+        scope.setContext('additional', context);
+        Sentry.captureException(error);
+      });
+    } else {
+      Sentry.captureException(error);
+    }
   }
 
-  // Set multiple tags
-  setTags(tags: Record<string, string | number | boolean>) {
-    if (!this.isInitialized) return;
-    Object.entries(tags).forEach(([key, value]) => {
-      Sentry.setTag(key, value);
-    });
+  /**
+   * Capture message
+   */
+  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: any) {
+    if (!this.initialized) {
+      console.log(`[ErrorMonitoring] Message captured (${level}):`, message);
+      return;
+    }
+
+    if (context) {
+      Sentry.withScope((scope) => {
+        scope.setContext('additional', context);
+        Sentry.captureMessage(message, level);
+      });
+    } else {
+      Sentry.captureMessage(message, level);
+    }
   }
 
-  // Performance monitoring
-  startTransaction(name: string, op: string = 'navigation') {
-    if (!this.isInitialized) return null;
-
+  /**
+   * Start a transaction for performance monitoring
+   */
+  startTransaction(name: string, op: string) {
+    if (!this.initialized) return null;
+    
     return Sentry.startTransaction({
       name,
       op,
     });
   }
 
-  // Profiling for performance issues
-  startProfiling() {
-    if (!this.isInitialized || !this.isProduction) return;
-    
-    // Start profiling session
-    Sentry.startProfiling();
-  }
-
-  stopProfiling() {
-    if (!this.isInitialized || !this.isProduction) return;
-    
-    // Stop profiling session
-    Sentry.stopProfiling();
-  }
-
-  // Crash test (for testing only)
-  testCrash() {
-    if (this.isProduction) {
-      console.warn('Crash test disabled in production');
-      return;
+  /**
+   * Wrap async function with error handling
+   */
+  async wrapAsync<T>(
+    fn: () => Promise<T>,
+    context?: { operation?: string; [key: string]: any }
+  ): Promise<T> {
+    try {
+      return await fn();
+    } catch (error) {
+      this.captureException(error as Error, context);
+      throw error;
     }
-    
-    throw new Error('Test crash - this is intentional for testing error reporting');
   }
 
-  // Network error tracking
-  trackNetworkError(url: string, status: number, error?: string) {
-    this.captureMessage(`Network Error: ${url}`, 'error', {
-      url,
-      status,
-      error,
-      platform: Platform.OS,
-    });
-  }
-
-  // Track failed API calls
-  trackApiError(endpoint: string, error: any, params?: any) {
-    this.captureException(error, {
-      endpoint,
-      params: params ? JSON.stringify(params) : undefined,
-      platform: Platform.OS,
-    });
-  }
-
-  // Track performance metrics
-  trackPerformance(metric: string, value: number, unit: string = 'ms') {
-    if (!this.isInitialized) return;
-
-    Sentry.withScope((scope) => {
-      scope.setContext('performance', {
-        metric,
-        value,
-        unit,
-        timestamp: new Date().toISOString(),
+  /**
+   * Create error boundary fallback
+   */
+  createErrorBoundaryFallback(resetError: () => void) {
+    return (error: Error, errorInfo: { componentStack: string }) => {
+      this.captureException(error, {
+        errorBoundary: true,
+        componentStack: errorInfo.componentStack,
       });
-      Sentry.captureMessage(`Performance: ${metric}`, 'info');
+      
+      // You can return a custom error UI here
+      console.error('Error boundary caught:', error);
+    };
+  }
+
+  /**
+   * Performance monitoring helpers
+   */
+  measurePerformance(name: string, fn: () => void) {
+    const transaction = this.startTransaction(name, 'custom');
+    const startTime = Date.now();
+    
+    try {
+      fn();
+    } finally {
+      const duration = Date.now() - startTime;
+      
+      if (transaction) {
+        transaction.setData('duration', duration);
+        transaction.finish();
+      }
+      
+      // Log slow operations
+      if (duration > 1000) {
+        this.captureMessage(
+          `Slow operation: ${name} took ${duration}ms`,
+          'warning',
+          { duration, operation: name }
+        );
+      }
+    }
+  }
+
+  /**
+   * Network request monitoring
+   */
+  monitorNetworkRequest(url: string, method: string, startTime: number, error?: Error) {
+    const duration = Date.now() - startTime;
+    
+    this.addBreadcrumb({
+      message: `${method} ${url}`,
+      category: 'network',
+      level: error ? 'error' : 'info',
+      data: {
+        url,
+        method,
+        duration,
+        error: error?.message,
+      },
+    });
+    
+    // Alert on slow requests
+    if (duration > 5000) {
+      this.captureMessage(
+        `Slow network request: ${method} ${url} took ${duration}ms`,
+        'warning',
+        { url, method, duration }
+      );
+    }
+  }
+
+  /**
+   * Track custom events
+   */
+  trackEvent(eventName: string, properties?: { [key: string]: any }) {
+    this.addBreadcrumb({
+      message: eventName,
+      category: 'event',
+      level: 'info',
+      data: properties,
     });
   }
 
-  // Session tracking
-  startSession() {
-    if (!this.isInitialized) return;
-    Sentry.startSession();
-  }
-
-  endSession() {
-    if (!this.isInitialized) return;
-    Sentry.endSession();
-  }
-
-  // Clear all data (for logout)
-  clear() {
-    if (!this.isInitialized) return;
+  /**
+   * Flush events before app terminates
+   */
+  async flush(timeout: number = 2000): Promise<boolean> {
+    if (!this.initialized) return true;
     
-    Sentry.setUser(null);
-    Sentry.setTags({});
-    Sentry.clearBreadcrumbs();
+    try {
+      return await Sentry.flush(timeout);
+    } catch (error) {
+      console.error('[ErrorMonitoring] Failed to flush events:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Close Sentry client
+   */
+  async close(timeout: number = 2000): Promise<boolean> {
+    if (!this.initialized) return true;
+    
+    try {
+      const result = await Sentry.close(timeout);
+      this.initialized = false;
+      return result;
+    } catch (error) {
+      console.error('[ErrorMonitoring] Failed to close Sentry:', error);
+      return false;
+    }
   }
 }
 
 // Export singleton instance
-export const errorMonitoring = new ErrorMonitoringService();
-
-// React Error Boundary Component
-import React, { Component, ReactNode } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error?: Error;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    
-    // Report to Sentry
-    errorMonitoring.captureException(error, {
-      componentStack: errorInfo.componentStack,
-      errorBoundary: true,
-    });
-  }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: undefined });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Oops! Something went wrong</Text>
-          <Text style={styles.message}>
-            We've encountered an unexpected error. The issue has been reported and we'll fix it soon.
-          </Text>
-          <Button title="Try Again" onPress={this.handleReset} />
-          {__DEV__ && (
-            <Text style={styles.error}>
-              {this.state.error?.toString()}
-            </Text>
-          )}
-        </View>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#666',
-  },
-  error: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#ffebee',
-    color: '#c62828',
-    fontFamily: 'monospace',
-    fontSize: 12,
-  },
-});
+const errorMonitoring = new ErrorMonitoringService();
+export default errorMonitoring;

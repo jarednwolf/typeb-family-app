@@ -264,11 +264,11 @@ class AnalyticsService {
   // Send to custom analytics endpoint (for additional analytics services)
   private async sendToCustomAnalytics(eventName: string, params?: Record<string, any>) {
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-      if (!apiUrl) return;
+      const functionsUrl = process.env.EXPO_PUBLIC_CLOUD_FUNCTIONS_URL;
+      if (!functionsUrl) return;
 
       // Send analytics data to your backend
-      await fetch(`${apiUrl}/analytics/events`, {
+      await fetch(`${functionsUrl}/trackAnalyticsEvent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

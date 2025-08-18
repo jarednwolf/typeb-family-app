@@ -29,7 +29,7 @@ import { useAppSelector } from '../../hooks/redux';
 import { selectFamilyMembers } from '../../store/slices/familySlice';
 import { selectUserProfile } from '../../store/slices/authSlice';
 import CompletionAnimation from '../animations/CompletionAnimation';
-import ParentReactionComponent from '../engagement/ParentReaction';
+import { ReactionDisplay } from '../reactions';
 import { useHaptics } from '../../utils/haptics';
 import { usePressAnimation, useFadeAnimation, usePulseAnimation } from '../../utils/animations';
 import {
@@ -507,13 +507,31 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </View>
       )}
       
-      {/* Parent Reaction Component */}
-      {isCompleted && userProfile && (
-        <View style={styles.reactionContainer}>
-          <ParentReactionComponent
-            taskId={task.id}
+      {/* Enhanced Reaction Display - Week 4 Social Features */}
+      {userProfile && (
+        <View style={[
+          styles.reactionContainer,
+          !isCompleted && styles.reactionContainerActive
+        ]}>
+          <ReactionDisplay
+            contentType="task"
+            contentId={task.id}
             reactions={task.parentReactions}
-            readonly={true}
+            compact={true}
+            showUserList={false}
+            allowReaction={userProfile.role === 'parent' || isCompleted}
+            maxReactionsShown={3}
+            onReactionAdded={(reaction) => {
+              // Add haptic feedback for reactions
+              haptics.selection();
+              // Announce for accessibility
+              if (settings.announceStateChanges) {
+                announce(`Added ${reaction} reaction to task`);
+              }
+            }}
+            onReactionRemoved={() => {
+              haptics.selection();
+            }}
           />
         </View>
       )}
@@ -720,10 +738,12 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   },
   
   reactionContainer: {
-    position: 'absolute',
-    bottom: theme.spacing.XS,
-    right: theme.spacing.M,
-    zIndex: 10,
+    marginTop: theme.spacing.XS,
+    marginLeft: 44 + theme.spacing.S, // Align with content (checkbox width + margin)
+  },
+  
+  reactionContainerActive: {
+    opacity: 0.8, // Slightly subdued when task is not completed
   },
 });
 

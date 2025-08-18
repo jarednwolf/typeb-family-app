@@ -23,6 +23,10 @@ import { updateTask, deleteTask, completeTask } from '../../store/slices/tasksSl
 import { selectFamilyMembers } from '../../store/slices/familySlice';
 import { Task, TaskPriority } from '../../types/models';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTaskReactions } from '../../hooks/useTaskReactions';
+import EmojiReactionPicker from '../../components/reactions/EmojiReactionPicker';
+import TaskReactionDisplay from '../../components/reactions/TaskReactionDisplay';
+import TaskComments from '../../components/tasks/TaskComments';
 
 // Task type that can handle both serialized (string dates) and non-serialized (Date objects)
 interface FlexibleTask {
@@ -52,6 +56,7 @@ interface FlexibleTask {
   updatedAt: string | Date;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   points?: number;
+  commentCount?: number;
 }
 
 interface TaskDetailModalProps {
@@ -83,6 +88,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [reactionAnchorPosition, setReactionAnchorPosition] = useState<{ x: number; y: number } | undefined>();
+  const [showComments, setShowComments] = useState(false);
+  
+  // Reactions hook
+  const {
+    reactions,
+    addReaction,
+    removeReaction,
+    hasUserReacted,
+    isLoading: reactionsLoading,
+  } = useTaskReactions(task?.id || '');
 
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
@@ -398,6 +415,49 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
             </View>
           )}
 
+          {/* Reactions Section */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Reactions</Text>
+            <TaskReactionDisplay
+              reactions={reactions}
+              onAddReaction={() => {
+                // Get position for picker
+                setReactionAnchorPosition({ x: 100, y: 300 });
+                setShowReactionPicker(true);
+              }}
+              onRemoveReaction={removeReaction}
+              showAddButton={task.status !== 'completed'}
+            />
+          </View>
+
+          {/* Comments Section */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.commentsHeader}
+              onPress={() => setShowComments(!showComments)}
+            >
+              <View style={styles.commentsHeaderLeft}>
+                <Text style={styles.label}>Comments</Text>
+                <View style={[styles.commentBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                  <Text style={[styles.commentBadgeText, { color: theme.colors.primary }]}>
+                    {task.commentCount || 0}
+                  </Text>
+                </View>
+              </View>
+              <Feather
+                name={showComments ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+            
+            {showComments && (
+              <View style={styles.commentsContainer}>
+                <TaskComments taskId={task.id} isModalVisible={visible} />
+              </View>
+            )}
+          </View>
+
           {/* Metadata */}
           <View style={styles.metadata}>
             <Text style={styles.metadataText}>
@@ -518,6 +578,19 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ visible, onClose, tas
               />
             </Modal>
           )}
+
+          {/* Emoji Reaction Picker */}
+          <EmojiReactionPicker
+            visible={showReactionPicker}
+            onClose={() => setShowReactionPicker(false)}
+            onSelect={async (emoji) => {
+              if (!hasUserReacted(emoji)) {
+                await addReaction(emoji);
+              }
+              setShowReactionPicker(false);
+            }}
+            anchorPosition={reactionAnchorPosition}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -750,6 +823,33 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   },
   deleteConfirmButton: {
     flex: 1,
+  },
+  reactionPickerContainer: {
+    marginTop: spacing.M,
+  },
+  commentsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.S,
+  },
+  commentsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.S,
+  },
+  commentBadge: {
+    paddingHorizontal: spacing.S,
+    paddingVertical: spacing.XXS,
+    borderRadius: borderRadius.round,
+  },
+  commentBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  commentsContainer: {
+    marginTop: spacing.M,
+    maxHeight: 300,
   },
 });
 

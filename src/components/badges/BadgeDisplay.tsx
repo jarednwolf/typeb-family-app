@@ -25,6 +25,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { Achievement, AchievementLevel } from '../../types/achievements';
 import { useHaptics } from '../../utils/haptics';
+import { ReactionDisplay } from '../reactions';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 interface BadgeDisplayProps {
   achievement: Achievement & {
@@ -32,12 +35,14 @@ interface BadgeDisplayProps {
     unlocked: boolean;
     celebrated?: boolean;
     progressPercentage: number;
+    reactions?: Record<string, any>;
   };
   onPress?: () => void;
   size?: 'small' | 'medium' | 'large';
   showProgress?: boolean;
   showName?: boolean;
   animated?: boolean;
+  showReactions?: boolean;
 }
 
 const BADGE_COLORS: Record<AchievementLevel, string> = {
@@ -76,8 +81,10 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
   showProgress = true,
   showName = true,
   animated = true,
+  showReactions = false,
 }) => {
   const haptics = useHaptics();
+  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
   const scale = useSharedValue(0);
   const rotation = useSharedValue(0);
   const progressWidth = useSharedValue(0);
@@ -295,6 +302,29 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
           )}
         </View>
       )}
+      
+      {/* Reactions for unlocked achievements - Week 4 Social Features */}
+      {showReactions && achievement.unlocked && userProfile && (
+        <View style={styles.reactionsContainer}>
+          <ReactionDisplay
+            contentType="achievement"
+            contentId={achievement.id}
+            reactions={achievement.reactions}
+            compact={size === 'small'}
+            showUserList={false}
+            allowReaction={true}
+            maxReactionsShown={3}
+            onReactionAdded={(reaction) => {
+              haptics.selection();
+              // Celebrate the reaction with a small animation
+              scale.value = withSequence(
+                withSpring(1.1, { damping: 10 }),
+                withSpring(1, { damping: 15 })
+              );
+            }}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -369,6 +399,10 @@ const styles = StyleSheet.create({
   progress: {
     color: theme.colors.textTertiary,
     marginTop: 2,
+  },
+  reactionsContainer: {
+    marginTop: theme.spacing.XS,
+    alignItems: 'center',
   },
 });
 

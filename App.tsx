@@ -8,7 +8,10 @@ import backgroundTaskService from './src/services/backgroundTasks';
 import { useRealtimeSyncManager } from './src/hooks/useRealtimeSync';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
-import { revenueCat } from './src/services/revenueCat';
+import revenueCatService from './src/services/revenueCat';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import errorMonitoring from './src/services/errorMonitoring';
+import { configureGoogleSignIn } from './src/services/auth';
 
 // Ignore specific warnings that are not critical for development
 LogBox.ignoreLogs([
@@ -25,46 +28,66 @@ function AppContent() {
   const user = useSelector((state: RootState) => state.auth.user);
 
   useEffect(() => {
-    // Initialize notification services
+    // Initialize all services
     const initializeServices = async () => {
       try {
+        // Initialize error monitoring (Sentry)
+        errorMonitoring.initialize();
+        
+        // Configure Google Sign-In
+        configureGoogleSignIn();
+        
         // Initialize local and push notifications
         await notificationService.initialize();
         
         // Initialize background tasks
         await backgroundTaskService.initialize();
         
-        console.log('All notification services initialized');
+        // Initialize RevenueCat
+        await revenueCatService.initialize();
+        
+        console.log('All services initialized successfully');
       } catch (error) {
         console.error('Error initializing services:', error);
+        errorMonitoring.captureException(error as Error);
       }
     };
 
     initializeServices();
   }, []);
 
-  // Initialize RevenueCat when user logs in
+  // Handle user authentication changes
   useEffect(() => {
-    const initializeRevenueCat = async () => {
+    const handleUserChange = async () => {
       if (user?.uid) {
         try {
-          await revenueCat.configure(user.uid);
-          console.log('RevenueCat initialized for user:', user.uid);
+          // Set user context for error monitoring
+          errorMonitoring.setUser({
+            id: user.uid,
+            email: user.email || undefined,
+            username: user.displayName || undefined,
+          });
+          
+          // Identify user in RevenueCat
+          await revenueCatService.identifyUser(user.uid);
+          console.log('User services configured for:', user.uid);
         } catch (error) {
-          console.error('Error initializing RevenueCat:', error);
+          console.error('Error configuring user services:', error);
+          errorMonitoring.captureException(error as Error);
         }
       } else {
-        // User logged out, clean up RevenueCat
+        // User logged out, clean up
         try {
-          await revenueCat.logout();
-          console.log('RevenueCat logged out');
+          errorMonitoring.setUser(null);
+          await revenueCatService.logOut();
+          console.log('User services cleaned up');
         } catch (error) {
-          console.error('Error logging out RevenueCat:', error);
+          console.error('Error cleaning up user services:', error);
         }
       }
     };
 
-    initializeRevenueCat();
+    handleUserChange();
   }, [user]);
 
   return <RootNavigator />;
@@ -72,12 +95,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <ThemeProvider>
-        <AccessibilityProvider>
-          <AppContent />
-        </AccessibilityProvider>
-      </ThemeProvider>
-    </Provider>
+    <ErrorBoundary showDebugInfo={__DEV__}>
+      <Provider store={store}>
+        <ThemeProvider>
+          <AccessibilityProvider>
+            <AppContent />
+          </AccessibilityProvider>
+        </ThemeProvider>
+      </Provider>
+    </ErrorBoundary>
   );
 }

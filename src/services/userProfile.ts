@@ -21,7 +21,12 @@ import { User } from '../types/models';
 export const createUserProfile = async (
   uid: string,
   email: string,
-  displayName: string
+  displayName: string,
+  additionalInfo?: {
+    photoURL?: string | null;
+    provider?: string;
+    googleId?: string;
+  }
 ): Promise<User> => {
   try {
     const newUser: User = {
@@ -34,6 +39,7 @@ export const createUserProfile = async (
       isPremium: false,
       notificationsEnabled: true,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...(additionalInfo?.photoURL && { photoURL: additionalInfo.photoURL }),
     };
 
     // Create user document
@@ -41,6 +47,8 @@ export const createUserProfile = async (
       ...newUser,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      ...(additionalInfo?.provider && { provider: additionalInfo.provider }),
+      ...(additionalInfo?.googleId && { googleId: additionalInfo.googleId }),
     });
 
     return newUser;

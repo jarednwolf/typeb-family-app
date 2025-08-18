@@ -5,25 +5,27 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   User as FirebaseUser,
-  connectAuthEmulator,
 } from 'firebase/auth';
 import {
-  getFirestore,
   doc,
   setDoc,
   getDoc,
   deleteDoc,
   collection,
   getDocs,
-  connectFirestoreEmulator,
   terminate,
 } from 'firebase/firestore';
-import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
+import {
+  initializeTestApp,
+  cleanupTestApp,
+  clearAllEmulatorData,
+  waitForEmulators,
+  FirebaseTestInstances
+} from '../setup/firebaseTestSetup';
 import {
   createFamily,
   joinFamily,
@@ -37,16 +39,10 @@ import {
 } from '../../services/family.refactored';
 import { Family, User } from '../../types/models';
 
-// Test configuration
-const TEST_PROJECT_ID = 'typeb-family-test';
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
-const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
-const FIRESTORE_EMULATOR_PORT = 8080;
-
 describe('Family Service Integration Tests (Refactored)', () => {
-  let app: FirebaseApp;
-  let auth: ReturnType<typeof getAuth>;
-  let db: ReturnType<typeof getFirestore>;
+  let testInstances: FirebaseTestInstances;
+  let auth: FirebaseTestInstances['auth'];
+  let db: FirebaseTestInstances['db'];
   let parentUser: FirebaseUser;
   let childUser: FirebaseUser;
   let secondParentUser: FirebaseUser;
@@ -72,29 +68,28 @@ describe('Family Service Integration Tests (Refactored)', () => {
   };
 
   beforeAll(async () => {
-    // Initialize test app with unique name to avoid conflicts
-    const appName = `family-test-app-${Date.now()}`;
-    app = initializeApp({
-      projectId: TEST_PROJECT_ID,
-      apiKey: 'test-api-key',
-      authDomain: 'test.firebaseapp.com',
-    }, appName);
-
-    auth = getAuth(app);
-    db = getFirestore(app);
-
-    // Connect to emulators
-    connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
-    connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
-  });
+    // Wait for emulators to be ready
+    await waitForEmulators();
+    
+    // Initialize test app with emulator connections
+    testInstances = initializeTestApp(`family-test-${Date.now()}`);
+    auth = testInstances.auth;
+    db = testInstances.db;
+    
+    // Clear any existing data
+    await clearAllEmulatorData();
+  }, 60000); // Increase timeout for emulator startup
 
   afterAll(async () => {
     // Clean up
     await terminate(db);
-    await deleteApp(app);
+    await cleanupTestApp(testInstances.app);
   });
 
   beforeEach(async () => {
+    // Clear emulator data between tests
+    await clearAllEmulatorData();
+    
     // Create test users with unique emails for each test
     const parentEmail = createTestEmail('parent');
     const childEmail = createTestEmail('child');

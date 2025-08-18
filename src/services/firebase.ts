@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getAuth,
   initializeAuth,
@@ -17,8 +17,8 @@ const isE2ETest = __DEV__ && (
   (global as any).__E2E_TEST__ === true
 );
 
-// Firebase configuration - always use emulators in dev mode for now
-const firebaseConfig = __DEV__ ? {
+// Firebase configuration - Use staging/production based on environment
+const firebaseConfig = __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' ? {
   // Development/E2E test configuration for emulators
   apiKey: "test-api-key",
   authDomain: "localhost",
@@ -27,20 +27,20 @@ const firebaseConfig = __DEV__ ? {
   messagingSenderId: "123456789",
   appId: "test-app-id"
 } : {
-  // Production configuration from environment variables
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo.firebaseapp.com',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo.appspot.com',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || 'demo-app-id',
+  // Staging/Production configuration
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyCOOvQfcyQ52eEPSC3esgl8bex0A9RUXu0',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'tybeb-staging.firebaseapp.com',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'tybeb-staging',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'tybeb-staging.firebasestorage.app',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '388132461668',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:388132461668:web:28a15aca13c36aaa475371',
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-console.log('🔥 Firebase Mode:', __DEV__ ? 'Development/E2E (using emulators)' : 'Production');
+console.log('🔥 Firebase Mode:', __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' ? 'Development/E2E (using emulators)' : 'Staging/Production');
 
 // Initialize Firebase only if it hasn't been initialized
-let app;
+let app: FirebaseApp;
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
 } else {
@@ -57,8 +57,8 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
-// Connect to emulators if in development mode
-if (__DEV__ && typeof global !== 'undefined') {
+// Connect to emulators if explicitly enabled
+if (__DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' && typeof global !== 'undefined') {
   // Track if emulators are already connected
   const globalAny = global as any;
   if (!globalAny.__FIREBASE_EMULATORS_CONNECTED__) {

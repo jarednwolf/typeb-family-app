@@ -49,6 +49,37 @@ interface TrendData {
   value: number;
 }
 
+// Helper function to calculate streak
+const calculateStreak = (completedTasks: any[]): number => {
+  if (completedTasks.length === 0) return 0;
+  
+  const sortedTasks = completedTasks
+    .filter(t => t.completedAt)
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+  
+  if (sortedTasks.length === 0) return 0;
+  
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  let currentDate = new Date(today);
+  
+  for (const task of sortedTasks) {
+    const taskDate = new Date(task.completedAt);
+    taskDate.setHours(0, 0, 0, 0);
+    
+    if (taskDate.getTime() === currentDate.getTime()) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else if (taskDate.getTime() < currentDate.getTime()) {
+      break;
+    }
+  }
+  
+  return streak;
+};
+
 const AnalyticsDashboard: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch<AppDispatch>();
@@ -163,37 +194,6 @@ const AnalyticsDashboard: React.FC = () => {
     
     return data;
   }, [tasks]);
-  
-  // Helper function to calculate streak
-  const calculateStreak = (completedTasks: any[]): number => {
-    if (completedTasks.length === 0) return 0;
-    
-    const sortedTasks = completedTasks
-      .filter(t => t.completedAt)
-      .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-    
-    if (sortedTasks.length === 0) return 0;
-    
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let currentDate = new Date(today);
-    
-    for (const task of sortedTasks) {
-      const taskDate = new Date(task.completedAt);
-      taskDate.setHours(0, 0, 0, 0);
-      
-      if (taskDate.getTime() === currentDate.getTime()) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else if (taskDate.getTime() < currentDate.getTime()) {
-        break;
-      }
-    }
-    
-    return streak;
-  };
   
   useEffect(() => {
     loadData();

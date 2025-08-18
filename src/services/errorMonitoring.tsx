@@ -1,28 +1,6 @@
-import React, { Component, ReactNode } from 'react';
-import { View, Text, Button, StyleSheet, Platform } from 'react-native';
+import * as Sentry from '@sentry/react-native';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-
-// Mock Sentry for development - in production, install @sentry/react-native
-const Sentry = {
-  init: (config: any) => console.log('Sentry init:', config),
-  withScope: (callback: Function) => callback({}),
-  captureException: (error: any) => console.error('Sentry exception:', error),
-  captureMessage: (message: string, level?: string) => console.log(`Sentry ${level}:`, message),
-  setUser: (user: any) => console.log('Sentry user:', user),
-  setTag: (key: string, value: any) => console.log('Sentry tag:', key, value),
-  setTags: (tags: any) => console.log('Sentry tags:', tags),
-  addBreadcrumb: (breadcrumb: any) => console.log('Sentry breadcrumb:', breadcrumb),
-  clearBreadcrumbs: () => console.log('Sentry breadcrumbs cleared'),
-  startTransaction: (config: any) => ({ finish: () => {} }),
-  startSession: () => console.log('Sentry session started'),
-  endSession: () => console.log('Sentry session ended'),
-  startProfiling: () => console.log('Sentry profiling started'),
-  stopProfiling: () => console.log('Sentry profiling stopped'),
-  ReactNativeTracing: class {},
-  ReactNavigationInstrumentation: class {},
-};
-
-type SeverityLevel = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
 
 class ErrorMonitoringService {
   private isInitialized = false;
@@ -43,8 +21,68 @@ class ErrorMonitoringService {
     }
 
     try {
-      // In production, this would use the real Sentry SDK
-      console.log('Initializing error monitoring with DSN:', sentryDsn);
+      Sentry.init({
+        dsn: sentryDsn,
+        environment: process.env.EXPO_PUBLIC_ENVIRONMENT || 'development',
+        debug: !this.isProduction,
+        tracesSampleRate: this.isProduction ? 0.2 : 1.0, // 20% in production, 100% in dev
+        attachStacktrace: true,
+        attachScreenshot: true, // Attach screenshots to errors
+        
+        // Release tracking
+        release: `${Constants.expoConfig?.slug}@${Constants.expoConfig?.version}`,
+        dist: Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString(),
+        
+        // Integration configuration
+        integrations: [
+          new Sentry.ReactNativeTracing({
+            tracingOrigins: ['localhost', /^\//],
+            routingInstrumentation: new Sentry.ReactNavigationInstrumentation(),
+          }),
+        ],
+        
+        // Before sending event
+        beforeSend: (event, hint) => {
+          // Filter out non-critical errors in production
+          if (this.isProduction) {
+            // Don't send network errors that are expected
+            if (event.exception?.values?.[0]?.type === 'NetworkError') {
+              return null;
+            }
+            
+            // Sanitize sensitive data
+            if (event.request?.cookies) {
+              delete event.request.cookies;
+            }
+            if (event.user?.email) {
+              event.user.email = '***';
+            }
+          }
+          
+          // Log to console in development
+          if (!this.isProduction) {
+            console.error('Sentry Event:', event, hint);
+          }
+          
+          return event;
+        },
+        
+        // Breadcrumb filtering
+        beforeBreadcrumb: (breadcrumb) => {
+          // Filter out sensitive breadcrumbs
+          if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
+            return null;
+          }
+          
+          // Sanitize data in breadcrumbs
+          if (breadcrumb.data?.password) {
+            breadcrumb.data.password = '***';
+          }
+          
+          return breadcrumb;
+        },
+      });
+
       this.isInitialized = true;
       console.log('Error monitoring initialized');
     } catch (error) {
@@ -54,14 +92,14 @@ class ErrorMonitoringService {
 
   // Capture exception with context
   captureException(error: Error | string, context?: Record<string, any>) {
-    const errorObj = typeof error === 'string' ? new Error(error) : error;
-    
     if (!this.isInitialized) {
-      console.error('Error (not sent to Sentry):', errorObj, context);
+      console.error('Error (not sent to Sentry):', error, context);
       return;
     }
 
-    Sentry.withScope((scope: any) => {
+    const errorObj = typeof error === 'string' ? new Error(error) : error;
+    
+    Sentry.withScope((scope) => {
       if (context) {
         scope.setContext('additional', context);
       }
@@ -70,13 +108,13 @@ class ErrorMonitoringService {
   }
 
   // Capture message (for non-error events)
-  captureMessage(message: string, level: SeverityLevel = 'info', context?: Record<string, any>) {
+  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, any>) {
     if (!this.isInitialized) {
       console.log(`Message (${level}):`, message, context);
       return;
     }
 
-    Sentry.withScope((scope: any) => {
+    Sentry.withScope((scope) => {
       if (context) {
         scope.setContext('additional', context);
       }
@@ -87,14 +125,25 @@ class ErrorMonitoringService {
   // Set user context
   setUser(user: { id: string; email?: string; username?: string; familyId?: string } | null) {
     if (!this.isInitialized) return;
-    Sentry.setUser(user);
+
+    if (user) {
+      Sentry.setUser({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        // Add custom attributes
+        familyId: user.familyId,
+      });
+    } else {
+      Sentry.setUser(null);
+    }
   }
 
   // Add breadcrumb for tracking user actions
   addBreadcrumb(breadcrumb: {
     message: string;
     category?: string;
-    level?: SeverityLevel;
+    level?: Sentry.SeverityLevel;
     data?: Record<string, any>;
   }) {
     if (!this.isInitialized) {
@@ -120,13 +169,44 @@ class ErrorMonitoringService {
   // Set multiple tags
   setTags(tags: Record<string, string | number | boolean>) {
     if (!this.isInitialized) return;
-    Sentry.setTags(tags);
+    Object.entries(tags).forEach(([key, value]) => {
+      Sentry.setTag(key, value);
+    });
   }
 
   // Performance monitoring
   startTransaction(name: string, op: string = 'navigation') {
     if (!this.isInitialized) return null;
-    return Sentry.startTransaction({ name, op });
+
+    return Sentry.startTransaction({
+      name,
+      op,
+    });
+  }
+
+  // Profiling for performance issues
+  startProfiling() {
+    if (!this.isInitialized || !this.isProduction) return;
+    
+    // Start profiling session
+    Sentry.startProfiling();
+  }
+
+  stopProfiling() {
+    if (!this.isInitialized || !this.isProduction) return;
+    
+    // Stop profiling session
+    Sentry.stopProfiling();
+  }
+
+  // Crash test (for testing only)
+  testCrash() {
+    if (this.isProduction) {
+      console.warn('Crash test disabled in production');
+      return;
+    }
+    
+    throw new Error('Test crash - this is intentional for testing error reporting');
   }
 
   // Network error tracking
@@ -152,7 +232,7 @@ class ErrorMonitoringService {
   trackPerformance(metric: string, value: number, unit: string = 'ms') {
     if (!this.isInitialized) return;
 
-    Sentry.withScope((scope: any) => {
+    Sentry.withScope((scope) => {
       scope.setContext('performance', {
         metric,
         value,
@@ -182,46 +262,39 @@ class ErrorMonitoringService {
     Sentry.setTags({});
     Sentry.clearBreadcrumbs();
   }
-
-  // Crash test (for testing only)
-  testCrash() {
-    if (this.isProduction) {
-      console.warn('Crash test disabled in production');
-      return;
-    }
-    
-    throw new Error('Test crash - this is intentional for testing error reporting');
-  }
 }
 
 // Export singleton instance
 export const errorMonitoring = new ErrorMonitoringService();
 
 // React Error Boundary Component
-interface ErrorBoundaryProps {
+import React, { Component, ReactNode } from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+
+interface Props {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
   error?: Error;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
     
-    // Report to error monitoring
+    // Report to Sentry
     errorMonitoring.captureException(error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: true,
@@ -245,9 +318,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             We've encountered an unexpected error. The issue has been reported and we'll fix it soon.
           </Text>
           <Button title="Try Again" onPress={this.handleReset} />
-          {__DEV__ && this.state.error && (
+          {__DEV__ && (
             <Text style={styles.error}>
-              {this.state.error.toString()}
+              {this.state.error?.toString()}
             </Text>
           )}
         </View>
@@ -283,7 +356,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#ffebee',
     color: '#c62828',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: 'monospace',
     fontSize: 12,
   },
 });

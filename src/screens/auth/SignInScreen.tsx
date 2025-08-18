@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { signIn, selectIsLoading, selectAuthError, clearError } from '../../store/slices/authSlice';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useTheme } from '../../contexts/ThemeContext';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { configureGoogleSignIn } from '../../services/auth';
 
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -34,6 +36,11 @@ const SignInScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+
+  useEffect(() => {
+    // Configure Google Sign-In when component mounts
+    configureGoogleSignIn();
+  }, []);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -143,6 +150,21 @@ const SignInScreen: React.FC = () => {
                 <Text style={styles.signInButtonText}>Sign In</Text>
               )}
             </TouchableOpacity>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <GoogleSignInButton
+              variant="signin"
+              onSuccess={() => {
+                // Navigation will be handled by auth state change
+                console.log('Google Sign-In successful');
+              }}
+              disabled={isLoading}
+            />
 
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -271,6 +293,22 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     color: isDarkMode ? theme.colors.info : theme.colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: theme.colors.textTertiary,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 
