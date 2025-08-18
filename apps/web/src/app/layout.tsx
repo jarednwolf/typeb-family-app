@@ -62,12 +62,12 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: '/favicon.png',
+    shortcut: '/type_b_logo.png',
+    apple: '/type_b_logo.png',
     other: {
       rel: 'apple-touch-icon-precomposed',
-      url: '/apple-touch-icon-precomposed.png',
+      url: '/type_b_logo.png',
     },
   },
   manifest: '/manifest.json',
@@ -103,7 +103,7 @@ export default function RootLayout({
               '@type': 'Organization',
               name: 'TypeB Family App',
               url: 'https://typebapp.com',
-              logo: 'https://typebapp.com/logo.png',
+              logo: 'https://typebapp.com/type_b_logo.png',
               description: 'Smart family task management app that turns chores into adventures',
               sameAs: [
                 'https://twitter.com/typebapp',

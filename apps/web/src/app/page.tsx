@@ -67,8 +67,8 @@ export default function LandingPage() {
         {/* Testimonials */}
         <Testimonials />
 
-        {/* Footer CTA Section */}
-        <section className="py-16 sm:py-24 bg-gradient-to-r from-primary to-secondary">
+        {/* Footer CTA Section with TypeB Gradient */}
+        <section className="py-16 sm:py-24 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -80,7 +80,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
                   href="/signup"
-                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-primary bg-white rounded-lg hover:bg-neutral-50 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-purple-700 bg-white rounded-lg hover:bg-purple-50 transition-colors duration-200 shadow-lg hover:shadow-xl"
                   data-analytics="footer-cta-start-trial"
                 >
                   Start Your Free Trial
@@ -182,8 +182,9 @@ export default function LandingPage() {
   );
 }
 
-// TypeB Design System Colors
+// TypeB Design System Colors (Updated to match brand)
 const colors = {
-  primary: '#4A90E2',
-  secondary: '#7ED321',
+  primary: '#8B5CF6',    // Purple
+  secondary: '#EC4899',  // Pink
+  accent: '#6366F1',     // Indigo
 };

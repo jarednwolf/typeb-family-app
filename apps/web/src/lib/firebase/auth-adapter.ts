@@ -5,7 +5,9 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  signInWithPopup,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './config';
@@ -131,6 +133,49 @@ class FirebaseAuthAdapter implements AuthAdapter {
     });
     
     return unsubscribe;
+  }
+
+  async signInWithGoogle(): Promise<User> {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      const userCredential = await signInWithPopup(auth, provider);
+      const { user } = userCredential;
+      
+      // Check if user profile exists
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (userDoc.exists()) {
+        // User exists, return their profile
+        return userDoc.data() as User;
+      } else {
+        // New user, create profile
+        const newUser: User = {
+          id: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || 'User',
+          role: 'child', // Default role
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          notificationsEnabled: true,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          isPremium: false,
+          avatarUrl: user.photoURL || undefined,
+        };
+        
+        await setDoc(doc(db, 'users', user.uid), {
+          ...newUser,
+          provider: 'google',
+        });
+        
+        return newUser;
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error);
+      throw new Error(error.message || 'Google sign-in failed');
+    }
   }
 }
 
