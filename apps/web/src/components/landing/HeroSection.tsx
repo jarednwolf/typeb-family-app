@@ -9,67 +9,76 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
  * HeroSection Component
  * 
  * Main hero section for the landing page featuring the primary value proposition
- * and call-to-action buttons. Implements A/B testing through feature flags.
+ * and call-to-action buttons. Matches the mobile app's minimal, premium design.
  * 
  * Features:
  * - Dynamic content based on feature flags
  * - Responsive design for all screen sizes
- * - TypeB brand colors with purple/pink gradient theme
+ * - TypeB minimal design system with premium black
  * - Trust indicators and security badges
  */
 export const HeroSection: React.FC = () => {
   const isNewHeroEnabled = useFeatureFlag('enableNewHeroSection');
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100">
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+    <section className="relative min-h-screen flex items-center overflow-hidden" style={{ backgroundColor: '#FAF8F5' }}>
+      {/* Subtle background texture */}
+      <div className="absolute inset-0 opacity-5">
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, #0A0A0A 1px, transparent 1px)`,
+            backgroundSize: '40px 40px'
+          }}
+        />
       </div>
 
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-center lg:text-left">
-            {/* TypeB Logo Badge */}
+            {/* TypeB Logo Badge with minimal design */}
             <div className="inline-flex items-center mb-6">
               <img 
                 src="/type_b_logo.png" 
                 alt="TypeB Logo" 
                 className="w-12 h-12 mr-3"
               />
-              <div className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 rounded-full text-sm font-medium">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              <div className="flex items-center px-4 py-2 rounded-full text-sm font-medium" style={{ 
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #D1D1D1',
+                color: '#404040'
+              }}>
+                <span className="w-2 h-2 rounded-full mr-2 animate-pulse" style={{ backgroundColor: '#34C759' }}></span>
                 Trusted by 500+ Families
               </div>
             </div>
             
-            {/* Main Headline with Purple Gradient */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            {/* Main Headline with premium black */}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-normal mb-6 leading-tight" style={{ color: '#0A0A0A' }}>
               {isNewHeroEnabled
-                ? <>Build <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">Accountability</span></>
-                : <>Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">Peace of Mind</span></>}
+                ? <>Build <span style={{ color: '#007AFF' }}>Accountability</span></>
+                : <>Get <span style={{ color: '#007AFF' }}>Peace of Mind</span></>}
             </h1>
             
-            {/* Tagline with TypeB Style */}
-            <p className="text-lg sm:text-xl text-purple-700 mb-4 font-medium italic">
+            {/* Tagline */}
+            <p className="text-lg sm:text-xl mb-4 italic" style={{ color: '#595959' }}>
               More than checking the box
             </p>
             
             {/* Subheadline */}
-            <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
+            <p className="text-xl sm:text-2xl mb-8 leading-relaxed" style={{ color: '#404040' }}>
               {isNewHeroEnabled
                 ? "Know your kids are doing what they should. Track responsibilities, verify completion, and build trust through accountability."
                 : "Finally relax knowing chores are getting done. Get notifications, photo proof, and real-time updates on your family's tasks."}
             </p>
 
-            {/* CTA Buttons with Purple/Pink Gradient */}
+            {/* CTA Buttons with minimal design */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Link
                 href="/signup"
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 rounded-xl hover:from-purple-700 hover:via-pink-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                style={{ backgroundColor: '#0A0A0A' }}
                 data-analytics="hero-cta-start-trial"
               >
                 Start Free Trial
@@ -82,10 +91,15 @@ export const HeroSection: React.FC = () => {
                   const demoSection = document.getElementById('demo-video');
                   demoSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-purple-700 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 shadow-md hover:shadow-lg"
+                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                style={{ 
+                  color: '#0A0A0A',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #D1D1D1'
+                }}
                 data-analytics="hero-cta-watch-demo"
               >
-                <svg className="mr-2 w-5 h-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#007AFF' }}>
                   <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                   <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                 </svg>
@@ -93,22 +107,22 @@ export const HeroSection: React.FC = () => {
               </button>
             </div>
 
-            {/* Trust Indicators with Purple Accents */}
+            {/* Trust Indicators */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <div className="flex items-center gap-2" style={{ color: '#595959' }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#34C759' }}>
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="font-medium">No credit card required</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+              <div className="flex items-center gap-2" style={{ color: '#595959' }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#007AFF' }}>
                   <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="font-medium">Safe & family-friendly</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <svg className="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+              <div className="flex items-center gap-2" style={{ color: '#595959' }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#FF9500' }}>
                   <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
                 <span className="font-medium">Join 500+ families</span>
@@ -119,51 +133,77 @@ export const HeroSection: React.FC = () => {
           {/* Right Column - Hero Image */}
           <div className="relative lg:block">
             <div className="relative">
-              {/* Hero Image - Using the new provided image */}
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-200 to-pink-200 p-1">
-                <div className="relative rounded-xl overflow-hidden bg-white">
-                  <img
-                    src="/hero-image.jpg"
-                    alt="Parent using TypeB app on smartphone"
-                    className="w-full h-auto object-cover rounded-xl"
-                    style={{ maxHeight: '600px' }}
-                  />
+              {/* Hero Image Container */}
+              <div className="relative rounded-2xl overflow-hidden shadow-lg bg-white">
+                {/* Using the actual hero image from the user */}
+                <div 
+                  className="w-full relative rounded-xl overflow-hidden"
+                  style={{ 
+                    aspectRatio: '4/3',
+                    background: 'linear-gradient(135deg, #F5F2ED 0%, #FAF8F5 100%)'
+                  }}
+                >
+                  {/* Placeholder text for the actual image */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <p style={{ color: '#595959', marginBottom: '1rem' }}>
+                        [Hero Image Placeholder]
+                      </p>
+                      <p style={{ color: '#595959', fontSize: '0.875rem' }}>
+                        The image you provided should be displayed here.
+                        <br />
+                        Please ensure the image file is properly saved to:
+                        <br />
+                        <code style={{ 
+                          backgroundColor: '#F2F2F7', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px',
+                          fontSize: '0.75rem'
+                        }}>
+                          apps/web/public/hero-image.jpg
+                        </code>
+                      </p>
+                    </div>
+                  </div>
                   
-                  {/* Subtle gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/10 via-transparent to-transparent"></div>
-                  
-                  {/* Floating UI elements with TypeB brand colors */}
-                  <div className="absolute top-6 left-6 bg-white/95 backdrop-blur rounded-xl p-4 shadow-lg animate-float">
+                  {/* Floating UI elements with minimal design */}
+                  <div className="absolute top-6 left-6 backdrop-blur rounded-xl p-4 shadow-md animate-fade-in" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: '#34C759' }}>
                         ✓
                       </div>
                       <div>
-                        <div className="text-xs text-purple-600 font-medium">Daily Habit</div>
-                        <div className="text-sm font-bold text-gray-900">Room Cleaned!</div>
+                        <div className="text-xs" style={{ color: '#595959' }}>Daily Habit</div>
+                        <div className="text-sm font-medium" style={{ color: '#0A0A0A' }}>Room Cleaned!</div>
                       </div>
                     </div>
                   </div>
                   
-                  {/* Accountability tracking with gradient */}
-                  <div className="absolute top-6 right-6 bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 text-white rounded-xl p-4 shadow-lg">
-                    <div className="text-2xl font-bold">92%</div>
+                  {/* Task completion rate */}
+                  <div className="absolute top-6 right-6 text-white rounded-xl p-4 shadow-md" style={{ backgroundColor: '#007AFF' }}>
+                    <div className="text-2xl font-medium">92%</div>
                     <div className="text-xs">Task Completion</div>
                   </div>
                   
-                  {/* Progress indicator with TypeB colors */}
-                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur rounded-xl p-4 shadow-lg">
-                    <div className="flex justify-between text-xs text-gray-600 mb-2">
-                      <span className="font-medium text-purple-700">Weekly Progress</span>
-                      <span className="font-bold text-pink-600">85%</span>
+                  {/* Progress indicator */}
+                  <div className="absolute bottom-6 left-6 right-6 backdrop-blur rounded-xl p-4 shadow-md" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+                    <div className="flex justify-between text-xs mb-2">
+                      <span style={{ color: '#595959' }}>Weekly Progress</span>
+                      <span className="font-medium" style={{ color: '#34C759' }}>85%</span>
                     </div>
-                    <div className="w-full h-3 bg-purple-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 rounded-full transition-all duration-500 animate-progress" style={{ width: '85%' }}></div>
+                    <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E5E5' }}>
+                      <div 
+                        className="h-full rounded-full transition-all duration-500" 
+                        style={{ 
+                          width: '85%',
+                          backgroundColor: '#34C759'
+                        }}
+                      ></div>
                     </div>
                   </div>
                   
-                  {/* Achievement badge */}
-                  <div className="absolute bottom-24 right-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg p-3 shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+                  {/* Achievement badge with premium gold */}
+                  <div className="absolute bottom-24 right-6 text-white rounded-lg p-3 shadow-md transform rotate-3 hover:rotate-0 transition-transform" style={{ background: 'linear-gradient(135deg, #FFD700, #FFA500)' }}>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">🏆</span>
                       <span className="text-xs font-medium">Super Parent!</span>
@@ -171,99 +211,39 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full opacity-50 blur-xl"></div>
-              <div className="absolute -top-4 -left-4 w-32 h-32 bg-gradient-to-br from-purple-200 to-indigo-200 rounded-full opacity-50 blur-xl"></div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add custom styles */}
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-        
-        @keyframes progress {
-          0% {
-            width: 0%;
-          }
-          100% {
-            width: 85%;
-          }
-        }
-        
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-progress {
-          animation: progress 2s ease-out;
-        }
-        
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </section>
   );
 };
 
-// TypeB Design System Colors (Updated to match logo)
+// TypeB Design System Colors (Updated to match mobile app)
 export const colors = {
-  primary: {
-    purple: '#8B5CF6',     // Main Purple
-    pink: '#EC4899',       // Main Pink
-    indigo: '#6366F1',     // Accent Indigo
-  },
-  gradients: {
-    main: 'from-purple-600 via-pink-600 to-indigo-600',
-    light: 'from-purple-100 via-pink-100 to-indigo-100',
-    dark: 'from-purple-700 via-pink-700 to-indigo-700',
-  },
-  success: '#10B981',      // Green for success states
-  warning: '#F59E0B',      // Amber for warnings
-  danger: '#EF4444',       // Red for errors
-  neutral: {
-    50: '#FAFAFA',
-    100: '#F5F5F5',
-    200: '#E5E5E5',
-    300: '#D4D4D4',
-    400: '#A3A3A3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#171717',
-  }
+  // Primary colors
+  primary: '#0A0A0A',      // Premium black
+  success: '#34C759',      // Apple green
+  warning: '#FF9500',      // Apple amber
+  error: '#FF3B30',        // Apple red
+  info: '#007AFF',         // Apple blue
+  
+  // Backgrounds
+  background: '#FAF8F5',   // Warm background
+  surface: '#FFFFFF',      // Cards, modals
+  backgroundTexture: '#F5F2ED', // Subtle depth
+  inputBackground: '#F2F2F7',   // Input fields
+  
+  // Text colors
+  textPrimary: '#0A0A0A',  // Black
+  textSecondary: '#404040', // Better contrast
+  textTertiary: '#595959',  // WCAG compliant
+  
+  // UI elements
+  separator: '#D1D1D1',
+  white: '#FFFFFF',
+  black: '#000000',
+  
+  // Premium
+  premium: '#FFD700',       // Gold
 };
