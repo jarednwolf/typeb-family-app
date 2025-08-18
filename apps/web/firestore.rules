@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/families/$(familyId)).data.memberIds.hasAny([request.auth.uid]);
+    }
+    
+    function isFamilyParent(familyId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/families/$(familyId)).data.parentIds.hasAny([request.auth.uid]);
+    }
+    
+    // Families collection
+    match /families/{familyId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isAuthenticated();
+      allow update: if isFamilyParent(familyId) && 
+        // Prevent direct counter manipulation
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['counters']);
+      allow delete: if false; // Never allow deletion
+      
+      // Tasks subcollection
+      match /tasks/{taskId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyParent(familyId) || 
+          (isFamilyMember(familyId) && 
+           request.resource.data.createdBy == request.auth.uid);
+        allow update: if isFamilyParent(familyId) || 
+          (resource.data.assignedTo == request.auth.uid && 
+           request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'completedAt', 'photoUrl', 'completionNotes', 'photoValidationStatus']));
+        allow delete: if isFamilyParent(familyId);
+      }
+      
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyParent(familyId);
+        allow update: if isFamilyParent(familyId) && 
+          // Prevent direct points manipulation - only Cloud Functions can update points
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['points', 'totalPointsEarned', 'totalPointsRedeemed', 'tasksCompleted']);
+        allow delete: if isFamilyParent(familyId);
+      }
+      
+      // Rewards subcollection
+      match /rewards/{rewardId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyParent(familyId);
+        allow update: if isFamilyParent(familyId);
+        allow delete: if isFamilyParent(familyId);
+      }
+      
+      // Redemptions subcollection
+      match /redemptions/{redemptionId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if false; // Only Cloud Functions can create redemptions
+        allow update: if isFamilyParent(familyId) && 
+          // Parents can only update status and fulfillment fields
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'fulfilledAt', 'fulfilledBy', 'fulfillmentNotes']);
+        allow delete: if false; // Redemptions cannot be deleted
+      }
+      
+      // Invites subcollection
+      match /invites/{inviteId} {
+        allow read: if true; // Anyone with invite code can read
+        allow create: if isFamilyParent(familyId);
+        allow update: if isFamilyParent(familyId);
+        allow delete: if isFamilyParent(familyId);
+      }
+      
+      // Custom categories subcollection
+      match /categories/{categoryId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyParent(familyId);
+        allow update: if isFamilyParent(familyId);
+        allow delete: if isFamilyParent(familyId);
+      }
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || 
+        (isAuthenticated() && 
+         resource.data.familyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && 
+        // Prevent manipulation of critical fields
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['role', 'familyId', 'points']);
+      allow delete: if false; // Users cannot be deleted through client
+    }
+    
+    // Categories collection (global)
+    match /categories/{categoryId} {
+      allow read: if true; // Public categories available to all
+      allow write: if false; // Only admin can modify via admin SDK
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if resource.data.userId == request.auth.uid;
+      allow create: if false; // Only created by Cloud Functions
+      allow update: if resource.data.userId == request.auth.uid && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      allow delete: if resource.data.userId == request.auth.uid;
+    }
+    
+    // Analytics collection (read-only for clients)
+    match /analytics/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // Activities collection (for analytics)
+    match /activities/{activityId} {
+      allow read: if false; // Only Cloud Functions can read
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // Audit logs collection
+    match /auditLogs/{logId} {
+      allow read: if false; // Only admins via Admin SDK
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // Subscriptions collection
+    match /subscriptions/{subscriptionId} {
+      allow read: if resource.data.userId == request.auth.uid || 
+        (isAuthenticated() && 
+         isFamilyParent(resource.data.familyId));
+      allow create: if false; // Only created by payment processor
+      allow update: if false; // Only updated by payment processor
+      allow delete: if false;
+    }
+  }
+}

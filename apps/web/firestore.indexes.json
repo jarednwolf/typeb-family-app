@@ -1,0 +1,87 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "familyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "familyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "assignedTo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "familyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dueDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "read",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rewards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "familyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "childId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "redeemed",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,7 @@
+packages:
+  # Shared packages
+  - 'packages/*'
+  # Applications
+  - 'apps/*'
+  # Keep existing mobile app in its current location for now
+  - 'typeb-family-app'
