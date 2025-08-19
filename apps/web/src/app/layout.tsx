@@ -64,13 +64,14 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.png', type: 'image/png' },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
     ],
     shortcut: '/favicon.ico',
-    apple: '/type_b_logo.png',
+    apple: '/apple-touch-icon.png',
     other: {
       rel: 'apple-touch-icon-precomposed',
-      url: '/type_b_logo.png',
+      url: '/apple-touch-icon.png',
     },
   },
   manifest: '/manifest.json',
