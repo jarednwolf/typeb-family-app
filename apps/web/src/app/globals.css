@@ -193,3 +193,21 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Fix for Chrome autocomplete styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  box-shadow: 0 0 0 30px white inset !important;
+  background-color: white !important;
+  background-clip: content-box !important;
+}
+
+input:-webkit-autofill::first-line {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+  font-size: 1rem !important;
+  color: #0A0A0A !important;
+}

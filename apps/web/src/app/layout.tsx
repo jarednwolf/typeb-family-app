@@ -62,8 +62,11 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/type_b_logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
     apple: '/type_b_logo.png',
     other: {
       rel: 'apple-touch-icon-precomposed',

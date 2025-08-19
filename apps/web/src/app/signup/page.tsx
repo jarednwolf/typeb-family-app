@@ -72,6 +72,25 @@ export default function SignUpPage() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    if (!agreedToTerms) {
+      setError('Please agree to the terms and conditions');
+      return;
+    }
+    
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await authAdapter.signInWithGoogle();
+      router.push('/onboarding');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up with Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12">
       <div className="w-full max-w-md">
@@ -99,11 +118,13 @@ export default function SignUpPage() {
                 id="displayName"
                 name="displayName"
                 type="text"
+                autoComplete="name"
                 value={formData.displayName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
                 placeholder="John Doe"
                 required
+                style={{ backgroundColor: 'white' }}
               />
             </div>
 
@@ -115,11 +136,13 @@ export default function SignUpPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
                 placeholder="you@example.com"
                 required
+                style={{ backgroundColor: 'white' }}
               />
             </div>
 
@@ -131,12 +154,14 @@ export default function SignUpPage() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
                 placeholder="••••••••"
                 required
                 minLength={6}
+                style={{ backgroundColor: 'white' }}
               />
               <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
             </div>
@@ -149,11 +174,13 @@ export default function SignUpPage() {
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
                 placeholder="••••••••"
                 required
+                style={{ backgroundColor: 'white' }}
               />
             </div>
 
@@ -196,12 +223,13 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          {/* Social Sign Up (placeholder) */}
+          {/* Social Sign Up */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              disabled
+              onClick={handleGoogleSignUp}
+              disabled={isLoading || !agreedToTerms}
+              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -216,8 +244,8 @@ export default function SignUpPage() {
               className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
               disabled
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#1877F2" d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
               </svg>
               <span className="ml-2 text-gray-700">Facebook</span>
             </button>
