@@ -133,44 +133,64 @@ export const HeroSection: React.FC = () => {
           {/* Right Column - Hero Image */}
           <div className="relative lg:block">
             <div className="relative">
-              {/* Hero Image Container */}
-              <div className="relative rounded-2xl overflow-hidden shadow-lg bg-white">
-                {/* Hero image from the user */}
-                <img
-                  src="/hero-image.png"
-                  alt="Parent using TypeB app on smartphone"
-                  className="w-full h-full object-cover"
-                  style={{ 
-                    aspectRatio: '4/3',
-                  }}
-                />
+              {/* Hero Image Container with proper aspect ratio */}
+              <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                <div className="relative w-full" style={{ paddingBottom: '75%' /* 4:3 Aspect Ratio */ }}>
+                  <img
+                    src="/hero-image.png"
+                    alt="Parent using TypeB app on smartphone"
+                    className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                  />
                   
-                  {/* Floating UI elements with minimal design */}
-                  <div className="absolute top-6 left-6 backdrop-blur rounded-xl p-4 shadow-md animate-fade-in" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: '#34C759' }}>
+                  {/* Floating UI elements - Hidden on mobile, subtle on desktop */}
+                  {/* Daily Habit Card - Top Left */}
+                  <div 
+                    className="hidden lg:block absolute top-6 left-6 rounded-xl p-3 shadow-sm animate-fade-in" 
+                    style={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium" 
+                        style={{ backgroundColor: '#34C759' }}
+                      >
                         ✓
                       </div>
                       <div>
                         <div className="text-xs" style={{ color: '#595959' }}>Daily Habit</div>
-                        <div className="text-sm font-medium" style={{ color: '#0A0A0A' }}>Room Cleaned!</div>
+                        <div className="text-xs font-medium" style={{ color: '#0A0A0A' }}>Room Cleaned!</div>
                       </div>
                     </div>
                   </div>
                   
-                  {/* Task completion rate */}
-                  <div className="absolute top-6 right-6 text-white rounded-xl p-4 shadow-md" style={{ backgroundColor: '#007AFF' }}>
-                    <div className="text-2xl font-medium">92%</div>
+                  {/* Task completion rate - Top Right */}
+                  <div 
+                    className="hidden lg:block absolute top-6 right-6 text-white rounded-xl p-3 shadow-sm" 
+                    style={{ 
+                      backgroundColor: 'rgba(0, 122, 255, 0.8)'
+                    }}
+                  >
+                    <div className="text-xl font-medium">92%</div>
                     <div className="text-xs">Task Completion</div>
                   </div>
                   
-                  {/* Progress indicator */}
-                  <div className="absolute bottom-6 left-6 right-6 backdrop-blur rounded-xl p-4 shadow-md" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+                  {/* Progress indicator - Bottom */}
+                  <div 
+                    className="hidden lg:block absolute bottom-6 left-6 right-6 rounded-xl p-3 shadow-sm" 
+                    style={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)'
+                    }}
+                  >
                     <div className="flex justify-between text-xs mb-2">
                       <span style={{ color: '#595959' }}>Weekly Progress</span>
                       <span className="font-medium" style={{ color: '#34C759' }}>85%</span>
                     </div>
-                    <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E5E5' }}>
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(229, 229, 229, 0.5)' }}>
                       <div 
                         className="h-full rounded-full transition-all duration-500" 
                         style={{ 
@@ -181,10 +201,15 @@ export const HeroSection: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Achievement badge with premium gold */}
-                  <div className="absolute bottom-24 right-6 text-white rounded-lg p-3 shadow-md transform rotate-3 hover:rotate-0 transition-transform" style={{ background: 'linear-gradient(135deg, #FFD700, #FFA500)' }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🏆</span>
+                  {/* Achievement badge - Bottom Right (Hidden on mobile) */}
+                  <div 
+                    className="hidden lg:block absolute bottom-20 right-6 text-white rounded-lg p-2 shadow-sm transform rotate-3 hover:rotate-0 transition-transform" 
+                    style={{ 
+                      background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.8), rgba(255, 165, 0, 0.8))'
+                    }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">🏆</span>
                       <span className="text-xs font-medium">Super Parent!</span>
                     </div>
                   </div>
