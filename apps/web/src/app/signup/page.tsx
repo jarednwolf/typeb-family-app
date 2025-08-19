@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 
 export default function SignUpPage() {
@@ -94,8 +95,17 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12">
       <div className="w-full max-w-md">
+        {/* Logo Link */}
+        <Link href="/" className="block mb-6">
+          <img
+            src="/type_b_logo.png"
+            alt="TypeB Logo"
+            className="h-12 w-12 mx-auto hover:opacity-80 transition-opacity"
+          />
+        </Link>
+        
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Logo/Title */}
+          {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
             <p className="text-gray-600 mt-2">Join TypeB and start managing tasks</p>
@@ -121,10 +131,14 @@ export default function SignUpPage() {
                 autoComplete="name"
                 value={formData.displayName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="John Doe"
                 required
-                style={{ backgroundColor: 'white' }}
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
             </div>
 
@@ -139,10 +153,14 @@ export default function SignUpPage() {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="you@example.com"
                 required
-                style={{ backgroundColor: 'white' }}
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
             </div>
 
@@ -157,11 +175,15 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 required
                 minLength={6}
-                style={{ backgroundColor: 'white' }}
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
               <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
             </div>
@@ -177,10 +199,14 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition bg-white"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 required
-                style={{ backgroundColor: 'white' }}
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
             </div>
 

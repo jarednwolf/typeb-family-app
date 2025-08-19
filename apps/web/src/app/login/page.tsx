@@ -27,6 +27,20 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await authAdapter.signInWithGoogle();
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Demo account quick fill
   const fillDemoAccount = () => {
     setEmail('demo@typebapp.com');
@@ -36,8 +50,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="w-full max-w-md">
+        {/* Logo Link */}
+        <Link href="/" className="block mb-6">
+          <img
+            src="/type_b_logo.png"
+            alt="TypeB Logo"
+            className="h-12 w-12 mx-auto hover:opacity-80 transition-opacity"
+          />
+        </Link>
+        
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Logo/Title */}
+          {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
             <p className="text-gray-600 mt-2">Sign in to your TypeB account</p>
@@ -64,6 +87,12 @@ export default function LoginPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
             </div>
 
@@ -79,6 +108,12 @@ export default function LoginPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
+                style={{ 
+                  backgroundColor: 'white',
+                  WebkitTextFillColor: '#000000',
+                  color: '#000000'
+                }}
               />
             </div>
 
@@ -122,12 +157,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Social Login (placeholder) */}
+          {/* Social Login */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              disabled
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -142,8 +178,8 @@ export default function LoginPage() {
               className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
               disabled
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#1877F2" d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
               </svg>
               <span className="ml-2 text-gray-700">Facebook</span>
             </button>
