@@ -1,0 +1,189 @@
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Deployment ID to rollback to'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Validate deployment ID
+        run: |
+          if [[ ! "${{ inputs.deployment_id }}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            echo "Invalid deployment ID format"
+            exit 1
+          fi
+          
+      - name: Notify rollback start
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "⚠️ Production rollback initiated",
+              "attachments": [{
+                "color": "warning",
+                "fields": [
+                  {"title": "Target Deployment", "value": "${{ inputs.deployment_id }}", "short": true},
+                  {"title": "Initiated by", "value": "${{ github.actor }}", "short": true},
+                  {"title": "Reason", "value": "${{ inputs.reason }}", "short": false}
+                ]
+              }]
+            }
+            
+      - name: Rollback Vercel
+        run: |
+          # Rollback to specific deployment
+          curl -X POST https://api.vercel.com/v13/deployments/${{ inputs.deployment_id }}/rollback \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json"
+            
+      - name: Checkout previous version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deployment_id }}
+          
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+        
+      - name: Rollback Firebase Functions
+        run: |
+          # Firebase doesn't have direct rollback, so we redeploy previous version
+          firebase use typeb-family-app --token ${{ secrets.FIREBASE_TOKEN }}
+          firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
+          
+      - name: Rollback Firestore Rules
+        run: |
+          firebase deploy --only firestore:rules --token ${{ secrets.FIREBASE_TOKEN }}
+          
+      - name: Rollback Storage Rules
+        run: |
+          firebase deploy --only storage:rules --token ${{ secrets.FIREBASE_TOKEN }}
+          
+      - name: Wait for rollback to propagate
+        run: sleep 60
+        
+      - name: Verify rollback health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://typebapp.com/api/health)
+          if [ $response != "200" ]; then
+            echo "Production is not healthy after rollback"
+            exit 1
+          fi
+          
+      - name: Run smoke tests
+        run: |
+          # Basic health checks
+          curl -f https://typebapp.com || exit 1
+          curl -f https://typebapp.com/api/health || exit 1
+          
+      - name: Create rollback record
+        run: |
+          echo '{
+            "deployment_id": "${{ inputs.deployment_id }}",
+            "reason": "${{ inputs.reason }}",
+            "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+            "initiated_by": "${{ github.actor }}",
+            "status": "completed"
+          }' > rollback-${{ github.run_id }}.json
+          
+      - name: Upload rollback record
+        uses: actions/upload-artifact@v3
+        with:
+          name: rollback-record
+          path: rollback-${{ github.run_id }}.json
+          retention-days: 90
+          
+      - name: Notify team - Success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "✅ Production rollback completed successfully",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Rolled back to", "value": "${{ inputs.deployment_id }}", "short": true},
+                  {"title": "Health Check", "value": "✅ Passed", "short": true},
+                  {"title": "Action Required", "value": "Please investigate the issue that caused the rollback", "short": false}
+                ]
+              }]
+            }
+            
+      - name: Notify team - Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "❌ Production rollback failed!",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  {"title": "Target Deployment", "value": "${{ inputs.deployment_id }}", "short": true},
+                  {"title": "Status", "value": "Failed", "short": true},
+                  {"title": "URGENT", "value": "Manual intervention required immediately!", "short": false},
+                  {"title": "Run URL", "value": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false}
+                ]
+              }]
+            }
+
+  create-incident:
+    name: Create Incident Report
+    runs-on: ubuntu-latest
+    needs: rollback
+    if: always()
+    steps:
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Production Rollback - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Production Rollback Incident
+              
+              **Deployment ID**: ${{ inputs.deployment_id }}
+              **Reason**: ${{ inputs.reason }}
+              **Initiated by**: ${{ github.actor }}
+              **Workflow Run**: [#${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              **Status**: ${{ needs.rollback.result }}
+              
+              ### Next Steps
+              - [ ] Investigate root cause
+              - [ ] Fix the issue
+              - [ ] Test fix in staging
+              - [ ] Plan re-deployment
+              - [ ] Update runbook if needed
+              
+              ### Timeline
+              - Rollback initiated: ${new Date().toISOString()}
+              - Rollback completed: TBD
+              - Issue resolved: TBD
+              
+              /cc @jaredwolf @devops-team`,
+              labels: ['incident', 'production', 'rollback', 'P0']
+            });
+            
+            console.log(`Created issue #${issue.data.number}`);

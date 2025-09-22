@@ -11,13 +11,31 @@ service cloud.firestore {
     }
     
     function isFamilyMember(familyId) {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/families/$(familyId)).data.memberIds.hasAny([request.auth.uid]);
     }
     
     function isFamilyParent(familyId) {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/families/$(familyId)).data.parentIds.hasAny([request.auth.uid]);
+    }
+    
+    // COPPA Compliance Helper Functions
+    function isUnder13(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.isUnder13 == true;
+    }
+    
+    function isParentOf(childId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/parental_consent/$(request.auth.uid + '_' + childId)) &&
+        get(/databases/$(database)/documents/parental_consent/$(request.auth.uid + '_' + childId)).data.status == 'verified';
+    }
+    
+    function hasValidParentalConsent(userId) {
+      return !isUnder13(userId) ||
+        exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.parentConsentId != null;
     }
     
     // Families collection
@@ -89,17 +107,59 @@ service cloud.firestore {
       }
     }
     
-    // Users collection
+    // Users collection with COPPA restrictions
     match /users/{userId} {
-      allow read: if isOwner(userId) || 
-        (isAuthenticated() && 
+      allow read: if isOwner(userId) ||
+        isParentOf(userId) ||
+        (isAuthenticated() &&
          resource.data.familyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) && 
-        // Prevent manipulation of critical fields
+      allow create: if isOwner(userId) && hasValidParentalConsent(userId);
+      allow update: if (isOwner(userId) && !isUnder13(userId)) || isParentOf(userId);
+      allow update: if isOwner(userId) && isUnder13(userId) &&
+        // Children under 13 cannot update certain fields
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['role', 'familyId', 'points']);
+          .hasAny(['email', 'phone', 'address', 'lastName', 'birthDate', 'isUnder13', 'parentConsentId', 'role', 'familyId', 'points']);
       allow delete: if false; // Users cannot be deleted through client
+    }
+    
+    // COPPA: Parental consent records (never delete for compliance)
+    match /parental_consent/{consentId} {
+      allow read: if resource.data.parentId == request.auth.uid ||
+        (isAuthenticated() && resource.data.childData.userId == request.auth.uid);
+      allow create: if request.auth.uid == request.resource.data.parentId;
+      allow update: if resource.data.parentId == request.auth.uid &&
+        // Only allow status updates and verification
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'consentGiven', 'consentDate', 'verificationMethod']);
+      allow delete: if false; // Never delete consent records for compliance
+    }
+    
+    // COPPA: Task photos with auto-deletion after 90 days
+    match /task_photos/{photoId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isParentOf(resource.data.userId) ||
+         isFamilyMember(resource.data.familyId));
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.createdAt == request.time;
+      allow update: if false; // Photos cannot be updated
+      allow delete: if isOwner(resource.data.userId) ||
+        isParentOf(resource.data.userId) ||
+        // Allow system deletion after 90 days
+        (request.auth.token.admin == true);
+    }
+    
+    // COPPA: Audit logs for compliance tracking
+    match /coppa_audit_log/{logId} {
+      allow read: if request.auth.token.admin == true;
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // COPPA: Email queue for parental consent
+    match /email_queue/{emailId} {
+      allow read: if false;
+      allow write: if false; // Only Cloud Functions can write
     }
     
     // Categories collection (global)

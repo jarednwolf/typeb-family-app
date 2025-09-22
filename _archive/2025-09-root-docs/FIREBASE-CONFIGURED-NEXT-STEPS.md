@@ -15,14 +15,14 @@
 - **Clean structure** with only essential docs
 - **Saved 804KB** of redundant files
 
-### Your Firebase Config (Saved)
+### Your Firebase Config (Use environment variables; do not commit keys)
 ```javascript
-apiKey: "AIzaSyCOOvQfcyQ52eEPSC3esgl8bex0A9RUXu0"
-authDomain: "tybeb-staging.firebaseapp.com"
-projectId: "tybeb-staging"
-storageBucket: "tybeb-staging.firebasestorage.app"
-messagingSenderId: "388132461668"
-appId: "1:388132461668:web:28a15aca13c36aaa475371"
+apiKey: "<your-api-key>"
+authDomain: "<your-project>.firebaseapp.com"
+projectId: "<your-project-id>"
+storageBucket: "<your-project>.appspot.com"
+messagingSenderId: "<your-sender-id>"
+appId: "<your-app-id>"
 ```
 
 ## 🧪 TEST NOW: Verify Firebase Works

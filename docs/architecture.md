@@ -1,294 +1,368 @@
-# Type B Family App - Technical Architecture
+# TypeB Architecture
 
-## Project Overview
-A productivity app helping Type B/C personality teens (middle school through college) develop structured habits through intelligent reminders, task management, and family accountability.
+## System Overview
 
-## Core Architecture Decisions
+TypeB is a serverless, event-driven architecture using Firebase as the backend with React Native (mobile) and Next.js (web) clients. The system is designed for scalability, maintainability, and rapid feature development.
 
-### Technology Stack
-- **Framework**: React Native with Expo
-  - Rapid development for iOS primary target
-  - Easy expansion to Android and Web
-  - Expo SDK for native features (notifications, camera, etc.)
-  
-- **Backend**: Firebase
-  - Firestore for real-time data sync
-  - Firebase Auth for user management
-  - Cloud Storage for photo proof uploads
-  - Cloud Functions for server-side logic
-  - Cloud Messaging for push notifications
-  
-- **State Management**: Redux Toolkit + RTK Query
-  - Predictable state updates
-  - Offline-first capability
-  - Optimistic updates for better UX
-  
-- **Testing**: Jest + React Native Testing Library + Detox
-  - Unit tests for business logic
-  - Integration tests for Firebase operations
-  - E2E tests for critical user flows
-
-### Design System
-- **Philosophy**: Clean & Minimal (Apple-inspired)
-  - Extensive white space
-  - Typography-focused
-  - Subtle animations
-  - Professional yet engaging
-  
-- **Component Library**: Custom components built on React Native Elements
-  - Consistent design tokens
-  - Reusable components
-  - Accessibility built-in
-
-## Data Architecture
-
-### User Model
 ```
-User {
-  id: string
-  email: string
-  displayName: string
-  role: 'manager' | 'member'
-  familyId: string
-  avatarUrl?: string
-  createdAt: timestamp
-  subscription: {
-    status: 'free' | 'premium' | 'trial'
-    expiresAt?: timestamp
-  }
+┌─────────────────────────────────────────────────────────────┐
+│                     Client Applications                      │
+├─────────────────────┬────────────────────┬──────────────────┤
+│   iOS App           │   Android App      │   Web App        │
+│   React Native      │   React Native     │   Next.js        │
+│   Expo SDK 51       │   Expo SDK 51      │   v15.4          │
+└─────────────────────┴────────────────────┴──────────────────┘
+              │                │                    │
+              └────────────────┴────────────────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │   Shared Packages   │
+                    ├────────────────────┬─┤
+                    │ @typeb/core        │ │
+                    │ @typeb/store       │ │
+                    │ @typeb/types       │ │
+                    └────────────────────┴─┘
+                               │
+                    ┌──────────┴──────────┐
+                    │   Firebase Backend  │
+                    ├────────────────────┬─┤
+                    │ Authentication     │ │
+                    │ Firestore DB       │ │
+                    │ Cloud Storage      │ │
+                    │ Cloud Functions    │ │
+                    │ Cloud Messaging    │ │
+                    └────────────────────┴─┘
+                               │
+                    ┌──────────┴──────────┐
+                    │  External Services  │
+                    ├────────────────────┬─┤
+                    │ RevenueCat         │ │
+                    │ Sentry             │ │
+                    │ Vercel (Web)       │ │
+                    └────────────────────┴─┘
+```
+
+## Tech Stack
+
+### Frontend Technologies
+
+| Layer | Technology | Version | Purpose |
+|-------|------------|---------|---------|
+| Mobile Framework | React Native | 0.74.2 | Cross-platform mobile development |
+| Mobile Platform | Expo | SDK 51 | Build, deploy, and iterate quickly |
+| Web Framework | Next.js | 15.4.6 | SEO, SSR, and performance |
+| State Management | Redux Toolkit | ^1.9.5 | Predictable state container |
+| Navigation | React Navigation | v6 | Mobile navigation |
+| UI Components | React Native Elements | ^3.4.3 | Consistent UI components |
+| Forms | React Hook Form | ^7.45.0 | Performant forms with validation |
+| Styling (Web) | Tailwind CSS | ^3.0.0 | Utility-first CSS |
+
+### Backend Technologies
+
+| Service | Technology | Purpose |
+|---------|------------|---------|
+| Authentication | Firebase Auth | User authentication and authorization |
+| Database | Cloud Firestore | NoSQL document database |
+| File Storage | Cloud Storage | Photo and file storage |
+| Serverless Functions | Cloud Functions | Backend logic and integrations |
+| Push Notifications | Firebase Cloud Messaging | Real-time notifications |
+| Analytics | Firebase Analytics | Usage tracking and insights |
+
+### Infrastructure & DevOps
+
+| Service | Technology | Purpose |
+|---------|------------|---------|
+| Web Hosting | Vercel | Next.js hosting with edge functions |
+| Mobile Builds | EAS Build | Native app builds and distribution |
+| Version Control | GitHub | Source code management |
+| CI/CD | GitHub Actions | Automated testing and deployment |
+| Error Tracking | Sentry | Error monitoring and debugging |
+| Payment Processing | RevenueCat | Subscription management |
+
+## Data Model
+
+### Core Collections
+
+```typescript
+// users/{userId}
+interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  role: 'parent' | 'child';
+  familyId: string;
+  avatar?: string;
+  settings: UserSettings;
+  subscription: SubscriptionInfo;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// families/{familyId}
+interface Family {
+  id: string;
+  name: string;
+  inviteCode: string;
+  memberIds: string[];
+  parentIds: string[];
+  settings: FamilySettings;
+  subscription: FamilySubscription;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// tasks/{taskId}
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  familyId: string;
+  assignedTo: string;
+  createdBy: string;
+  categoryId: string;
+  priority: 'low' | 'medium' | 'high';
+  points: number;
+  dueDate: Timestamp;
+  repeatPattern?: RepeatPattern;
+  status: 'pending' | 'in_progress' | 'awaiting_validation' | 'completed';
+  photoRequired: boolean;
+  validationPhoto?: string;
+  validatedBy?: string;
+  validatedAt?: Timestamp;
+  completedAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// categories/{categoryId}
+interface Category {
+  id: string;
+  name: string;
+  familyId: string;
+  color: string;
+  icon: string;
+  isCustom: boolean;
+  createdAt: Timestamp;
+}
+
+// photos/{photoId}
+interface Photo {
+  id: string;
+  taskId: string;
+  familyId: string;
+  url: string;
+  thumbnailUrl?: string;
+  uploadedBy: string;
+  validatedBy?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Timestamp;
+  expiresAt: Timestamp; // Auto-delete after 90 days
+}
+
+// notifications/{notificationId}
+interface Notification {
+  id: string;
+  userId: string;
+  type: 'task_assigned' | 'task_completed' | 'validation_required' | 'points_earned';
+  title: string;
+  body: string;
+  data: Record<string, any>;
+  read: boolean;
+  createdAt: Timestamp;
 }
 ```
 
-### Family Model
-```
-Family {
-  id: string
-  name: string
-  managerId: string
-  memberIds: string[]
-  createdAt: timestamp
-  settings: {
-    timezone: string
-    quietHours: { start: string, end: string }
-  }
-}
-```
+### Security Rules Strategy
 
-### Task Model
-```
-Task {
-  id: string
-  familyId: string
-  title: string
-  description?: string
-  category: string
-  assignedTo: string
-  createdBy: string
-  dueDate: timestamp
-  recurrence?: {
-    type: 'daily' | 'weekly' | 'monthly' | 'custom'
-    pattern: object
-  }
-  reminder: {
-    type: 'smart' | 'basic'
-    settings: {
-      initialReminder: number // minutes before
-      escalationLevels?: number[]
-      notifyManager?: boolean
+```javascript
+// Firestore Security Rules Pattern
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only read/write their own profile
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId 
+        || request.auth.uid in resource.data.familyMembers;
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Family members can read, parents can write
+    match /families/{familyId} {
+      allow read: if request.auth.uid in resource.data.memberIds;
+      allow write: if request.auth.uid in resource.data.parentIds;
+    }
+    
+    // Tasks are scoped to family
+    match /tasks/{taskId} {
+      allow read: if request.auth.uid in 
+        get(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds;
+      allow create: if request.auth.uid in 
+        get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.parentIds;
+      allow update: if request.auth.uid == resource.data.assignedTo 
+        || request.auth.uid in get(/databases/$(database)/documents/families/$(resource.data.familyId)).data.parentIds;
     }
   }
-  validation?: {
-    required: boolean
-    type: 'photo' | 'text' | 'manager_approval'
-    proof?: {
-      url?: string
-      text?: string
-      submittedAt?: timestamp
-    }
+}
+```
+
+## Key Architecture Patterns
+
+### 1. Repository Pattern
+All data access goes through service classes that abstract Firebase operations:
+```typescript
+// Example: TaskService
+class TaskService {
+  async create(task: TaskInput): Promise<Task>
+  async getByFamily(familyId: string): Promise<Task[]>
+  async update(id: string, updates: Partial<Task>): Promise<void>
+  async delete(id: string): Promise<void>
+}
+```
+
+### 2. State Management Pattern
+Redux Toolkit with normalized state:
+```typescript
+// Slice pattern
+const tasksSlice = createSlice({
+  name: 'tasks',
+  initialState: tasksAdapter.getInitialState(),
+  reducers: {
+    taskAdded: tasksAdapter.addOne,
+    taskUpdated: tasksAdapter.updateOne,
+    taskRemoved: tasksAdapter.removeOne
   }
-  status: 'pending' | 'in_progress' | 'completed' | 'validated'
-  completedAt?: timestamp
-  validatedAt?: timestamp
-  validatedBy?: string
-}
+});
 ```
 
-### Routine Model
-```
-Routine {
-  id: string
-  familyId: string
-  name: string
-  category: string
-  tasks: TaskTemplate[]
-  assignedTo: string[]
-  schedule: RecurrencePattern
-  active: boolean
-}
-```
+### 3. Offline-First Pattern
+- Optimistic updates with rollback
+- Local caching with Redux Persist
+- Background sync when online
 
-## MVP Feature Scope
-
-### Free Tier (MVP)
-- Single user account (family of 1)
-- Task creation and management
-- Basic reminders
-- Task completion
-- Dashboard view
-- Category organization
-- Recurring tasks
-
-### Premium Tier ($4.99/month)
-- Multiple family members (unlimited)
-- Task validation with photo/text proof
-- Manager oversight dashboard
-- Smart reminder escalation
-- Family member invitation system
-- Priority support
-
-### Future Premium Features (Post-MVP)
-- Calendar integrations
-- Gamification (points, streaks, badges)
-- Advanced analytics
-- Custom routine templates library
-- API access
-
-## Notification Architecture
-
-### Smart Reminder System
-1. **Initial Reminder**: Gentle notification at scheduled time
-2. **Follow-up**: If not acknowledged within 15 minutes
-3. **Escalation**: Increasing urgency at 30, 45 minutes
-4. **Manager Alert**: Optional notification to parent if deadline missed
-
-### Implementation
-- Firebase Cloud Messaging for push notifications
-- Local notifications for immediate reminders
-- Cloud Functions for scheduling and escalation logic
-- Respect quiet hours and timezone settings
-
-## Authentication & Security
-
-### User Flow
-1. Email/password registration
-2. Email verification required
-3. Family creation or join via invite code
-4. Role assignment (manager vs member)
-
-### Security Rules
-- Users can only access their family's data
-- Managers can create/modify all family tasks
-- Members can only modify their assigned tasks
-- Photo uploads restricted to task assignees
-- Validation restricted to managers (premium)
-
-## Testing Strategy
-
-### Test-First Development
-1. **Architecture Tests**: API contracts, data models
-2. **Unit Tests**: Business logic, utilities
-3. **Integration Tests**: Firebase operations, auth flows
-4. **E2E Tests**: Critical paths (create task, complete task, validate)
-
-### Critical Test Coverage
-- Notification scheduling and delivery
-- Data sync across devices
-- Offline functionality
-- Subscription management
-- Task recurrence patterns
-
-## Development Standards
-
-### Code Organization
-```
-/src
-  /components     # Reusable UI components
-  /screens       # Screen components
-  /navigation    # Navigation configuration
-  /services      # Firebase, API services
-  /store         # Redux store and slices
-  /utils         # Helper functions
-  /hooks         # Custom React hooks
-  /constants     # App constants
-  /types         # TypeScript definitions
+### 4. Event-Driven Architecture
+Cloud Functions respond to Firestore triggers:
+```typescript
+// Example: Photo validation trigger
+export const onPhotoUploaded = functions.storage
+  .object()
+  .onFinalize(async (object) => {
+    // Process photo, create thumbnail
+    // Notify parent for validation
+    // Update task status
+  });
 ```
 
-### Coding Standards
-- TypeScript for type safety
-- ESLint + Prettier for code consistency
-- Conventional commits for version control
-- Component documentation with props
-- Error boundaries for crash protection
-- Performance monitoring with Sentry
+## Performance Considerations
 
-### Git Workflow
-- Main branch for production
-- Develop branch for integration
-- Feature branches for new features
-- Hourly commits during development week
-- Tag releases for App Store submissions
+### Optimization Strategies
 
-## Development Timeline
+1. **Image Optimization**
+   - Compress photos before upload (80% quality, max 1920px)
+   - Generate thumbnails server-side
+   - Serve via CDN with caching
 
-### Day 1-2: Foundation
-- Project setup with Expo
-- Firebase configuration
-- Authentication implementation
-- Basic navigation structure
-- Core data models
+2. **Query Optimization**
+   - Composite indexes for complex queries
+   - Pagination for large datasets
+   - Client-side caching with Redux
 
-### Day 3-4: Core Features
-- Task CRUD operations
-- Dashboard implementation
-- Reminder system
-- Basic notifications
-- Family management
+3. **Bundle Optimization**
+   - Code splitting with dynamic imports
+   - Tree shaking unused code
+   - Lazy loading heavy components
 
-### Day 5: Premium Features
-- Validation system
-- Photo upload
-- Manager oversight
-- Smart reminders
-- Subscription management
+4. **API Optimization**
+   - Batch operations where possible
+   - Debounce real-time listeners
+   - Use Firebase offline persistence
 
-### Day 6: Polish & Testing
-- UI refinement
-- Comprehensive testing
-- Bug fixes
-- Performance optimization
-- TestFlight deployment
+### Scalability Limits
 
-### Phase 5: Launch Preparation (Days 11-14)
-- App Store assets
-- Beta user onboarding
-- Monitoring setup
-- Documentation
-- Submit to App Store
+| Component | Current Limit | Scaling Strategy |
+|-----------|--------------|------------------|
+| Concurrent Users | 1,000 | Firebase auto-scales |
+| Storage | 100GB | Implement photo cleanup |
+| API Calls | 10K/second | Add caching layer |
+| Push Notifications | Unlimited | Use topics for broadcast |
 
-## Performance Targets
-- App launch: < 2 seconds
-- Screen transitions: < 300ms
-- Offline to online sync: < 5 seconds
-- Notification delivery: < 1 minute accuracy
-- Photo upload: < 3 seconds for 5MB
+## Security Architecture
 
-## Monitoring & Analytics
-- Firebase Analytics for user behavior
-- Crashlytics for crash reporting
-- Performance monitoring for app speed
-- Custom events for feature usage
-- Subscription conversion tracking
+### Authentication Flow
+1. Email/password or Google OAuth
+2. Firebase Auth creates JWT token
+3. Custom claims added for role (parent/child)
+4. Token validated on each request
+5. Refresh token rotation every 30 days
 
-## Risk Mitigation
-1. **Notification Reliability**: Fallback to local notifications
-2. **Data Loss**: Offline-first with automatic sync
-3. **Scaling**: Firebase auto-scaling, pagination for large families
-4. **Payment Issues**: Multiple payment providers (IAP + Stripe)
-5. **App Rejection**: Strict adherence to App Store guidelines
+### Data Protection
+- **At Rest**: AES-256 encryption in Firestore
+- **In Transit**: TLS 1.3 minimum
+- **Photos**: Signed URLs with expiration
+- **Secrets**: Environment variables, never in code
 
-## Success Metrics (MVP - 2-3 Weeks)
-- 30 beta users acquired
-- < 2% crash rate
-- 90% notification delivery rate
-- 5% free to premium conversion (1-2 users)
-- 3.5+ TestFlight rating
+### COPPA Compliance
+- Parental consent required for under-13
+- Limited data collection from minors
+- 90-day photo retention policy
+- No third-party data sharing
+
+## Deployment Architecture
+
+### Environments
+
+| Environment | Purpose | URL | Firebase Project |
+|-------------|---------|-----|------------------|
+| Development | Local development | localhost | Emulators |
+| Staging | Pre-production testing | staging.typebapp.com | typeb-family-app-staging |
+| Production | Live application | typebapp.com | typeb-family-app |
+
+### CI/CD Pipeline (Planned)
+```yaml
+# GitHub Actions Workflow
+1. Push to main branch
+2. Run tests (Jest, TypeScript)
+3. Build applications
+4. Deploy to staging
+5. Run E2E tests
+6. Manual approval
+7. Deploy to production
+8. Smoke tests
+9. Rollback if needed
+```
+
+## Monitoring & Observability
+
+### Key Metrics
+- **Error Rate**: Target <1%
+- **API Latency**: p95 <500ms
+- **Uptime**: Target 99.9%
+- **Daily Active Users**: Track growth
+- **Conversion Rate**: Free to paid
+
+### Monitoring Stack
+- **Errors**: Sentry
+- **Performance**: Firebase Performance
+- **Analytics**: Firebase Analytics
+- **Uptime**: Vercel Analytics
+- **Logs**: Firebase Functions logs
+
+## Future Architecture Considerations
+
+### Planned Improvements
+1. **GraphQL API**: For more flexible queries
+2. **Microservices**: Split functions by domain
+3. **Event Sourcing**: For audit trail
+4. **CQRS**: Separate read/write models
+5. **API Gateway**: Rate limiting and caching
+
+### Technical Debt to Address
+1. Monorepo structure needs cleanup
+2. Test coverage improvement needed
+3. Documentation consolidation required
+4. CI/CD automation missing
+5. Staging environment underutilized
+
+---
+
+**Last Updated**: January 2025  
+**Version**: 2.0.0  
+**Next Review**: Quarterly

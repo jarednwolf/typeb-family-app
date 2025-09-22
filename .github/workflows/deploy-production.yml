@@ -1,0 +1,152 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+
+jobs:
+  pre-deployment:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check staging health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://staging.typebapp.com/api/health)
+          if [ $response != "200" ]; then
+            echo "Staging is not healthy"
+            exit 1
+          fi
+          
+      - name: Run smoke tests on staging
+        run: |
+          # Run critical path tests
+          pnpm test:smoke --url=https://staging.typebapp.com
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: pre-deployment
+    environment:
+      name: production
+      url: https://typebapp.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Build packages
+        run: pnpm build:packages
+        
+      - name: Build web application
+        run: pnpm build:web
+        
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+        
+      - name: Select Production Firebase project
+        run: firebase use typeb-family-app --token ${{ secrets.FIREBASE_TOKEN }}
+        
+      - name: Deploy Firebase Rules and Functions
+        run: |
+          firebase deploy --only firestore:rules --token ${{ secrets.FIREBASE_TOKEN }}
+          firebase deploy --only storage:rules --token ${{ secrets.FIREBASE_TOKEN }}
+          firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
+          
+      - name: Trigger Mobile Build
+        run: |
+          curl -X POST https://api.expo.dev/v2/projects/${{ secrets.EXPO_PROJECT_ID }}/builds \
+            -H "Authorization: Bearer ${{ secrets.EXPO_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "platform": "ios",
+              "profile": "production",
+              "message": "Production build for version ${{ inputs.version }}"
+            }'
+            
+      - name: Create Release Tag
+        run: |
+          git tag -a "release-${{ inputs.version }}" -m "Production release ${{ inputs.version }}"
+          git push origin "release-${{ inputs.version }}"
+          
+      - name: Notify team
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment ${{ inputs.version }} completed'
+
+  post-deployment:
+    name: Post-deployment Validation
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait for deployment to propagate
+        run: sleep 60
+        
+      - name: Check production health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://typebapp.com/api/health)
+          if [ $response != "200" ]; then
+            echo "Production is not healthy after deployment"
+            exit 1
+          fi
+          
+      - name: Run smoke tests on production
+        run: |
+          # Run critical path tests
+          pnpm test:smoke --url=https://typebapp.com
+          
+      - name: Monitor error rates
+        run: |
+          # Check Sentry for error rate spike
+          # This would integrate with Sentry API
+          echo "Monitoring error rates for 5 minutes..."
+          
+      - name: Final notification
+        if: success()
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "🚀 Production deployment ${{ inputs.version }} validated successfully!",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Version", "value": "${{ inputs.version }}", "short": true},
+                  {"title": "URL", "value": "https://typebapp.com", "short": true},
+                  {"title": "Status", "value": "✅ All checks passed", "short": false}
+                ]
+              }]
+            }

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consolidated documentation structure
 - Updated security rules for COPPA
 - Improved environment configuration
+- Functions: refactor error reporting summary to avoid FieldValue.increment, add idempotent update with processedEventIds dedupe, improve structured logging
+- Storage: emulator-aware URLs for thumbnails; production signed URLs with SA requirement
+ - Monitoring: initialize Sentry in functions; add minimal web Sentry setup and diagnostic route
 
 ### Security
 - API key rotation procedures

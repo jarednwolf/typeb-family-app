@@ -1,0 +1,41 @@
+{
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20",
+    "predeploy": [
+      "pnpm --prefix \"$RESOURCE_DIR\" install --prod=false",
+      "pnpm --prefix \"$RESOURCE_DIR\" run build"
+    ]
+  },
+  "firestore": {
+    "rules": "apps/web/firestore.rules",
+    "indexes": "apps/web/firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "apps/web/storage.rules"
+  },
+  "emulators": {
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9100
+    },
+    "functions": {
+      "host": "127.0.0.1",
+      "port": 5002
+    },
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "storage": {
+      "host": "127.0.0.1",
+      "port": 9200
+    },
+    "ui": {
+      "enabled": true,
+      "host": "127.0.0.1",
+      "port": 4002
+    },
+    "singleProjectMode": true
+  }
+}

@@ -17,21 +17,44 @@
     "build": "turbo run build",
     "build:packages": "turbo run build --filter='./packages/*'",
     "build:web": "turbo run build --filter=@typeb/web",
+    "build:mobile": "cd typeb-family-app && npm run build",
     "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "test:smoke": "turbo run test:smoke",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "ci:install": "pnpm install --frozen-lockfile",
+    "ci:test": "pnpm test --ci --coverage",
+    "ci:build": "pnpm build",
+    "ci:lint": "pnpm lint",
+    "ci:type-check": "pnpm type-check",
+    "ci:audit": "pnpm audit --audit-level=high",
     "prepare": "husky install",
     "deploy": "vercel --cwd apps/web",
-    "deploy:prod": "vercel --cwd apps/web --prod"
+    "deploy:prod": "vercel --cwd apps/web --prod",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:deploy:functions": "firebase deploy --only functions",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage:rules",
+    "firebase:deploy:all": "firebase deploy",
+    "env:check": "node ./scripts/validate-envs.mjs",
+    "env:fix": "node ./scripts/validate-envs.mjs --fix",
+    "rules:test": "firebase emulators:exec --only firestore,storage 'node scripts/rules-test.js'",
+    "firebase:smoke": "firebase emulators:exec --only functions,firestore,storage './scripts/smoke-emulators.sh'",
+    "firebase:smoke:run": "./scripts/smoke-emulators.sh"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "3",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
+    "firebase": "10.14.1",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
@@ -46,5 +69,9 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@sentry/nextjs": "7",
+    "@sentry/node": "7"
   }
 }

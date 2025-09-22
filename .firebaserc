@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "tybeb-staging",
+    "staging": "tybeb-staging",
+    "production": "typeb-family-app"
+  }
+}

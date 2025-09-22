@@ -8,18 +8,18 @@
 
 | ID | Category | Task | Priority | Status | Owner | Due | Dependencies | Acceptance Criteria |
 |----|----------|------|----------|--------|-------|-----|--------------|-------------------|
-| INF-001 | Infrastructure | Set up GitHub Actions CI/CD | P0 | ⏳ Todo | DevOps | Day 1 | None | Tests run on PR, auto-deploy to staging |
+| INF-001 | Infrastructure | Set up GitHub Actions CI/CD | P0 | 🟡 Partial | DevOps | Day 1 | None | Tests run on PR, auto-deploy to staging |
 | INF-002 | Infrastructure | Configure production environment | P0 | ⏳ Todo | DevOps | Day 1 | INF-001 | .env.production created and tested |
 | INF-003 | Infrastructure | Set up staging environment | P0 | ⏳ Todo | DevOps | Day 2 | INF-002 | Staging Firebase project active |
 | INF-004 | Infrastructure | Configure Vercel production | P1 | ⏳ Todo | DevOps | Day 2 | INF-002 | Production domain configured |
 | INF-005 | Infrastructure | Set up monitoring dashboards | P1 | ⏳ Todo | DevOps | Day 5 | MON-001 | Grafana/Datadog configured |
-| SEC-001 | Security | Implement COPPA consent flow | P0 | ⏳ Todo | Backend | Day 2 | None | Parent verification working |
+| SEC-001 | Security | Implement COPPA consent flow | P0 | 🟡 Partial | Backend | Day 2 | None | Parent verification working |
 | SEC-002 | Security | Update privacy policy | P0 | ⏳ Todo | Legal | Day 1 | SEC-001 | COPPA compliant policy live |
 | SEC-003 | Security | Audit Firebase security rules | P0 | ⏳ Todo | Security | Day 3 | None | No unauthorized access paths |
 | SEC-004 | Security | Rotate all API keys | P0 | ⏳ Todo | Security | Day 3 | INF-002 | New keys in production |
 | SEC-005 | Security | Implement rate limiting | P1 | ⏳ Todo | Backend | Day 3 | SEC-003 | 100 req/min enforced |
 | SEC-006 | Security | Set up secret management | P1 | ⏳ Todo | DevOps | Day 2 | INF-002 | Secrets in vault, not code |
-| AUTH-001 | Authentication | Implement Google SSO | P0 | ⏳ Todo | Frontend | Day 4 | None | Google login working |
+| AUTH-001 | Authentication | Implement Google SSO | P0 | 🟡 Partial | Frontend | Day 4 | None | Google login working |
 | AUTH-002 | Authentication | Add Apple Sign In | P2 | ⏳ Todo | Frontend | Week 2 | None | Apple login working |
 | AUTH-003 | Authentication | Test auth flows | P0 | ⏳ Todo | QA | Day 4 | AUTH-001 | All auth paths tested |
 | PAY-001 | Payments | Configure RevenueCat products | P0 | ⏳ Todo | Backend | Day 3 | None | Products created in dashboard |

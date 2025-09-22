@@ -3,5 +3,7 @@ packages:
   - 'packages/*'
   # Applications
   - 'apps/*'
+  # Firebase functions (root)
+  - 'functions'
   # Keep existing mobile app in its current location for now
   - 'typeb-family-app'
