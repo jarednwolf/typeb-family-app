@@ -407,6 +407,7 @@ jest.mock('react-native', () => {
   
   return {
     ...RN,
+    KeyboardAvoidingView: RN.View,
     Settings: {
       get: jest.fn(() => ({})),
       set: jest.fn(),

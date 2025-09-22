@@ -227,7 +227,7 @@ const PhotoValidationScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
           
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} testID="photo-review-scroll">
             <Text style={styles.modalTaskTitle}>{selectedItem.taskTitle}</Text>
             
             <View style={styles.modalAssigneeInfo}>
@@ -260,6 +260,7 @@ const PhotoValidationScreen: React.FC = () => {
               multiline
               numberOfLines={3}
               style={styles.notesInput}
+              testID="validation-notes-input"
             />
             
             <View style={styles.validationActions}>

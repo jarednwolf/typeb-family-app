@@ -667,6 +667,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
                 numberOfLines={2}
                 maxLength={200}
                 style={styles.photoInstructions}
+                testID="photo-instructions-input"
               />
             )}
 

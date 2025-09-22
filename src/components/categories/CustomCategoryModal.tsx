@@ -123,6 +123,7 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
               onChangeText={setName}
               placeholder="Enter category name"
               maxLength={20}
+              testID="category-name-input"
             />
             <Text style={styles.charCount}>{name.length}/20</Text>
           </View>
@@ -141,6 +142,7 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
                   ]}
                   onPress={() => setSelectedColor(color)}
                   activeOpacity={0.7}
+                  testID={`color-option-${color}`}
                 >
                   {selectedColor === color && (
                     <Feather name="check" size={20} color="#FFFFFF" />
@@ -164,6 +166,7 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
                   ]}
                   onPress={() => setSelectedIcon(icon)}
                   activeOpacity={0.7}
+                  testID={`icon-option-${icon}`}
                 >
                   <Feather
                     name={icon as any}

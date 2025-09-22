@@ -163,6 +163,7 @@ export const Input: React.FC<InputProps> = ({
             style,
           ]}
           placeholderTextColor={colors.textTertiary}
+          testID={props.testID || 'input'}
           value={localValue}
           onChangeText={handleChangeText}
           onFocus={handleFocus}

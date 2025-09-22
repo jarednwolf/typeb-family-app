@@ -231,7 +231,7 @@ export const Modal: React.FC<ModalProps> = ({
             )}
 
             {/* Content */}
-            <ContentWrapper style={styles.content} {...contentWrapperProps}>
+            <ContentWrapper style={styles.content} {...contentWrapperProps} testID="modal-content">
               {children}
             </ContentWrapper>
 
