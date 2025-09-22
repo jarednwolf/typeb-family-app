@@ -14,6 +14,7 @@ module.exports = {
   testRegex: '(/__tests__/.*\\.(test|spec))\\.(jsx?|tsx?)$',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^src/(.*)$': '<rootDir>/src/$1',
     '\\.svg': '<rootDir>/__mocks__/svgMock.js',
     '@react-native-community/datetimepicker': '<rootDir>/src/__mocks__/@react-native-community/datetimepicker.tsx',
   },
