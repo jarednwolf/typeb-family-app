@@ -279,6 +279,63 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+// Mock NetInfo
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn(() => Promise.resolve({ isConnected: true, isInternetReachable: true })),
+  addEventListener: jest.fn(() => jest.fn()),
+}));
+
+// Mock Google Sign-In
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    signIn: jest.fn(() => Promise.resolve({ user: { id: '1' } })),
+    signOut: jest.fn(() => Promise.resolve()),
+    getCurrentUser: jest.fn(() => Promise.resolve(null)),
+  },
+  statusCodes: {},
+}));
+
+// Mock RevenueCat Purchases
+jest.mock('react-native-purchases', () => ({
+  __esModule: true,
+  default: {
+    setup: jest.fn(),
+    getOfferings: jest.fn(() => Promise.resolve({})),
+    getCustomerInfo: jest.fn(() => Promise.resolve({})),
+    addCustomerInfoUpdateListener: jest.fn(),
+    removeAllListeners: jest.fn(),
+    logIn: jest.fn(() => Promise.resolve({})),
+    logOut: jest.fn(() => Promise.resolve()),
+  },
+}));
+
+// Mock Expo image picker/manipulator
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  launchCameraAsync: jest.fn(() => Promise.resolve({ canceled: true })),
+}));
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn(() => Promise.resolve({ uri: 'file://manipulated.jpg' })),
+}));
+
+// Mock react-native-modal
+jest.mock('react-native-modal', () => ({ __esModule: true, default: ({ children }) => children }));
+
+// Mock @sentry/react-native (ESM)
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  setUser: jest.fn(),
+  setTags: jest.fn(),
+  setTag: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  withScope: (cb) => cb({ setContext: jest.fn() }),
+  ReactNativeTracing: function () {},
+}));
+
 // Mock AsyncStorage with in-memory storage
 const mockAsyncStorage = (() => {
   let store = {};
@@ -329,6 +386,8 @@ jest.mock('@react-navigation/native', () => ({
   NavigationContainer: ({ children }) => children,
   createNavigationContainerRef: jest.fn(() => ({ current: null }))
 }));
+
+// Note: realtime/offline services are tested separately; avoid global mocks here
 
 // Mock React Native Settings module
 jest.mock('react-native/Libraries/Settings/Settings', () => ({

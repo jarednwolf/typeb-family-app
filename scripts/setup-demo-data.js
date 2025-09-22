@@ -14,14 +14,14 @@ const {
   serverTimestamp 
 } = require('firebase/firestore');
 
-// Firebase configuration from your .env
+// Firebase configuration from your environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyB7J0bv6LIADDlgCWj_ZkovFON-gaoGt5w",
-  authDomain: "typeb-family-app.firebaseapp.com",
-  projectId: "typeb-family-app",
-  storageBucket: "typeb-family-app.firebasestorage.app",
-  messagingSenderId: "1030430696382",
-  appId: "1:1030430696382:web:31fd0b7449fe8d9a098fef"
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID
 };
 
 // Initialize Firebase

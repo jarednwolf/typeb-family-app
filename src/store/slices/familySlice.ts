@@ -406,3 +406,5 @@ export const selectCurrentUserRole = (state: RootState) => {
 };
 
 export default familySlice.reducer;
+// Additional selectors
+export const selectActiveFamily = (state: RootState) => state.family.currentFamily;

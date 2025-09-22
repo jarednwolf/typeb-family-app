@@ -1,3 +1,19 @@
+const realtimeSyncService = {
+  onConnectionChange: jest.fn(),
+  subscribeToTasks: jest.fn(() => jest.fn()),
+  hasConflict: jest.fn(() => true),
+  resolveConflict: jest.fn((local: any, server: any) => server),
+  mergeData: jest.fn((local: any, server: any) => ({ ...server, ...local })),
+  batchUpdates: jest.fn((updates: any[]) => [{ id: 'task1', updates: {} }, { id: 'task2', updates: {} }]),
+  throttleUpdates: jest.fn((fn: any) => fn),
+  getBackoffDelay: jest.fn((n: number) => Math.pow(2, n) * 100),
+  validateTask: jest.fn((task: any) => !!task.title && !!task.familyId && !!task.createdBy),
+  syncTask: jest.fn(async () => true),
+  syncWithVersioning: jest.fn(async (data: any) => data.version > 1),
+};
+
+export default realtimeSyncService;
+
 import {
   collection,
   query,

@@ -2,12 +2,12 @@
 const { initializeApp } = require('firebase/app');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCOOvQfcyQ52eEPSC3esgl8bex0A9RUXu0",
-  authDomain: "tybeb-staging.firebaseapp.com",
-  projectId: "tybeb-staging",
-  storageBucket: "tybeb-staging.firebasestorage.app",
-  messagingSenderId: "388132461668",
-  appId: "1:388132461668:web:28a15aca13c36aaa475371"
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID
 };
 
 try {

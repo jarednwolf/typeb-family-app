@@ -17,25 +17,25 @@ const isE2ETest = __DEV__ && (
   (global as any).__E2E_TEST__ === true
 );
 
-// Firebase configuration - Use staging/production based on environment
-const firebaseConfig = __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' ? {
-  // Development/E2E test configuration for emulators
-  apiKey: "test-api-key",
-  authDomain: "localhost",
-  projectId: "typeb-family-app",
-  storageBucket: "typeb-family-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "test-app-id"
-} : {
-  // Staging/Production configuration
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyCOOvQfcyQ52eEPSC3esgl8bex0A9RUXu0',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'tybeb-staging.firebaseapp.com',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'tybeb-staging',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'tybeb-staging.firebasestorage.app',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '388132461668',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:388132461668:web:28a15aca13c36aaa475371',
-  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+// Firebase configuration - Use emulators for dev when enabled, otherwise read from env
+const firebaseConfig = __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true'
+  ? {
+      apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+      authDomain: 'localhost',
+      projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    }
+  : {
+      apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+      measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    };
 
 console.log('🔥 Firebase Mode:', __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' ? 'Development/E2E (using emulators)' : 'Staging/Production');
 

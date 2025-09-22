@@ -25,45 +25,49 @@ jest.mock('firebase/auth', () => ({
 }));
 
 // Mock Firebase Firestore
-jest.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(() => ({
-    collection: jest.fn(),
-    doc: jest.fn(),
-  })),
-  collection: jest.fn(),
-  doc: jest.fn(),
-  getDoc: jest.fn(),
-  getDocs: jest.fn(),
-  setDoc: jest.fn(),
-  updateDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  orderBy: jest.fn(),
-  limit: jest.fn(),
-  onSnapshot: jest.fn(),
-  serverTimestamp: jest.fn(() => new Date()),
-  Timestamp: {
-    now: jest.fn(() => ({ toDate: () => new Date() })),
-    fromDate: jest.fn((date) => ({ toDate: () => date })),
-  },
-  runTransaction: jest.fn((db: any, callback: any) => callback({
-    get: jest.fn(),
-    set: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  })),
-  // Add array field operations
-  arrayRemove: jest.fn((...elements) => ({ _type: 'arrayRemove', elements })),
-  arrayUnion: jest.fn((...elements) => ({ _type: 'arrayUnion', elements })),
-  FieldValue: {
-    arrayRemove: jest.fn((...elements) => ({ _type: 'arrayRemove', elements })),
-    arrayUnion: jest.fn((...elements) => ({ _type: 'arrayUnion', elements })),
-  },
-  // Add emulator functions if needed for integration tests
-  connectFirestoreEmulator: jest.fn(),
-  terminate: jest.fn(),
-}));
+jest.mock('firebase/firestore', () => {
+  const defaultDoc = { id: 'mock-doc-id', path: 'collection/mock-doc-id' };
+  const defaultSnapshot = {
+    exists: () => true,
+    data: () => ({}),
+    id: 'mock-doc-id',
+  };
+  return {
+    getFirestore: jest.fn(() => ({})),
+    collection: jest.fn((_db?: any, name?: string) => ({ id: name || 'mock-collection' })),
+    doc: jest.fn((_arg1?: any, _arg2?: string, _arg3?: string) => defaultDoc),
+    getDoc: jest.fn(() => Promise.resolve(defaultSnapshot)),
+    getDocs: jest.fn(() => Promise.resolve({ empty: true, docs: [], size: 0, forEach: jest.fn() })),
+    setDoc: jest.fn(() => Promise.resolve()),
+    updateDoc: jest.fn(() => Promise.resolve()),
+    deleteDoc: jest.fn(() => Promise.resolve()),
+    addDoc: jest.fn(() => Promise.resolve({ id: 'new-doc-id' })),
+    query: jest.fn((...args: any[]) => ({ _query: args })),
+    where: jest.fn((field: string, op: any, value: any) => ({ field, op, value })),
+    orderBy: jest.fn((field: string, direction?: string) => ({ field, direction })),
+    limit: jest.fn((n: number) => ({ n })),
+    onSnapshot: jest.fn((_q: any, cb: any) => { cb({ docs: [] }); return jest.fn(); }),
+    serverTimestamp: jest.fn(() => new Date()),
+    Timestamp: {
+      now: jest.fn(() => ({ toDate: () => new Date() })),
+      fromDate: jest.fn((date: Date) => ({ toDate: () => date })),
+    },
+    runTransaction: jest.fn((_db: any, callback: any) => callback({
+      get: jest.fn(() => Promise.resolve(defaultSnapshot)),
+      set: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    })),
+    arrayRemove: jest.fn((...elements: any[]) => ({ _type: 'arrayRemove', elements })),
+    arrayUnion: jest.fn((...elements: any[]) => ({ _type: 'arrayUnion', elements })),
+    FieldValue: {
+      arrayRemove: jest.fn((...elements: any[]) => ({ _type: 'arrayRemove', elements })),
+      arrayUnion: jest.fn((...elements: any[]) => ({ _type: 'arrayUnion', elements })),
+    },
+    connectFirestoreEmulator: jest.fn(),
+    terminate: jest.fn(),
+  };
+});
 
 // Mock Firebase Storage
 jest.mock('firebase/storage', () => ({
@@ -695,7 +699,7 @@ jest.mock('../../services/celebrations', () => ({
   getAchievementProgress: jest.fn(() => Promise.resolve({ progress: 0, maxProgress: 0 })),
 }));
 
-// Mock config/firebase
+// Mock config/firebase (fallback path used by some tests)
 jest.mock('../../config/firebase', () => ({
   firestore: {
     collection: jest.fn(),
@@ -705,6 +709,13 @@ jest.mock('../../config/firebase', () => ({
   auth: {
     currentUser: null,
   },
+}));
+
+// Also mock services/firebase used by app code
+jest.mock('../../services/firebase', () => ({
+  auth: { currentUser: null },
+  db: {},
+  storage: {},
 }));
 
 // Increase default timeout for integration tests

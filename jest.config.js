@@ -1,17 +1,16 @@
 module.exports = {
-  preset: 'react-native',
-  testEnvironment: 'node',
+  preset: 'jest-expo',
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(\\.pnpm/.*?/node_modules/)?(@react-native|react-native|react-native-.*|@react-navigation/.*|expo(nent)?|@expo(nent)?/.*|expo-modules-core|@unimodules/.*|sentry-expo|nativewind|react-native-svg|react-native-gesture-handler|@react-native-picker/.*|@react-native-google-signin/google-signin|@react-native/js-polyfills|react-redux)/)'
+  ],
   setupFilesAfterEnv: [
     '<rootDir>/jest.setup.js',
     '<rootDir>/src/__tests__/setup/testSetup.ts'
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
-  },
-  transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-navigation|@expo|expo|expo-.*|@unimodules|react-native-svg|react-native-screens|react-native-safe-area-context|react-native-gesture-handler|react-native-reanimated|react-native-heroicons|@expo/vector-icons|react-native-vector-icons)/)',
-  ],
   testRegex: '(/__tests__/.*\\.(test|spec))\\.(jsx?|tsx?)$',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
