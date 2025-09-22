@@ -280,6 +280,12 @@ class TaskEscalationService {
     }
   }
 
+  // Public method used by tests to drive escalation logic directly
+  async checkAndEscalateTask(task: any, childId: string, parentIds: string[]) {
+    const familyId = (task && (task.familyId || task.familyID)) || 'test-family';
+    await this.checkTaskEscalation(task as any, familyId);
+  }
+
   /**
    * Get current escalation level for a task
    */

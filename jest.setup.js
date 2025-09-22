@@ -155,6 +155,12 @@ jest.mock('firebase/storage', () => ({
   }))
 }));
 
+// Mock Firebase Functions (avoid ESM parse issues in tests)
+jest.mock('firebase/functions', () => ({
+  httpsCallable: jest.fn(() => jest.fn(async () => ({ data: {} }))),
+  getFunctions: jest.fn(() => ({})),
+}));
+
 // Mock Firebase App
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(() => ({})),

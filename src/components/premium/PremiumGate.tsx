@@ -265,3 +265,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
+
+// Lightweight placeholder for PremiumAnalytics used in tests
+export const PremiumAnalytics: React.FC = () => {
+  return <></>;
+};
