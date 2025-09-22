@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
+import { renderWithProviders } from '../../src/test-utils/component-test-utils';
 import { configureStore } from '@reduxjs/toolkit';
 import CustomCategoryModal from '../../src/components/categories/CustomCategoryModal';
 import CreateTaskModal from '../../src/screens/tasks/CreateTaskModal';
@@ -226,104 +227,150 @@ describe('Custom Categories Premium Feature', () => {
   describe('CreateTaskModal with Custom Categories', () => {
     it('should show custom categories in task creation', () => {
       const mockOnClose = jest.fn();
-      
+      const preloaded: any = {
+        auth: {
+          user: null,
+          userProfile: { id: 'user1', role: 'parent', displayName: 'P', familyId: 'family1', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' },
+          isLoading: false, isAuthenticated: true, error: null, isEmailVerified: false,
+        },
+        family: {
+          currentFamily: {
+            id: 'family1', name: 'F', inviteCode: 'X', createdBy: 'user1', createdAt: '', updatedAt: '', memberIds: ['user1','user2'], parentIds: ['user1'], childIds: ['user2'], maxMembers: 4, isPremium: true,
+            taskCategories: [ { id: '1', name: 'Chores', color: '#10B981', icon: 'home', order: 1 }, { id: '2', name: 'School', color: '#3B82F6', icon: 'book', order: 2 } ],
+          },
+          members: [ { id: 'user1', displayName: 'Parent', email: 'p@example.com', role: 'parent', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' } ],
+          isLoading: false, error: null, inviteCode: null, isJoining: false, isCreating: false,
+        },
+        tasks: { tasks: [], userTasks: [], overdueTasks: [], selectedTask: null, isLoading: false, error: null, filters: {} },
+        notifications: { notifications: [], unreadCount: 0, settings: {}, pushToken: null, isLoading: false, error: null, lastFetchedAt: null, hasPermission: false },
+      };
+      const staticStore = configureStore({
+        reducer: {
+          auth: (state = preloaded.auth) => state,
+          family: (state = preloaded.family) => state,
+          tasks: (state = preloaded.tasks) => state,
+          notifications: (state = preloaded.notifications) => state,
+        },
+        preloadedState: preloaded,
+      });
       const { getByText } = render(
-        <Provider store={store}>
-          <ThemeProvider>
-            <NavigationContainer>
-              <CreateTaskModal
-                visible={true}
-                onClose={mockOnClose}
-              />
-            </NavigationContainer>
-          </ThemeProvider>
+        <Provider store={staticStore}>
+          <NavigationContainer>
+            <CreateTaskModal visible={true} onClose={mockOnClose} />
+          </NavigationContainer>
         </Provider>
       );
-      
-      // Should show existing categories
       expect(getByText('Chores')).toBeTruthy();
       expect(getByText('School')).toBeTruthy();
     });
     
     it('should show Add Custom button for premium users', () => {
       const mockOnClose = jest.fn();
-      
+      const preloaded: any = {
+        auth: {
+          user: null,
+          userProfile: { id: 'user1', role: 'parent', displayName: 'P', familyId: 'family1', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' },
+          isLoading: false, isAuthenticated: true, error: null, isEmailVerified: false,
+        },
+        family: {
+          currentFamily: {
+            id: 'family1', name: 'F', inviteCode: 'X', createdBy: 'user1', createdAt: '', updatedAt: '', memberIds: ['user1'], parentIds: ['user1'], childIds: [], maxMembers: 4, isPremium: true,
+            taskCategories: [ { id: '1', name: 'Chores', color: '#10B981', icon: 'home', order: 1 } ],
+          },
+          members: [ { id: 'user1', displayName: 'Parent', email: 'p@example.com', role: 'parent', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' } ],
+          isLoading: false, error: null, inviteCode: null, isJoining: false, isCreating: false,
+        },
+        tasks: { tasks: [], userTasks: [], overdueTasks: [], selectedTask: null, isLoading: false, error: null, filters: {} },
+        notifications: { notifications: [], unreadCount: 0, settings: {}, pushToken: null, isLoading: false, error: null, lastFetchedAt: null, hasPermission: false },
+      };
+      const staticStore = configureStore({
+        reducer: {
+          auth: (state = preloaded.auth) => state,
+          family: (state = preloaded.family) => state,
+          tasks: (state = preloaded.tasks) => state,
+          notifications: (state = preloaded.notifications) => state,
+        },
+        preloadedState: preloaded,
+      });
       const { getByText, getByTestId } = render(
-        <Provider store={store}>
-          <ThemeProvider>
-            <NavigationContainer>
-              <CreateTaskModal
-                visible={true}
-                onClose={mockOnClose}
-              />
-            </NavigationContainer>
-          </ThemeProvider>
+        <Provider store={staticStore}>
+          <NavigationContainer>
+            <CreateTaskModal visible={true} onClose={mockOnClose} />
+          </NavigationContainer>
         </Provider>
       );
-      
       expect(getByTestId('add-category-button')).toBeTruthy();
       expect(getByText('Add Custom')).toBeTruthy();
     });
     
     it('should not show Add Custom button for free users', () => {
-      const freeStore = configureStore({
-        reducer: {
-          auth: authReducer,
-          family: familyReducer,
-          tasks: tasksReducer,
-        },
-        preloadedState: {
-          ...store.getState(),
-          family: {
-            ...store.getState().family,
-            currentFamily: {
-              ...store.getState().family.currentFamily,
-              isPremium: false,
-            },
-          },
-        },
-      });
-      
       const mockOnClose = jest.fn();
-      
-      const { queryByTestId } = render(
-        <Provider store={freeStore}>
-          <ThemeProvider>
-            <NavigationContainer>
-              <CreateTaskModal
-                visible={true}
-                onClose={mockOnClose}
-              />
-            </NavigationContainer>
-          </ThemeProvider>
-        </Provider>
+      const { queryByTestId } = renderWithProviders(
+        <NavigationContainer>
+          <CreateTaskModal visible={true} onClose={mockOnClose} />
+        </NavigationContainer>,
+        {
+          initialState: {
+            auth: {
+              user: null,
+              userProfile: { id: 'user1', role: 'parent', displayName: 'P', familyId: 'family1', createdAt: '', updatedAt: '', isPremium: false, notificationsEnabled: true, timezone: 'UTC' },
+              isLoading: false,
+              isAuthenticated: true,
+              error: null,
+              isEmailVerified: false,
+            },
+            family: {
+              currentFamily: {
+                id: 'family1', name: 'F', inviteCode: 'X', createdBy: 'user1', createdAt: '', updatedAt: '', memberIds: ['user1'], parentIds: ['user1'], childIds: [], maxMembers: 4, isPremium: false,
+                taskCategories: [ { id: '1', name: 'Chores', color: '#10B981', icon: 'home', order: 1 } ],
+              },
+              members: [ { id: 'user1', displayName: 'Parent', email: 'p@example.com', role: 'parent', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' } ],
+              isLoading: false, error: null, inviteCode: null, isJoining: false, isCreating: false,
+            },
+          } as any,
+        }
       );
-      
       expect(queryByTestId('add-category-button')).toBeFalsy();
     });
     
-    it('should open custom category modal when Add Custom is pressed', () => {
+    it('should open custom category modal when Add Custom is pressed', async () => {
       const mockOnClose = jest.fn();
-      
-      const { getByTestId, getByText } = render(
-        <Provider store={store}>
-          <ThemeProvider>
-            <NavigationContainer>
-              <CreateTaskModal
-                visible={true}
-                onClose={mockOnClose}
-              />
-            </NavigationContainer>
-          </ThemeProvider>
+      const preloaded: any = {
+        auth: {
+          user: null,
+          userProfile: { id: 'user1', role: 'parent', displayName: 'P', familyId: 'family1', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' },
+          isLoading: false, isAuthenticated: true, error: null, isEmailVerified: false,
+        },
+        family: {
+          currentFamily: {
+            id: 'family1', name: 'F', inviteCode: 'X', createdBy: 'user1', createdAt: '', updatedAt: '', memberIds: ['user1'], parentIds: ['user1'], childIds: [], maxMembers: 4, isPremium: true,
+            taskCategories: [ { id: '1', name: 'Chores', color: '#10B981', icon: 'home', order: 1 } ],
+          },
+          members: [ { id: 'user1', displayName: 'Parent', email: 'p@example.com', role: 'parent', createdAt: '', updatedAt: '', isPremium: true, notificationsEnabled: true, timezone: 'UTC' } ],
+          isLoading: false, error: null, inviteCode: null, isJoining: false, isCreating: false,
+        },
+        tasks: { tasks: [], userTasks: [], overdueTasks: [], selectedTask: null, isLoading: false, error: null, filters: {} },
+        notifications: { notifications: [], unreadCount: 0, settings: {}, pushToken: null, isLoading: false, error: null, lastFetchedAt: null, hasPermission: false },
+      };
+      const staticStore = configureStore({
+        reducer: {
+          auth: (state = preloaded.auth) => state,
+          family: (state = preloaded.family) => state,
+          tasks: (state = preloaded.tasks) => state,
+          notifications: (state = preloaded.notifications) => state,
+        },
+        preloadedState: preloaded,
+      });
+      const { getByTestId, findByText } = render(
+        <Provider store={staticStore}>
+          <NavigationContainer>
+            <CreateTaskModal visible={true} onClose={mockOnClose} />
+          </NavigationContainer>
         </Provider>
       );
-      
       const addButton = getByTestId('add-category-button');
       fireEvent.press(addButton);
-      
-      waitFor(() => {
-        expect(getByText('Create Custom Category')).toBeTruthy();
-      });
+      expect(await findByText('Create Custom Category')).toBeTruthy();
     });
   });
 });

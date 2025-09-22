@@ -62,17 +62,20 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
   const [selectedColor, setSelectedColor] = useState(editingCategory?.color || PRESET_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(editingCategory?.icon || PRESET_ICONS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const styles = React.useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   const handleSave = useCallback(() => {
     // Validate name
     if (!name.trim()) {
+      setNameError('Category name is required');
       Alert.alert('Error', 'Please enter a category name');
       return;
     }
 
     if (name.trim().length > 20) {
+      setNameError('Category name must be less than 20 characters');
       Alert.alert('Error', 'Category name must be less than 20 characters');
       return;
     }
@@ -84,11 +87,15 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
     );
 
     if (isDuplicate) {
+      setNameError('Category name already exists');
       Alert.alert('Error', 'A category with this name already exists');
       return;
     }
 
     setIsSubmitting(true);
+
+    // Clear any previous error
+    setNameError(null);
 
     // Calculate order (place at end)
     const maxOrder = Math.max(...existingCategories.map(c => c.order), 0);
@@ -124,6 +131,7 @@ const CustomCategoryModal: React.FC<CustomCategoryModalProps> = ({
               placeholder="Enter category name"
               maxLength={20}
               testID="category-name-input"
+              error={nameError || undefined}
             />
             <Text style={styles.charCount}>{name.length}/20</Text>
           </View>

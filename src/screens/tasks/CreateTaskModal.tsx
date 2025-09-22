@@ -51,8 +51,8 @@ const isValidFeatherIcon = (iconName: string): boolean => {
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const familyMembers = useSelector(selectFamilyMembers);
-  const userProfile = useSelector((state: RootState) => state.auth.userProfile);
-  const family = useSelector((state: RootState) => state.family.currentFamily);
+  const userProfile = useSelector((state: RootState) => state.auth?.userProfile || null);
+  const family = useSelector((state: RootState) => state.family?.currentFamily || null);
   const { theme, isDarkMode } = useTheme();
   
   // State for template selection
