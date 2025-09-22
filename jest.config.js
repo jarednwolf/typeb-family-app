@@ -19,6 +19,7 @@ module.exports = {
     '@react-native-community/datetimepicker': '<rootDir>/src/__mocks__/@react-native-community/datetimepicker.tsx',
     '^.*common/Modal$': '<rootDir>/src/components/common/__mocks__/Modal.tsx',
     '^.*contexts/ThemeContext$': '<rootDir>/src/__mocks__/ThemeContext.tsx',
+    '^.*common/Button$': '<rootDir>/src/components/common/__mocks__/Button.tsx',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
