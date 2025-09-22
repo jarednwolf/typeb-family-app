@@ -17,6 +17,8 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/src/$1',
     '\\.svg': '<rootDir>/__mocks__/svgMock.js',
     '@react-native-community/datetimepicker': '<rootDir>/src/__mocks__/@react-native-community/datetimepicker.tsx',
+    '^.*common/Modal$': '<rootDir>/src/components/common/__mocks__/Modal.tsx',
+    '^.*contexts/ThemeContext$': '<rootDir>/src/__mocks__/ThemeContext.tsx',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
