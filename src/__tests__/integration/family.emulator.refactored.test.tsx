@@ -38,6 +38,7 @@ import {
   regenerateInviteCode,
 } from '../../services/family.refactored';
 import { Family, User } from '../../types/models';
+import { waitForEmulators } from '../setup/firebaseTestSetup';
 
 describe('Family Service Integration Tests (Refactored)', () => {
   let testInstances: FirebaseTestInstances;

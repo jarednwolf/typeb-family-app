@@ -31,9 +31,9 @@ interface ErrorContext {
 
 class ErrorReportingService {
   private errorQueue: ErrorReport[] = [];
-  private isProduction = process.env.EXPO_PUBLIC_ENVIRONMENT === 'production';
+  private isProduction = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_ENVIRONMENT) === 'production';
   private maxQueueSize = 50;
-  private batchTimer: NodeJS.Timeout | null = null;
+  private batchTimer: any = null;
 
   constructor() {
     this.setupGlobalErrorHandlers();
@@ -42,7 +42,7 @@ class ErrorReportingService {
   private setupGlobalErrorHandlers() {
     // Handle unhandled promise rejections
     if (!__DEV__) {
-      const originalHandler = (global as any).onunhandledrejection;
+      const originalHandler = (global as any)?.onunhandledrejection;
       (global as any).onunhandledrejection = (event: any) => {
         this.reportError(
           new Error(`Unhandled Promise Rejection: ${event.reason}`),
@@ -203,7 +203,7 @@ class ErrorReportingService {
 
   private async sendToBackend(reports: ErrorReport[]): Promise<void> {
     try {
-      const functionsUrl = process.env.EXPO_PUBLIC_CLOUD_FUNCTIONS_URL;
+      const functionsUrl = typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_CLOUD_FUNCTIONS_URL : undefined;
       if (!functionsUrl || !this.isProduction) return;
 
       await fetch(`${functionsUrl}/reportErrorBatch`, {
@@ -291,7 +291,7 @@ class ErrorReportingService {
     }
   ): Promise<void> {
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const apiUrl = (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_API_URL : undefined) as string | undefined;
       if (!apiUrl) return;
 
       await fetch(`${apiUrl}/errors/${errorId}/feedback`, {

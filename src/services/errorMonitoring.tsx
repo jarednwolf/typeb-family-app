@@ -58,6 +58,15 @@ class ErrorMonitoringService {
               event.user.email = '***';
             }
           }
+          // Group by screen tag if provided
+          const screen = (event.tags as any)?.screen || (event.extra as any)?.screen;
+          if (screen) {
+            event.fingerprint = ['{{ default }}', `screen:${screen}`];
+          }
+          // Respect runtime privacy flag
+          if (!this.privacyEnabled) {
+            return null;
+          }
           
           // Log to console in development
           if (!this.isProduction) {
@@ -100,6 +109,11 @@ class ErrorMonitoringService {
     const errorObj = typeof error === 'string' ? new Error(error) : error;
     
     Sentry.withScope((scope) => {
+      // Apply privacy
+      scope.setUser(this.privacyEnabled ? this.currentUser : null);
+      if (!this.privacyEnabled) {
+        scope.clearBreadcrumbs();
+      }
       if (context) {
         scope.setContext('additional', context);
       }
@@ -126,17 +140,8 @@ class ErrorMonitoringService {
   setUser(user: { id: string; email?: string; username?: string; familyId?: string } | null) {
     if (!this.isInitialized) return;
 
-    if (user) {
-      Sentry.setUser({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        // Add custom attributes
-        familyId: user.familyId,
-      });
-    } else {
-      Sentry.setUser(null);
-    }
+    this.currentUser = user ?? null;
+    Sentry.setUser(this.privacyEnabled ? user : null);
   }
 
   // Add breadcrumb for tracking user actions
@@ -261,6 +266,20 @@ class ErrorMonitoringService {
     Sentry.setUser(null);
     Sentry.setTags({});
     Sentry.clearBreadcrumbs();
+  }
+
+  // Privacy controls
+  private privacyEnabled: boolean = true;
+  private currentUser: { id: string; email?: string; username?: string; familyId?: string } | null = null;
+
+  setPrivacyEnabled(enabled: boolean) {
+    this.privacyEnabled = enabled;
+    if (!enabled) {
+      Sentry.setUser(null);
+      Sentry.clearBreadcrumbs();
+    } else if (this.currentUser) {
+      Sentry.setUser(this.currentUser);
+    }
   }
 }
 

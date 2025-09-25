@@ -199,7 +199,7 @@ describe('Auth Service - Integration Tests', () => {
       expect(profileData?.displayName).toBe('New User');
 
       // Check that security profile was created
-      const securityDoc = await getDoc(doc(db, 'userSecurity', result.user.uid));
+      const securityDoc = await getDoc(doc(db, 'securityProfiles', result.user.uid));
       expect(securityDoc.exists()).toBe(true);
       const securityData = securityDoc.data();
       expect(securityData?.emailVerified).toBe(false);
@@ -332,7 +332,7 @@ describe('Auth Service - Integration Tests', () => {
       await signIn(signInData);
 
       // Check that login count was incremented
-      const securityDoc = await getDoc(doc(db, 'userSecurity', testUser!.uid));
+      const securityDoc = await getDoc(doc(db, 'securityProfiles', testUser!.uid));
       const securityData = securityDoc.data();
       expect(securityData?.loginCount).toBeGreaterThan(0);
       expect(securityData?.lastLogin).toBeDefined();
@@ -494,7 +494,7 @@ describe('Auth Service - Integration Tests', () => {
       expect(auth.currentUser).toBeNull();
 
       // Check that last logout was updated
-      const securityDoc = await getDoc(doc(db, 'userSecurity', userIdBeforeLogout!));
+      const securityDoc = await getDoc(doc(db, 'securityProfiles', userIdBeforeLogout!));
       const securityData = securityDoc.data();
       expect(securityData?.lastLogout).toBeDefined();
     });
@@ -549,7 +549,7 @@ describe('Auth Service - Integration Tests', () => {
       const userId = userCred.user.uid;
 
       // Create security profile
-      await setDoc(doc(testApp.firestore, 'userSecurity', userId), {
+      await setDoc(doc(testApp.firestore, 'securityProfiles', userId), {
         userId,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),

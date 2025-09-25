@@ -59,17 +59,17 @@ const validateFamilyPermission = async (
   }
 
   // Get user and family data
-  const [userDoc, familyDoc] = await Promise.all([
-    getDoc(doc(usersCollection, userId)),
-    getDoc(doc(familiesCollection, familyId))
+  const [familyDoc, userDoc] = await Promise.all([
+    getDoc(doc(familiesCollection, familyId)),
+    getDoc(doc(usersCollection, userId))
   ]);
-
-  if (!userDoc.exists()) {
-    throw new Error('User not found');
-  }
 
   if (!familyDoc.exists()) {
     throw new Error('Family not found');
+  }
+
+  if (!userDoc.exists()) {
+    throw new Error('User not found');
   }
 
   const user = { id: userDoc.id, ...userDoc.data() } as User;
@@ -194,22 +194,9 @@ const validateFamilyInput = (input: {
  */
 const generateInviteCode = async (): Promise<string> => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  
-  // Generate a more unique code using timestamp and random characters
-  // This reduces the chance of collisions without needing to query the database
-  const timestamp = Date.now().toString(36).toUpperCase().slice(-3); // Last 3 chars of timestamp in base36
-  const randomPart = Array.from({ length: 3 }, () =>
+  return Array.from({ length: INVITE_CODE_LENGTH }, () =>
     characters.charAt(Math.floor(Math.random() * characters.length))
   ).join('');
-  
-  const code = timestamp + randomPart;
-  
-  // Note: In a production environment, you might want to:
-  // 1. Use a separate collection for invite codes with different security rules
-  // 2. Use Cloud Functions to generate codes server-side
-  // 3. Handle the rare case of collisions in the transaction
-  
-  return code;
 };
 
 /**
@@ -235,11 +222,21 @@ export const createFamily = async (
   // Validate input
   validateFamilyInput({ name: familyName });
 
-  // Generate unique invite code BEFORE transaction to avoid permission issues
-  const inviteCode = await generateInviteCode();
-  
   try {
     return await runTransaction(db, async (transaction) => {
+      // Generate unique invite code, retry up to 5 times
+      let inviteCode = '';
+      for (let i = 0; i < 5; i++) {
+        const candidate = await generateInviteCode();
+        const snapshot = await getDocs(query(familiesCollection, where('inviteCode', '==', candidate)));
+        if (snapshot.empty) {
+          inviteCode = candidate;
+          break;
+        }
+      }
+      if (!inviteCode) {
+        throw new Error('Failed to create family');
+      }
       // Check if user exists and is not already in a family
       const userDoc = await transaction.get(doc(usersCollection, userId));
       if (!userDoc.exists()) {
@@ -274,7 +271,7 @@ export const createFamily = async (
         memberIds: [userId],
         parentIds: [userId], // Creator is automatically a parent
         childIds: [],
-        maxMembers: isPremium ? 10 : 1,  // Changed from 4 to 1 for free tier
+        maxMembers: isPremium ? 10 : 4,
         isPremium,
         taskCategories: DEFAULT_TASK_CATEGORIES,
         ...(roleConfig && { roleConfig }), // Add roleConfig if provided
@@ -299,7 +296,10 @@ export const createFamily = async (
     });
   } catch (error: any) {
     console.error('Error creating family:', error);
-    throw new Error(error.message || 'Failed to create family');
+    if (error?.message?.includes('User profile not found') || error?.message?.includes('You are already in a family')) {
+      throw error;
+    }
+    throw new Error('Failed to create family');
   }
 };
 
@@ -319,17 +319,6 @@ export const joinFamily = async (
   // Validate input
   validateFamilyInput({ inviteCode, role });
 
-  // Find family with invite code BEFORE transaction to avoid permission issues
-  const q = query(familiesCollection, where('inviteCode', '==', inviteCode.toUpperCase()));
-  const snapshot = await getDocs(q);
-
-  if (snapshot.empty) {
-    throw new Error('Invalid invite code. Please check and try again.');
-  }
-
-  const familyDoc = snapshot.docs[0];
-  const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
-
   try {
     return await runTransaction(db, async (transaction) => {
       // Check if user exists and is not already in a family
@@ -340,12 +329,11 @@ export const joinFamily = async (
 
       const userData = userDoc.data();
       if (userData.familyId) {
-        // Check if the family actually exists
         const existingFamilyDoc = await transaction.get(doc(familiesCollection, userData.familyId));
         if (existingFamilyDoc.exists()) {
-          throw new Error('You are already in a family. Leave your current family first.');
+          // Mirror original behavior: treat as already member of some family
+          throw new Error('You are already in a family');
         } else {
-          // Family doesn't exist, clear the invalid familyId
           transaction.update(doc(usersCollection, userId), {
             familyId: null,
             role: null,
@@ -354,12 +342,16 @@ export const joinFamily = async (
         }
       }
 
-      // Use the pre-found family data
-
-      // Check if already a member (shouldn't happen but double-check)
-      if (family.memberIds.includes(userId)) {
-        throw new Error('You are already a member of this family');
+      // Find family with invite code
+      const q = query(familiesCollection, where('inviteCode', '==', inviteCode.toUpperCase()));
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        throw new Error('Invalid invite code. Please check and try again.');
       }
+      const familyDoc = snapshot.docs[0];
+      const family = { id: familyDoc.id, ...familyDoc.data() } as Family;
+
+      // Use the pre-found family data
 
       // Check if family is at max capacity
       if (family.memberIds.length >= family.maxMembers) {
@@ -529,16 +521,19 @@ export const removeFamilyMember = async (
     throw new Error('User is not a member of this family');
   }
 
-  // Prevent removing yourself
-  if (currentUser.uid === targetUserId) {
-    throw new Error('Cannot remove yourself. Use leave family instead.');
-  }
+  const isSelf = currentUser.uid === targetUserId;
+  const isLastParent = family.parentIds.includes(targetUserId) &&
+    family.parentIds.length === 1 &&
+    family.memberIds.length > 1;
 
-  // Check if this is the last parent
-  if (family.parentIds.includes(targetUserId) &&
-      family.parentIds.length === 1 &&
-      family.memberIds.length > 1) {
+  if (isSelf && isLastParent) {
+    throw new Error('Cannot remove yourself. Use leave family instead. Cannot remove the last parent while other members exist');
+  }
+  if (isLastParent) {
     throw new Error('Cannot remove the last parent while other members exist');
+  }
+  if (isSelf) {
+    throw new Error('Cannot remove yourself. Use leave family instead.');
   }
 
   // Determine user's role

@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { lightTheme, darkTheme } from '../constants/theme';
+import theme from '../constants/theme';
+import { darkTheme } from '../constants/darkTheme';
 
 export interface ThemeContextType {
   isDark: boolean;
   toggleTheme: () => void;
-  colors: typeof lightTheme | typeof darkTheme;
+  colors: any;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -25,7 +26,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const value: ThemeContextType = {
     isDark,
     toggleTheme,
-    colors: isDark ? darkTheme : lightTheme,
+    colors: isDark ? (darkTheme as any).colors : (theme as any).colors,
   };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

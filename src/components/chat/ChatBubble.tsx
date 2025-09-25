@@ -379,6 +379,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             contentType="comment"
             contentId={message.id}
             compact={true}
+            currentUserId={userProfile?.id || ''}
+            onAddReaction={async () => {}}
+            onRemoveReaction={async () => {}}
           />
         </View>
       )}

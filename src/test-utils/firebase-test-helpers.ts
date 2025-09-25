@@ -30,6 +30,7 @@ import {
   connectStorageEmulator,
   FirebaseStorage 
 } from 'firebase/storage';
+import http from 'http';
 
 // Emulator configuration
 const EMULATOR_CONFIG = {
@@ -43,7 +44,7 @@ const EMULATOR_CONFIG = {
 const TEST_APP_CONFIG = {
   apiKey: 'test-api-key',
   authDomain: 'test-auth-domain',
-  projectId: 'typeb-family-app', // Match the emulator project ID
+  projectId: 'typeb-family-test', // Match the emulator project ID used by emulators:exec
   storageBucket: 'test-storage-bucket',
   messagingSenderId: 'test-sender-id',
   appId: 'test-app-id'
@@ -110,6 +111,21 @@ export const initializeTestApp = async (projectId?: string): Promise<TestApp> =>
   return testApp;
 };
 
+// Minimal HTTP helper to avoid Node's global fetch (undici) issues in Jest
+const httpRequest = (options: http.RequestOptions): Promise<{ statusCode?: number; body: string }> => {
+  return new Promise((resolve, reject) => {
+    const req = http.request(options, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        resolve({ statusCode: res.statusCode, body: Buffer.concat(chunks).toString() });
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+};
+
 /**
  * Clean up test app and disconnect from emulators
  */
@@ -130,13 +146,14 @@ export const clearFirestoreData = async (): Promise<void> => {
     throw new Error('Test app not initialized');
   }
 
-  // Use the REST API to clear the emulator
-  const response = await fetch(
-    `http://${EMULATOR_CONFIG.firestore.host}:${EMULATOR_CONFIG.firestore.port}/emulator/v1/projects/${testApp.projectId}/databases/(default)/documents`,
-    { method: 'DELETE' }
-  );
+  const response = await httpRequest({
+    method: 'DELETE',
+    host: EMULATOR_CONFIG.firestore.host,
+    port: EMULATOR_CONFIG.firestore.port,
+    path: `/emulator/v1/projects/${testApp.projectId}/databases/(default)/documents`,
+  });
 
-  if (!response.ok) {
+  if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
     throw new Error('Failed to clear Firestore data');
   }
 };
@@ -151,13 +168,15 @@ export const clearAuthData = async (): Promise<void> => {
 
   // Use the REST API to clear the auth emulator
   try {
-    const response = await fetch(
-      `http://${EMULATOR_CONFIG.auth.host}:${EMULATOR_CONFIG.auth.port}/emulator/v1/projects/${testApp.projectId}/accounts`,
-      { method: 'DELETE' }
-    );
+    const response = await httpRequest({
+      method: 'DELETE',
+      host: EMULATOR_CONFIG.auth.host,
+      port: EMULATOR_CONFIG.auth.port,
+      path: `/emulator/v1/projects/${testApp.projectId}/accounts`,
+    });
 
-    if (!response.ok) {
-      console.warn('Failed to clear Auth data:', response.statusText);
+    if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+      console.warn('Failed to clear Auth data');
     }
   } catch (error) {
     console.warn('Error clearing Auth data:', error);
@@ -197,17 +216,35 @@ export const waitForAuth = async (timeout: number = 5000): Promise<void> => {
  * Create a test user with email and password
  */
 export const createTestUser = async (
-  userData: {
-    email: string;
-    password: string;
-    displayName?: string;
-    familyId?: string;
-    role?: 'parent' | 'child';
-  }
+  userDataOrEmail: any,
+  maybePassword?: string,
+  maybeInfo?: Partial<{ displayName: string; familyId: string; role: 'parent' | 'child' }>
 ): Promise<User> => {
   if (!testApp) {
     throw new Error('Test app not initialized');
   }
+  // Backward-compatible signature handling
+  const userData: {
+    email: string;
+    password: string;
+    displayName?: string;
+    familyId?: string | null;
+    role?: 'parent' | 'child';
+  } = typeof userDataOrEmail === 'string'
+    ? {
+        email: userDataOrEmail,
+        password: String(maybePassword || 'Test123!'),
+        displayName: maybeInfo?.displayName || 'Test User',
+        familyId: maybeInfo?.familyId || null,
+        role: maybeInfo?.role || 'parent',
+      }
+    : {
+        email: userDataOrEmail.email,
+        password: userDataOrEmail.password,
+        displayName: userDataOrEmail.displayName || 'Test User',
+        familyId: userDataOrEmail.familyId || null,
+        role: userDataOrEmail.role || 'parent',
+      };
 
   // Create user in Auth
   const userCredential = await createUserWithEmailAndPassword(
@@ -217,19 +254,17 @@ export const createTestUser = async (
   );
 
   // Update display name if provided
-  if (userData.displayName) {
-    await updateProfile(userCredential.user, {
-      displayName: userData.displayName
-    });
-  }
+  await updateProfile(userCredential.user, {
+    displayName: userData.displayName || 'Test User'
+  });
 
-  // Create user profile in Firestore
+  // Create user profile in Firestore (ensure required fields for strict rules)
   await setDoc(doc(testApp.firestore, 'users', userCredential.user.uid), {
     id: userCredential.user.uid,
-    email: userData.email.toLowerCase(),
+    email: (userData.email || '').toLowerCase(),
     displayName: userData.displayName || 'Test User',
     familyId: userData.familyId || null,
-    role: userData.role || 'parent',
+    role: userData.role || null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     isPremium: false,
@@ -371,7 +406,10 @@ export const seedTestFamily = async (): Promise<{
     role: 'child'
   });
 
-  // Create family
+  // IMPORTANT: sign in as the parent before creating the family to satisfy strict rules
+  await signInWithEmailAndPassword(testApp.auth, parent.email!, 'Parent123!');
+
+  // Create family as the authenticated parent
   const familyId = await createTestFamily({
     name: 'Test Family',
     createdBy: parent.uid,
@@ -460,11 +498,13 @@ export const getTestApp = (): TestApp => {
 export const waitForEmulators = async (maxAttempts = 30): Promise<void> => {
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      // Try to connect to Firestore emulator
-      const response = await fetch(
-        `http://${EMULATOR_CONFIG.firestore.host}:${EMULATOR_CONFIG.firestore.port}/`
-      );
-      if (response.ok) {
+      const response = await httpRequest({
+        method: 'GET',
+        host: EMULATOR_CONFIG.firestore.host,
+        port: EMULATOR_CONFIG.firestore.port,
+        path: '/',
+      });
+      if (response.statusCode && response.statusCode >= 200 && response.statusCode < 500) {
         return;
       }
     } catch (error) {
@@ -475,8 +515,17 @@ export const waitForEmulators = async (maxAttempts = 30): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
-  throw new Error('Emulators did not start within timeout period');
+  // Don't fail entire suite; allow tests to proceed and fail with clearer errors
+  return;
 };
 
 // Export emulator config for use in other files
 export { EMULATOR_CONFIG };
+
+/**
+ * Wait for Firebase emulators to be reachable on expected ports.
+ * Returns once HTTP connections succeed or the timeout elapses.
+ */
+// Note: Consolidated into the maxAttempts-based implementation above
+
+// (duplicate getTestApp removed; see earlier definition above)

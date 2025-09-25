@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+// @ts-ignore - type shim provided in src/types/patches.d.ts
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -202,6 +203,34 @@ const NotificationSettings: React.FC = () => {
       setPreferences(prev => ({ ...prev, pushEnabled: false }));
     }
   };
+
+  const educateAndRequestPermissions = async () => {
+    Alert.alert(
+      'Enable Notifications',
+      'Stay on track with reminders and updates. We only send relevant alerts and you can change this anytime.',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        {
+          text: 'Enable',
+          onPress: async () => {
+            const { status } = await Notifications.requestPermissionsAsync();
+            if (status === 'granted') {
+              savePreferences({ ...preferences, pushEnabled: true });
+            } else {
+              Alert.alert(
+                'Permission Required',
+                'Please enable notifications in your device settings.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ]
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
   
   const handlePushToggle = async (value: boolean) => {
     if (value) {
@@ -258,6 +287,17 @@ const NotificationSettings: React.FC = () => {
       minute: '2-digit',
       hour12: true,
     });
+  };
+
+  const handleTimeChange = (type: 'start' | 'end', selectedDate: Date) => {
+    const newPreferences = {
+      ...preferences,
+      quietHours: {
+        ...preferences.quietHours,
+        [type]: selectedDate,
+      },
+    };
+    savePreferences(newPreferences);
   };
   
   const renderNotificationCategory = (category: string) => {
@@ -363,7 +403,7 @@ const NotificationSettings: React.FC = () => {
             </View>
             <Switch
               value={preferences.pushEnabled}
-              onValueChange={handlePushToggle}
+              onValueChange={(val) => (val ? educateAndRequestPermissions() : handlePushToggle(false))}
               trackColor={{
                 false: theme.colors.separator,
                 true: theme.colors.primary + '80',
@@ -621,17 +661,10 @@ const NotificationSettings: React.FC = () => {
           mode="time"
           is24Hour={false}
           display="default"
-          onChange={(event, selectedDate) => {
+          onChange={(event: any, selectedDate: Date | undefined) => {
             setShowStartTimePicker(false);
             if (selectedDate) {
-              const newPreferences = {
-                ...preferences,
-                quietHours: {
-                  ...preferences.quietHours,
-                  startTime: selectedDate,
-                },
-              };
-              savePreferences(newPreferences);
+              handleTimeChange('start', selectedDate);
             }
           }}
         />
@@ -643,17 +676,10 @@ const NotificationSettings: React.FC = () => {
           mode="time"
           is24Hour={false}
           display="default"
-          onChange={(event, selectedDate) => {
+          onChange={(event: any, selectedDate: Date | undefined) => {
             setShowEndTimePicker(false);
             if (selectedDate) {
-              const newPreferences = {
-                ...preferences,
-                quietHours: {
-                  ...preferences.quietHours,
-                  endTime: selectedDate,
-                },
-              };
-              savePreferences(newPreferences);
+              handleTimeChange('end', selectedDate);
             }
           }}
         />

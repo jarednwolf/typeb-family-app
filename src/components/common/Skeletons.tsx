@@ -62,7 +62,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
           width,
           height,
           borderRadius,
-          backgroundColor: theme.colors.skeleton,
+          backgroundColor: (theme.colors as any).skeleton ?? theme.colors.separator,
           opacity,
         },
         style,
@@ -230,6 +230,60 @@ export const PhotoGridSkeleton: React.FC = () => {
   );
 };
 
+/**
+ * Family Screen Skeleton
+ */
+export const FamilyScreenSkeleton: React.FC = () => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Skeleton width={120} height={24} />
+      </View>
+
+      {/* Family summary */}
+      <View style={{ paddingHorizontal: theme.spacing.L, paddingTop: theme.spacing.M }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Skeleton width={56} height={56} borderRadius={28} />
+          <View style={{ flex: 1, marginLeft: theme.spacing.M }}>
+            <Skeleton width={160} height={18} style={{ marginBottom: 6 }} />
+            <Skeleton width={80} height={14} />
+          </View>
+        </View>
+      </View>
+
+      {/* Invite card */}
+      <View style={{ marginHorizontal: theme.spacing.L, marginTop: theme.spacing.M }}>
+        <View style={{ backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.large, padding: theme.spacing.M }}>
+          <Skeleton width={100} height={14} style={{ marginBottom: theme.spacing.S }} />
+          <Skeleton width={140} height={22} style={{ marginBottom: theme.spacing.XS }} />
+          <Skeleton width={200} height={12} />
+        </View>
+      </View>
+
+      {/* Members list */}
+      <View style={{ marginTop: theme.spacing.L }}>
+        <Skeleton width={120} height={14} style={{ marginLeft: theme.spacing.L, marginBottom: theme.spacing.S }} />
+        {[1,2,3,4].map((i) => (
+          <View key={i} style={{ backgroundColor: theme.colors.surface, marginHorizontal: theme.spacing.L, paddingHorizontal: theme.spacing.M, paddingVertical: theme.spacing.M, borderBottomWidth: 1, borderBottomColor: theme.colors.separator }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Skeleton width={48} height={48} borderRadius={24} />
+              <View style={{ flex: 1, marginLeft: theme.spacing.M }}>
+                <Skeleton width={140} height={16} style={{ marginBottom: 6 }} />
+                <Skeleton width={80} height={12} />
+              </View>
+              <Skeleton width={24} height={24} borderRadius={12} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
@@ -341,4 +395,5 @@ export default {
   TasksScreenSkeleton,
   DashboardScreenSkeleton,
   PhotoGridSkeleton,
+  FamilyScreenSkeleton,
 };

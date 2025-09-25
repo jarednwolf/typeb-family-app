@@ -7,7 +7,8 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+// Lazy require to avoid types error when type-checking without RN types
+const DateTimePicker: any = require('@react-native-community/datetimepicker').default || require('@react-native-community/datetimepicker');
 import { Feather } from '@expo/vector-icons';
 import Modal from '../common/Modal';
 import Button from '../common/Button';

@@ -7,6 +7,9 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/glo
 import { initializeApp, cert, deleteApp, App as AdminApp } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore } from 'firebase-admin/firestore';
 import { getAuth as getAdminAuth, Auth as AdminAuth } from 'firebase-admin/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth as getClientAuth, connectAuthEmulator, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { initializeApp as initializeClientApp } from 'firebase/app';
 import {
   createFamily,
   joinFamily,
@@ -19,6 +22,7 @@ import {
   regenerateInviteCode,
 } from '../../services/family.refactored';
 import { Family, User } from '../../types/models';
+import { waitForEmulators } from '../setup/firebaseTestSetup';
 
 // Test configuration
 const TEST_PROJECT_ID = 'typeb-family-test';
@@ -27,11 +31,15 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
   let adminApp: AdminApp;
   let adminDb: AdminFirestore;
   let adminAuth: AdminAuth;
-  let db: any; // Will cast admin Firestore to regular Firestore interface
+  let db: any; // Client Firestore instance against same project
   
   let parentUserId: string;
   let childUserId: string;
   let secondParentUserId: string;
+  let clientAuth: ReturnType<typeof getClientAuth>;
+  let parentEmail: string;
+  let childEmail: string;
+  let secondParentEmail: string;
 
   // Helper to create unique test emails
   const createTestEmail = (prefix: string) => {
@@ -68,9 +76,10 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
   };
 
   beforeAll(async () => {
+    await waitForEmulators();
     // Initialize admin app with emulator settings
-    process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
-    process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+    process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
     
     adminApp = initializeApp({
       projectId: TEST_PROJECT_ID,
@@ -78,9 +87,16 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
 
     adminAuth = getAdminAuth(adminApp);
     adminDb = getAdminFirestore(adminApp);
-    
-    // Cast admin Firestore to regular Firestore interface for service functions
-    db = adminDb as any;
+
+    // Create client app bound to same project for service functions (modular SDK)
+    const clientApp = initializeClientApp({ projectId: TEST_PROJECT_ID, apiKey: 'AIzaSyD-LOCAL-TEST_KEY', appId: 'fake-app-id' }, 'client-admin-tests');
+    db = getFirestore(clientApp);
+    // Ensure client Firestore uses emulator
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    clientAuth = getClientAuth(clientApp);
+    connectAuthEmulator(clientAuth, 'http://localhost:9099', { disableWarnings: true });
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
+    process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
   });
 
   afterAll(async () => {
@@ -103,9 +119,14 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
     await Promise.all(deletePromises);
 
     // Create test users
-    parentUserId = await createTestUser(createTestEmail('parent'), 'Test Parent', 'parent');
-    childUserId = await createTestUser(createTestEmail('child'), 'Test Child', 'child');
-    secondParentUserId = await createTestUser(createTestEmail('parent2'), 'Second Parent', 'parent');
+    parentEmail = createTestEmail('parent');
+    childEmail = createTestEmail('child');
+    secondParentEmail = createTestEmail('parent2');
+    parentUserId = await createTestUser(parentEmail, 'Test Parent', 'parent');
+    childUserId = await createTestUser(childEmail, 'Test Child', 'child');
+    secondParentUserId = await createTestUser(secondParentEmail, 'Second Parent', 'parent');
+    // Default to parent signed-in for tests; individual tests will switch as needed
+    await signInWithEmailAndPassword(clientAuth, parentEmail, 'password123');
   });
 
   describe('createFamily', () => {
@@ -166,10 +187,14 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
 
   describe('joinFamily', () => {
     it('should join family successfully', async () => {
-      // Create a family to join
+      // Create a family to join (ensure parent signed in)
+      await signInWithEmailAndPassword(clientAuth, parentEmail, 'password123');
       const family = await createFamily(db, parentUserId, 'Join Test Family');
       const inviteCode = family.inviteCode;
 
+      // Switch to child for join
+      await signOut(clientAuth);
+      await signInWithEmailAndPassword(clientAuth, childEmail, 'password123');
       const joinedFamily = await joinFamily(db, childUserId, inviteCode);
 
       expect(joinedFamily.id).toBe(family.id);
@@ -203,31 +228,39 @@ describe('Family Service Integration Tests (Admin SDK)', () => {
 
     it('should handle case-insensitive invite codes', async () => {
       // Create a family
+      await signInWithEmailAndPassword(clientAuth, parentEmail, 'password123');
       const family = await createFamily(db, parentUserId, 'Case Test Family');
       const inviteCode = family.inviteCode;
-
+      await signOut(clientAuth);
+      await signInWithEmailAndPassword(clientAuth, childEmail, 'password123');
       const joinedFamily = await joinFamily(db, childUserId, inviteCode.toLowerCase());
       expect(joinedFamily.id).toBe(family.id);
     });
 
     it('should respect family capacity limits', async () => {
       // Create a family
+      await signInWithEmailAndPassword(clientAuth, parentEmail, 'password123');
       const family = await createFamily(db, parentUserId, 'Capacity Test Family');
       const inviteCode = family.inviteCode;
 
       // Update family to have max 1 member
       await updateFamily(db, parentUserId, family.id, { maxMembers: 1 });
 
-      // Try to join
+      // Try to join as child
+      await signOut(clientAuth);
+      await signInWithEmailAndPassword(clientAuth, childEmail, 'password123');
       await expect(joinFamily(db, childUserId, inviteCode))
         .rejects.toThrow('Family is at maximum capacity');
     });
 
     it('should prevent joining multiple families', async () => {
       // Create first family
+      await signInWithEmailAndPassword(clientAuth, parentEmail, 'password123');
       const family1 = await createFamily(db, parentUserId, 'First Family');
       
       // Create second family
+      await signOut(clientAuth);
+      await signInWithEmailAndPassword(clientAuth, secondParentEmail, 'password123');
       const family2 = await createFamily(db, secondParentUserId, 'Second Family');
 
       // Try to join first family when already in second

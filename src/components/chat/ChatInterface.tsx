@@ -67,7 +67,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   
   const flatListRef = useRef<FlatList>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<number | undefined>();
   const unsubscribeMessages = useRef<(() => void) | null>(null);
   const unsubscribeTyping = useRef<(() => void) | null>(null);
 
@@ -310,8 +310,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {/* Message Input */}
         <ChatInput
-          onSendMessage={handleSendMessage}
-          onTypingChange={handleTypingChange}
+          chatId={chatId}
           disabled={isSending}
           placeholder={
             typingUsers.length > 0

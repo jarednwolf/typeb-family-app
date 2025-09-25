@@ -14,13 +14,14 @@ import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Card from '../../components/common/Card';
-import PremiumGate from '../../components/premium/PremiumGate';
+import { PremiumGate } from '../../components/premium/PremiumGate';
 import { spacing, borderRadius, typography } from '../../constants/theme';
 import { AppDispatch, RootState } from '../../store/store';
 import { fetchTaskStats, selectTaskStats, selectTasks } from '../../store/slices/tasksSlice';
 import { selectFamilyMembers } from '../../store/slices/familySlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import smartNotifications from '../../services/smartNotifications';
+import EmptyState from '../../components/common/EmptyState';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -391,10 +392,24 @@ const AnalyticsDashboard: React.FC = () => {
     );
   }
   
+  // Empty state when there are no tasks yet
+  if ((tasks?.length || 0) === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <EmptyState
+          icon="bar-chart-2"
+          title="No Data Yet"
+          message="Create and complete tasks to see analytics and insights here."
+        />
+      </SafeAreaView>
+    );
+  }
+  
   return (
     <PremiumGate 
       feature="Advanced Analytics"
-      isPremium={family?.isPremium || false}
+      featureName="Advanced Analytics"
+      showUpgradePrompt={true}
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>

@@ -13,6 +13,8 @@ type AppTheme = typeof lightTheme | typeof darkTheme;
 interface ThemeContextType {
   theme: AppTheme;
   isDarkMode: boolean;
+  // compatibility shim for components that access theme.colors directly
+  colors: AppTheme['colors'];
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -58,6 +60,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const value = useMemo(() => ({
     theme: currentTheme,
     isDarkMode,
+    colors: currentTheme.colors,
   }), [currentTheme, isDarkMode]);
 
   return (

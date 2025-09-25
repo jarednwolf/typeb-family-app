@@ -34,11 +34,12 @@ import {
   regenerateInviteCode,
 } from '../../services/family.refactored';
 import { Family, User } from '../../types/models';
+import { waitForEmulators } from '../setup/firebaseTestSetup';
 
 // Test configuration
 const TEST_PROJECT_ID = 'typeb-family-test';
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
-const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
+const AUTH_EMULATOR_URL = 'http://localhost:9099';
+const FIRESTORE_EMULATOR_HOST = 'localhost';
 const FIRESTORE_EMULATOR_PORT = 8080;
 
 describe('Family Service Integration Tests (Simplified)', () => {
@@ -70,6 +71,7 @@ describe('Family Service Integration Tests (Simplified)', () => {
   };
 
   beforeAll(async () => {
+    await waitForEmulators();
     // Initialize test app
     app = initializeApp({
       projectId: TEST_PROJECT_ID,

@@ -12,6 +12,7 @@ import {
 } from '../EmptyState';
 import { renderWithProviders } from '../../../test-utils/component-test-utils';
 import { colors } from '../../../constants/theme';
+import { darkColors } from '../../../constants/darkTheme';
 
 // Mock Animated API
 jest.mock('react-native', () => {
@@ -255,10 +256,10 @@ describe('EmptyState', () => {
           <NoTasksEmpty onCreateTask={onCreateTask} />
         );
         
-        expect(getByText('No tasks yet')).toBeTruthy();
+        expect(getByText('Ready to get started?')).toBeTruthy();
         expect(getByText(/Create your first task/)).toBeTruthy();
         
-        const button = getByText('Create Task');
+        const button = getByText('Create Your First Task');
         fireEvent.press(button);
         expect(onCreateTask).toHaveBeenCalledTimes(1);
       });
@@ -272,13 +273,13 @@ describe('EmptyState', () => {
           <NoFamilyEmpty onCreate={onCreate} onJoin={onJoin} />
         );
         
-        expect(getByText('Welcome to TypeB')).toBeTruthy();
-        expect(getByText(/Start by creating/)).toBeTruthy();
+        expect(getByText('Welcome to TypeB Family')).toBeTruthy();
+        expect(getByText(/Connect with your family/)).toBeTruthy();
         
-        fireEvent.press(getByText('Create Family'));
+        fireEvent.press(getByText('Start a New Family'));
         expect(onCreate).toHaveBeenCalledTimes(1);
         
-        fireEvent.press(getByText('Join Family'));
+        fireEvent.press(getByText('Join Existing Family'));
         expect(onJoin).toHaveBeenCalledTimes(1);
       });
     });
@@ -289,8 +290,8 @@ describe('EmptyState', () => {
           <NoNotificationsEmpty />
         );
         
-        expect(getByText('No notifications')).toBeTruthy();
-        expect(getByText(/all caught up/)).toBeTruthy();
+        expect(getByText('All caught up!')).toBeTruthy();
+        expect(getByText(/No new notifications/)).toBeTruthy();
         
         const icon = UNSAFE_getByProps({ name: 'bell' });
         expect(icon.props.size).toBe(32); // Compact size
@@ -304,10 +305,10 @@ describe('EmptyState', () => {
           <SearchEmpty searchTerm="test query" onClear={onClear} />
         );
         
-        expect(getByText('No results found')).toBeTruthy();
-        expect(getByText(/couldn't find anything matching "test query"/)).toBeTruthy();
+        expect(getByText('No matches found')).toBeTruthy();
+        expect(getByText(/Try adjusting your search terms or filters for "test query"/)).toBeTruthy();
         
-        fireEvent.press(getByText('Clear Search'));
+        fireEvent.press(getByText('Clear and Try Again'));
         expect(onClear).toHaveBeenCalledTimes(1);
       });
 
@@ -316,7 +317,7 @@ describe('EmptyState', () => {
           <SearchEmpty searchTerm="test" />
         );
         
-        expect(queryByText('Clear Search')).toBeNull();
+        expect(queryByText('Clear and Try Again')).toBeNull();
       });
     });
 
@@ -327,10 +328,9 @@ describe('EmptyState', () => {
           <ErrorState onRetry={onRetry} />
         );
         
-        expect(getByText('Oops!')).toBeTruthy();
         expect(getByText('Something went wrong')).toBeTruthy();
         
-        fireEvent.press(getByText('Try Again'));
+        fireEvent.press(getByText('Retry'));
         expect(onRetry).toHaveBeenCalledTimes(1);
       });
 
@@ -358,14 +358,14 @@ describe('EmptyState', () => {
           <OfflineState onRetry={onRetry} />
         );
         
-        expect(getByText('No connection')).toBeTruthy();
-        expect(getByText(/check your internet/)).toBeTruthy();
+        expect(getByText("You're offline")).toBeTruthy();
+        expect(getByText(/Check your internet connection/)).toBeTruthy();
         
         const icon = UNSAFE_getByProps({ name: 'wifi-off' });
         expect(icon).toBeTruthy();
         expect(icon.props.size).toBe(32); // Compact size
         
-        fireEvent.press(getByText('Retry'));
+        fireEvent.press(getByText('Retry Connection'));
         expect(onRetry).toHaveBeenCalledTimes(1);
       });
 
@@ -386,7 +386,7 @@ describe('EmptyState', () => {
       );
       
       const icon = UNSAFE_getByProps({ name: 'inbox' });
-      expect(icon.props.color).toBe(colors.textTertiary);
+      expect([colors.textTertiary, darkColors.textTertiary]).toContain(icon.props.color);
     });
 
     it('centers content', () => {
@@ -444,7 +444,7 @@ describe('EmptyState', () => {
         <SearchEmpty searchTerm="test@#$%^&*()" />
       );
       
-      expect(getByText(/couldn't find anything matching "test@#\$%\^&\*\(\)"/)).toBeTruthy();
+      expect(getByText(/Try adjusting your search terms or filters for "test@#\$%\^&\*\(\)"/)).toBeTruthy();
     });
   });
 });

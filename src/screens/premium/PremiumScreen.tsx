@@ -21,7 +21,7 @@ import LoadingState from '../../components/common/LoadingState';
 import { spacing, typography, borderRadius } from '../../constants/theme';
 import { RootState } from '../../store/store';
 import { useTheme } from '../../contexts/ThemeContext';
-import { revenueCat } from '../../services/revenueCat';
+import revenueCat from '../../services/revenueCat';
 
 interface PremiumFeature {
   icon: string;
@@ -49,11 +49,11 @@ const PremiumScreen: React.FC = () => {
   const loadOfferings = async () => {
     setIsLoading(true);
     try {
-      const currentOffering = await revenueCat.getOfferings();
+      const currentOffering = await revenueCat.fetchOfferings();
       if (currentOffering?.availablePackages) {
-        setOfferings(currentOffering.availablePackages);
+        setOfferings(currentOffering.availablePackages as any);
         // Select the first package by default (usually monthly)
-        setSelectedPackage(currentOffering.availablePackages[0]);
+        setSelectedPackage(currentOffering.availablePackages[0] as any);
       }
     } catch (error) {
       console.error('Error loading offerings:', error);

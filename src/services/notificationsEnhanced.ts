@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { doc, updateDoc, collection, addDoc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from './firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 
@@ -402,17 +402,33 @@ class NotificationsService {
     switch (data?.type) {
       case 'task_reminder':
         // Navigate to task details
-        console.log('Navigate to task:', data.taskId);
+        try {
+          const { default: RootNavigation } = await import('../utils/rootNavigation');
+          RootNavigation.navigate('Tasks', {
+            screen: 'TaskDetail',
+            params: { taskId: data.taskId },
+          });
+        } catch (e) {
+          console.log('Navigate to task:', data.taskId);
+        }
         break;
 
       case 'family_activity':
-        // Navigate to activity feed
-        console.log('Navigate to activity feed');
+        try {
+          const { default: RootNavigation } = await import('../utils/rootNavigation');
+          RootNavigation.navigate('Dashboard');
+        } catch (e) {
+          console.log('Navigate to activity feed');
+        }
         break;
 
       case 'daily_digest':
-        // Navigate to dashboard
-        console.log('Navigate to dashboard');
+        try {
+          const { default: RootNavigation } = await import('../utils/rootNavigation');
+          RootNavigation.navigate('Dashboard');
+        } catch (e) {
+          console.log('Navigate to dashboard');
+        }
         break;
 
       default:

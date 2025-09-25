@@ -8,7 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+const DateTimePicker: any = require('@react-native-community/datetimepicker').default || require('@react-native-community/datetimepicker');
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -112,7 +112,7 @@ export const AgeGateScreen: React.FC = () => {
               mode="date"
               display="default"
               maximumDate={new Date()}
-              onChange={(event, selectedDate) => {
+              onChange={(event: any, selectedDate?: Date) => {
                 setShowDatePicker(false);
                 if (selectedDate) {
                   setBirthDate(selectedDate);

@@ -79,14 +79,16 @@ describe('Phase 2 Data Flow Integration Tests', () => {
       testUserB = userCredB.user;
       await createUserProfile(testUserB.uid, emailB, 'User B');
 
-      // User A creates family
+      // Ensure signed in as User A then create family
+      await signInWithEmailAndPassword(auth, emailA, TEST_PASSWORD);
       const family = await createFamily(testUserA.uid, 'Test Family');
       expect(family.name).toBe('Test Family');
       expect(family.inviteCode).toHaveLength(6);
       expect(family.memberIds).toContain(testUserA.uid);
       expect(family.parentIds).toContain(testUserA.uid);
 
-      // User B joins family
+      // Sign in as User B, then join family
+      await signInWithEmailAndPassword(auth, emailB, TEST_PASSWORD);
       const updatedFamily = await joinFamily(testUserB.uid, family.inviteCode);
       expect(updatedFamily.memberIds).toContain(testUserB.uid);
       expect(updatedFamily.childIds).toContain(testUserB.uid);
@@ -105,7 +107,7 @@ describe('Phase 2 Data Flow Integration Tests', () => {
       testUserA = userCred.user;
       await createUserProfile(testUserA.uid, email, 'User A');
 
-      const family = await createFamily(testUserA.uid, 'Test Family');
+      const family = await createFamily(testUserA.uid, 'Test Family', true);
 
       // Try to create task assigned to non-existent user
       const taskInput: CreateTaskInput = {
@@ -132,7 +134,7 @@ describe('Phase 2 Data Flow Integration Tests', () => {
       testUserA = userCred.user;
       await createUserProfile(testUserA.uid, email, 'User A');
 
-      const family = await createFamily(testUserA.uid, 'Test Family');
+      const family = await createFamily(testUserA.uid, 'Test Family', true);
 
       // Create task
       const taskInput: CreateTaskInput = {
@@ -207,7 +209,10 @@ describe('Phase 2 Data Flow Integration Tests', () => {
       await createUserProfile(testUserB.uid, emailB, 'User B');
 
       // User A creates family, User B joins
+      await signInWithEmailAndPassword(auth, emailA, TEST_PASSWORD);
       const family = await createFamily(testUserA.uid, 'Test Family');
+      await signOut(auth);
+      await signInWithEmailAndPassword(auth, emailB, TEST_PASSWORD);
       await joinFamily(testUserB.uid, family.inviteCode);
 
       // Create task assigned to User B

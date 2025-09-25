@@ -8,8 +8,22 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { analyticsService } from '../../services/analytics';
-import { errorReportingService } from '../../services/errorReporting';
+// Use dynamic requires to avoid pulling full service types into app type-check
+const analyticsService: any = (() => {
+  try {
+    return require('../../services/analytics').analyticsService;
+  } catch {
+    return { track: () => {} };
+  }
+})();
+
+const errorReportingService: any = (() => {
+  try {
+    return require('../../services/errorReporting').errorReportingService;
+  } catch {
+    return { reportError: async () => {}, sendUserReport: async () => {} };
+  }
+})();
 
 interface Props {
   children: ReactNode;
@@ -65,8 +79,8 @@ class ErrorBoundary extends Component<Props, State> {
       // Log to analytics
       analyticsService.track('app_error' as any, {
         error_message: error.message,
-        error_stack: error.stack,
-        component_stack: errorInfo.componentStack,
+        error_stack: (error.stack || undefined) as string | undefined,
+        component_stack: errorInfo.componentStack || '',
         timestamp: new Date().toISOString(),
       });
 
@@ -133,7 +147,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {
-        return <>{this.props.fallback}</>;
+        return <>{this.props.fallback}</>; 
       }
 
       // Default error UI
@@ -160,12 +174,12 @@ class ErrorBoundary extends Component<Props, State> {
                 <View style={styles.errorDetails}>
                   <Text style={styles.errorDetailsTitle}>Error Details (Dev Only):</Text>
                   <Text style={styles.errorDetailsText}>
-                    {this.state.error.message}
+                    {String(this.state.error?.message || '')}
                   </Text>
-                  {this.state.error.stack && (
+                  {this.state.error?.stack && (
                     <ScrollView style={styles.stackTrace}>
                       <Text style={styles.stackTraceText}>
-                        {this.state.error.stack}
+                        {this.state.error.stack as string}
                       </Text>
                     </ScrollView>
                   )}

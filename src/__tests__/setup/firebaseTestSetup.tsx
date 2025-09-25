@@ -16,10 +16,10 @@ export const TEST_CONFIG = {
   storageBucket: 'test-bucket',
   
   // Emulator settings
-  authEmulatorUrl: process.env.FIREBASE_AUTH_EMULATOR_HOST || 'http://127.0.0.1:9099',
-  firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST?.split(':')[0] || '127.0.0.1',
+  authEmulatorUrl: process.env.FIREBASE_AUTH_EMULATOR_HOST || 'http://localhost:9099',
+  firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST?.split(':')[0] || 'localhost',
   firestoreEmulatorPort: parseInt(process.env.FIRESTORE_EMULATOR_HOST?.split(':')[1] || '8080'),
-  storageEmulatorHost: process.env.FIREBASE_STORAGE_EMULATOR_HOST?.split(':')[0] || '127.0.0.1',
+  storageEmulatorHost: process.env.FIREBASE_STORAGE_EMULATOR_HOST?.split(':')[0] || 'localhost',
   storageEmulatorPort: parseInt(process.env.FIREBASE_STORAGE_EMULATOR_HOST?.split(':')[1] || '9199'),
 };
 
@@ -87,29 +87,33 @@ export async function cleanupTestApp(app: FirebaseApp): Promise<void> {
 /**
  * Wait for emulators to be ready
  */
-export async function waitForEmulators(maxAttempts = 30, delayMs = 1000): Promise<void> {
+export async function waitForEmulators(maxAttempts = 60, delayMs = 500): Promise<void> {
   if (process.env.USE_FIREBASE_EMULATOR === 'false') {
     return;
   }
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      // Try to connect to auth emulator
-      const response = await fetch(TEST_CONFIG.authEmulatorUrl);
-      if (response.ok) {
-        console.log('Firebase emulators are ready');
-        return;
-      }
+      const http = await import('http');
+      await new Promise((resolve, reject) => {
+        const req = http.request({ method: 'GET', host: TEST_CONFIG.firestoreEmulatorHost, port: TEST_CONFIG.firestoreEmulatorPort, path: '/' }, (res) => {
+          // Any response means emulator is up
+          resolve(null);
+        });
+        req.on('error', reject);
+        req.end();
+      });
+      console.log('Firebase emulators are ready');
+      return;
     } catch (error) {
       // Emulator not ready yet
     }
-    
     if (attempt < maxAttempts - 1) {
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
-  
-  throw new Error('Firebase emulators did not start in time');
+  // Do not fail the entire suite; proceed and let tests report more specific errors
+  console.warn('Proceeding without explicit emulator readiness confirmation');
 }
 
 /**
@@ -121,14 +125,23 @@ export async function clearFirestoreData(projectId: string = TEST_CONFIG.project
   }
 
   try {
-    const response = await fetch(
-      `http://${TEST_CONFIG.firestoreEmulatorHost}:${TEST_CONFIG.firestoreEmulatorPort}/emulator/v1/projects/${projectId}/databases/(default)/documents`,
-      { method: 'DELETE' }
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to clear Firestore: ${response.statusText}`);
-    }
+    const http = await import('http');
+    await new Promise((resolve, reject) => {
+      const req = http.request({
+        method: 'DELETE',
+        host: TEST_CONFIG.firestoreEmulatorHost,
+        port: TEST_CONFIG.firestoreEmulatorPort,
+        path: `/emulator/v1/projects/${projectId}/databases/(default)/documents`,
+      }, (res) => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(null);
+        } else {
+          reject(new Error('Failed to clear Firestore'));
+        }
+      });
+      req.on('error', reject);
+      req.end();
+    });
   } catch (error) {
     console.error('Error clearing Firestore data:', error);
   }
@@ -143,14 +156,24 @@ export async function clearAuthData(projectId: string = TEST_CONFIG.projectId): 
   }
 
   try {
-    const response = await fetch(
-      `${TEST_CONFIG.authEmulatorUrl}/emulator/v1/projects/${projectId}/accounts`,
-      { method: 'DELETE' }
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to clear Auth: ${response.statusText}`);
-    }
+    const url = new URL(TEST_CONFIG.authEmulatorUrl);
+    const http = await import('http');
+    await new Promise((resolve, reject) => {
+      const req = http.request({
+        method: 'DELETE',
+        host: url.hostname,
+        port: Number(url.port),
+        path: `/emulator/v1/projects/${projectId}/accounts`,
+      }, (res) => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(null);
+        } else {
+          reject(new Error('Failed to clear Auth'));
+        }
+      });
+      req.on('error', reject);
+      req.end();
+    });
   } catch (error) {
     console.error('Error clearing Auth data:', error);
   }

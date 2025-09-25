@@ -68,7 +68,7 @@ const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
 }) => {
   const { theme, isDarkMode } = useTheme();
   const confettiRef = useRef<ConfettiCannon>(null);
-  const dismissTimerRef = useRef<NodeJS.Timeout>();
+  const dismissTimerRef = useRef<number | undefined>();
   
   const config = MILESTONE_CONFIG[milestone];
   
@@ -106,7 +106,7 @@ const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
       if (autoDismiss) {
         dismissTimerRef.current = setTimeout(() => {
           runOnJS(onDismiss)();
-        }, 3000);
+        }, 3000) as unknown as number;
       }
     } else {
       // Reset animations

@@ -2,23 +2,18 @@ import React, { useEffect } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { store, RootState } from './src/store/store';
 import RootNavigator from './src/navigation/RootNavigator';
-import { LogBox } from 'react-native';
-import notificationService from './src/services/notifications';
-import backgroundTaskService from './src/services/backgroundTasks';
+const notificationService = require('./src/services/notifications').default;
+const backgroundTaskService = require('./src/services/backgroundTasks').default;
 import { useRealtimeSyncManager } from './src/hooks/useRealtimeSync';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
-import revenueCatService from './src/services/revenueCat';
+const revenueCatService = require('./src/services/revenueCat').default;
 import ErrorBoundary from './src/components/ErrorBoundary';
-import errorMonitoring from './src/services/errorMonitoring';
-import { configureGoogleSignIn } from './src/services/auth';
+const errorMonitoring = require('./src/services/errorMonitoring').default;
+const { configureGoogleSignIn } = require('./src/services/auth');
+import i18n from './src/i18n';
 
-// Ignore specific warnings that are not critical for development
-LogBox.ignoreLogs([
-  'AsyncStorage has been extracted',
-  'Setting a timer',
-  'Non-serializable values were found',
-]);
+// Runtime dev warnings are handled via LogBox in device builds; omitted for type-check
 
 function AppContent() {
   // Initialize realtime sync

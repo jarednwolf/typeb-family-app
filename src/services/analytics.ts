@@ -110,8 +110,15 @@ interface UserProperties {
 class AnalyticsService {
   private analytics: any = null;
   private isInitialized = false;
-  private isProduction = process.env.EXPO_PUBLIC_ENVIRONMENT === 'production';
-  private enableAnalytics = process.env.EXPO_PUBLIC_ENABLE_ANALYTICS === 'true';
+  private isProduction = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_ENVIRONMENT) === 'production';
+  private enableAnalytics = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_ENABLE_ANALYTICS) === 'true';
+
+  // Keys that are considered sensitive and will be masked in analytics params
+  private static readonly SENSITIVE_KEYS = new Set([
+    'email', 'userEmail', 'displayName', 'name', 'firstName', 'lastName',
+    'phone', 'phoneNumber', 'avatar', 'avatarUrl', 'address', 'location',
+    'lat', 'lng', 'latitude', 'longitude', 'ip', 'token', 'idToken', 'accessToken'
+  ]);
 
   constructor() {
     this.initialize();
@@ -163,15 +170,18 @@ class AnalyticsService {
   // Track a custom event
   track(eventName: AnalyticsEvent | string, params?: Record<string, any>) {
     try {
-      // Always log to console in development
+      const canonicalName = this.canonicalizeEventName(String(eventName));
+      const scrubbedParams = this.scrubPII(params || {});
+
+      // Always log to console in development (scrubbed)
       if (!this.isProduction) {
-        console.log(`📊 Analytics Event: ${eventName}`, params);
+        console.log(`📊 Analytics Event: ${eventName} (→ ${canonicalName})`, scrubbedParams);
       }
 
       // Send to Firebase Analytics if initialized
       if (this.isInitialized && this.analytics) {
-        logEvent(this.analytics, eventName, {
-          ...params,
+        logEvent(this.analytics, canonicalName, {
+          ...scrubbedParams,
           timestamp: new Date().toISOString(),
           platform: Platform.OS,
         });
@@ -179,7 +189,7 @@ class AnalyticsService {
 
       // Also send to custom analytics endpoint if configured
       if (this.isProduction) {
-        this.sendToCustomAnalytics(eventName, params);
+        this.sendToCustomAnalytics(canonicalName, scrubbedParams);
       }
     } catch (error) {
       console.error('Failed to track event:', error);
@@ -264,7 +274,7 @@ class AnalyticsService {
   // Send to custom analytics endpoint (for additional analytics services)
   private async sendToCustomAnalytics(eventName: string, params?: Record<string, any>) {
     try {
-      const functionsUrl = process.env.EXPO_PUBLIC_CLOUD_FUNCTIONS_URL;
+      const functionsUrl = typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_CLOUD_FUNCTIONS_URL : undefined;
       if (!functionsUrl) return;
 
       // Send analytics data to your backend
@@ -289,7 +299,7 @@ class AnalyticsService {
 
   // Batch events for performance (useful for high-frequency events)
   private eventQueue: Array<{ event: string; params: any }> = [];
-  private batchTimer: NodeJS.Timeout | null = null;
+  private batchTimer: any = null;
 
   trackBatched(eventName: AnalyticsEvent | string, params?: Record<string, any>) {
     this.eventQueue.push({ event: eventName, params });
@@ -352,6 +362,55 @@ class AnalyticsService {
     } catch (error) {
       console.debug('Performance measurement not available:', error);
     }
+  }
+
+  // Convert freeform event names used in app/tests to canonical snake_case for providers
+  private canonicalizeEventName(eventName: string): string {
+    const map: Record<string, string> = {
+      'Purchase Completed': 'purchase_completed',
+      'Purchases Restored': 'restore_completed',
+      'Trial Started': 'trial_started',
+      'Premium Screen Viewed': 'premium_screen_viewed',
+      'Task Created': 'task_created',
+      'Task Completed': 'task_completed',
+    };
+    return map[eventName] || eventName.replace(/\s+/g, '_').toLowerCase();
+  }
+
+  // Scrub PII recursively from params
+  private scrubPII(input: any): any {
+    if (input == null) return input;
+    if (Array.isArray(input)) return input.map((v) => this.scrubPII(v));
+    if (typeof input !== 'object') return this.maskIfSensitiveValue('', input);
+
+    const output: Record<string, any> = {};
+    for (const [key, value] of Object.entries(input)) {
+      if (AnalyticsService.SENSITIVE_KEYS.has(key)) {
+        output[key] = '***';
+        continue;
+      }
+      if (value && typeof value === 'object') {
+        output[key] = this.scrubPII(value);
+      } else {
+        output[key] = this.maskIfSensitiveValue(key, value);
+      }
+    }
+    return output;
+  }
+
+  private maskIfSensitiveValue(key: string, value: any): any {
+    if (typeof value !== 'string') return value;
+    const v = value as string;
+    // Email pattern
+    if (/(.+)@(.+)\.(.+)/.test(v)) return '***@***';
+    // Phone-like digits
+    const digits = v.replace(/\D/g, '');
+    if (digits.length >= 7) return `***${digits.slice(-2)}`;
+    // Tokens
+    if (/^(eyJ|ya29\.|pk_live_|pk_test_)/.test(v)) return '***';
+    // Names - if key suggests name, mask partially
+    if (/name/i.test(key)) return v.length <= 2 ? '**' : `${v[0]}***`;
+    return v;
   }
 }
 

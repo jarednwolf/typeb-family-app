@@ -16,11 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
-import { signIn, selectIsLoading, selectAuthError, clearError } from '../../store/slices/authSlice';
+import { signIn, selectIsLoading, selectAuthError, clearError, selectIsEmailVerified, selectUser } from '../../store/slices/authSlice';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useTheme } from '../../contexts/ThemeContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { configureGoogleSignIn } from '../../services/auth';
+import { configureGoogleSignIn, validateEmail, validatePassword } from '../../services/auth';
+import VerificationBanner from '../../components/VerificationBanner';
 
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -29,11 +30,19 @@ const SignInScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectAuthError);
+  const isEmailVerified = useAppSelector(selectIsEmailVerified);
+  const currentUser = useAppSelector(selectUser);
   const { theme, isDarkMode } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showVerification, setShowVerification] = useState(true);
+
+  // inline validation
+  const emailValidation = useMemo(() => validateEmail(email), [email]);
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const isFormValid = emailValidation.isValid && passwordValidation.isValid;
 
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
@@ -43,8 +52,13 @@ const SignInScreen: React.FC = () => {
   }, []);
 
   const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!isFormValid) {
+      const msg = !emailValidation.isValid
+        ? emailValidation.error
+        : !passwordValidation.isValid
+        ? passwordValidation.errors?.[0] || 'Invalid password'
+        : 'Please fix errors';
+      Alert.alert('Sign In', msg || 'Please fix errors');
       return;
     }
 
@@ -84,12 +98,17 @@ const SignInScreen: React.FC = () => {
             <Text style={styles.subtitle}>More than checking the box</Text>
           </View>
 
+          {/* Email verification banner (only if signed in and unverified) */}
+          {currentUser && !isEmailVerified && showVerification && (
+            <VerificationBanner onDismiss={() => setShowVerification(false)} />
+          )}
+
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
                 testID="email-input"
-                style={styles.input}
+                style={[styles.input, !emailValidation.isValid && email.length > 0 ? { borderColor: theme.colors.error } : null]}
                 placeholder="Enter your email"
                 placeholderTextColor={theme.colors.textTertiary}
                 value={email}
@@ -99,6 +118,9 @@ const SignInScreen: React.FC = () => {
                 autoCorrect={false}
                 editable={!isLoading}
               />
+              {!emailValidation.isValid && email.length > 0 && (
+                <Text style={{ color: theme.colors.error, marginTop: 6 }}>{emailValidation.error}</Text>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -106,7 +128,7 @@ const SignInScreen: React.FC = () => {
               <View style={styles.passwordContainer}>
                 <TextInput
                   testID="password-input"
-                  style={[styles.input, styles.passwordInput]}
+                  style={[styles.input, styles.passwordInput, !passwordValidation.isValid && password.length > 0 ? { borderColor: theme.colors.error } : null]}
                   placeholder="Enter your password"
                   placeholderTextColor={theme.colors.textTertiary}
                   value={password}
@@ -127,6 +149,11 @@ const SignInScreen: React.FC = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
+              {!passwordValidation.isValid && password.length > 0 && (
+                <Text style={{ color: theme.colors.error, marginTop: 6 }}>
+                  {(passwordValidation.errors && passwordValidation.errors[0]) || 'Invalid password'}
+                </Text>
+              )}
             </View>
 
             <TouchableOpacity
@@ -140,9 +167,9 @@ const SignInScreen: React.FC = () => {
 
             <TouchableOpacity
               testID="signin-button"
-              style={[styles.signInButton, isLoading && styles.disabledButton]}
+              style={[styles.signInButton, (isLoading || !isFormValid) && styles.disabledButton]}
               onPress={handleSignIn}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color={theme.colors.background} />

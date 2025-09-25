@@ -43,6 +43,7 @@ import {
 } from '../types/models';
 import { getFamily } from './family';
 import { getCurrentUser } from './auth';
+import realtimeSyncService from './realtimeSyncEnhanced';
 
 // Collection references
 const tasksCollection = collection(db, 'tasks');
@@ -54,6 +55,19 @@ const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const VALID_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 const VALID_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'cancelled'];
+
+// Detect transient network errors to enable optimistic offline behavior
+const isNetworkError = (error: any): boolean => {
+  const code: string = error?.code || '';
+  const message: string = (error?.message || '').toLowerCase();
+  return (
+    code.includes('unavailable') ||
+    code.includes('network') ||
+    message.includes('network') ||
+    message.includes('offline') ||
+    message.includes('failed to fetch')
+  );
+};
 
 /**
  * Validate user has permission to perform action on task
@@ -304,6 +318,43 @@ export const createTask = async (
     return newTask;
   } catch (error: any) {
     console.error('Error creating task:', error);
+    // Fallback: optimistic offline create
+    if (isNetworkError(error)) {
+      try {
+        const offlineTaskId = doc(tasksCollection).id;
+        const offlineData: any = {
+          id: offlineTaskId,
+          familyId,
+          title: input.title?.trim() || 'Untitled',
+          description: input.description?.trim(),
+          assignedTo: input.assignedTo,
+          assignedBy: userId,
+          createdBy: userId,
+          status: 'pending' as TaskStatus,
+          requiresPhoto: !!input.requiresPhoto,
+          isRecurring: !!input.isRecurring,
+          reminderEnabled: !!input.reminderEnabled,
+          priority: input.priority || 'medium',
+          category: input.categoryId
+            ? { id: input.categoryId }
+            : undefined,
+          dueDate: input.dueDate || undefined,
+          points: input.points,
+          // createdAt / updatedAt will be set by server via serverTimestamp()
+        };
+
+        await realtimeSyncService.optimisticUpdate('tasks', offlineTaskId, offlineData, 'create');
+
+        // Return a local placeholder so UI can reflect queued create
+        return {
+          ...(offlineData as Task),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as Task;
+      } catch (queueError: any) {
+        console.error('Failed to queue offline task create:', queueError);
+      }
+    }
     throw new Error(error.message || 'Failed to create task');
   }
 };
@@ -414,6 +465,16 @@ export const updateTask = async (
     });
   } catch (error: any) {
     console.error('Error updating task:', error);
+    // Fallback: optimistic offline update
+    if (isNetworkError(error)) {
+      try {
+        const offlineUpdates: any = { ...updates };
+        await realtimeSyncService.optimisticUpdate('tasks', taskId, offlineUpdates, 'update');
+        return;
+      } catch (queueError: any) {
+        console.error('Failed to queue offline task update:', queueError);
+      }
+    }
     throw new Error(error.message || 'Failed to update task');
   }
 };
@@ -494,6 +555,24 @@ export const completeTask = async (
     }
   } catch (error: any) {
     console.error('Error completing task:', error);
+    // Fallback: optimistic offline completion
+    if (isNetworkError(error)) {
+      try {
+        const updates: any = {
+          status: 'completed' as TaskStatus,
+          completedAt: new Date(),
+          completedBy: userId,
+        };
+        if (photoUrl) {
+          updates.photoUrl = photoUrl;
+          updates.validationStatus = 'pending';
+        }
+        await realtimeSyncService.optimisticUpdate('tasks', taskId, updates, 'update');
+        return;
+      } catch (queueError: any) {
+        console.error('Failed to queue offline task completion:', queueError);
+      }
+    }
     throw new Error(error.message || 'Failed to complete task');
   }
 };
@@ -536,6 +615,15 @@ export const deleteTask = async (
     });
   } catch (error: any) {
     console.error('Error deleting task:', error);
+    // Fallback: optimistic offline delete (soft delete)
+    if (isNetworkError(error)) {
+      try {
+        await realtimeSyncService.optimisticUpdate('tasks', taskId, { deleted: true }, 'delete');
+        return;
+      } catch (queueError: any) {
+        console.error('Failed to queue offline task delete:', queueError);
+      }
+    }
     throw new Error(error.message || 'Failed to delete task');
   }
 };

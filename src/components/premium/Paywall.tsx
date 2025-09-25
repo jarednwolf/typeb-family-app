@@ -115,7 +115,7 @@ const Paywall: React.FC<PaywallProps> = ({
     }
   };
 
-  const annualSavings = revenueCatService.calculateAnnualSavings(monthlyPackage, annualPackage);
+  const annualSavings = revenueCatService.calculateAnnualSavings(monthlyPackage ?? undefined, annualPackage ?? undefined);
 
   const styles = createStyles(theme, isDarkMode);
 

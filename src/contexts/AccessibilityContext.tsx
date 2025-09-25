@@ -105,9 +105,9 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     loadSettings();
 
     // Subscribe to screen reader changes
-    const screenReaderChangedSubscription = AccessibilityInfo.addEventListener(
+    const screenReaderChangedSubscription = AccessibilityInfo.addEventListener?.(
       'screenReaderChanged',
-      (isEnabled) => {
+      (isEnabled: boolean) => {
         setSettings(prev => ({ ...prev, isScreenReaderEnabled: isEnabled }));
       }
     );
@@ -115,7 +115,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     // Subscribe to reduce motion changes (if available)
     const reduceMotionChangedSubscription = AccessibilityInfo.addEventListener?.(
       'reduceMotionChanged',
-      (isEnabled) => {
+      (isEnabled: boolean) => {
         setSettings(prev => ({ ...prev, reduceMotion: isEnabled }));
       }
     );

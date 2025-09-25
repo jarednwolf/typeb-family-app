@@ -514,6 +514,18 @@ export const updateFamily = async (
     });
   } catch (error: any) {
     console.error('Error updating family:', error);
+    // Optimistic fallback for transient network failures
+    const message = (error?.message || '').toLowerCase();
+    if (message.includes('network') || message.includes('unavailable') || message.includes('offline')) {
+      try {
+        // Soft-apply in client by saving a local hint (realtimeSyncEnhanced handles later persistence)
+        const { default: realtimeSyncEnhanced } = await import('./realtimeSyncEnhanced');
+        await realtimeSyncEnhanced.optimisticUpdate('families', familyId, updates, 'update');
+        return;
+      } catch (queueErr) {
+        console.error('Failed to queue offline family update:', queueErr);
+      }
+    }
     throw new Error(error.message || 'Failed to update family');
   }
 };

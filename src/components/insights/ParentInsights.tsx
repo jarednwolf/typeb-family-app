@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
@@ -631,13 +632,15 @@ export const ParentInsights: React.FC<ParentInsightsProps> = ({
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshing={refreshing}
-        onScroll={({ nativeEvent }) => {
-          if (nativeEvent.contentOffset.y < -50 && !refreshing) {
-            setRefreshing(true);
-            loadInsights().then(() => setRefreshing(false));
-          }
-        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              loadInsights().then(() => setRefreshing(false));
+            }}
+          />
+        }
       >
         {selectedTab === 'overview' && renderOverview()}
         {selectedTab === 'insights' && renderInsights()}

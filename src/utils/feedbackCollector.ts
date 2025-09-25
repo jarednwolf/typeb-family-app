@@ -1,6 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import analytics from '@react-native-firebase/analytics';
+import { analyticsService } from '../services/analytics';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { Platform, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -138,8 +138,8 @@ class FeedbackCollector {
       
       feedback.id = docRef.id;
       
-      // Log to analytics
-      await analytics().logEvent('feedback_submitted', {
+      // Log to centralized analytics (PII scrubbed)
+      analyticsService.track('feedback_submitted', {
         feedback_type: type,
         category: feedback.category,
         severity: feedback.severity,

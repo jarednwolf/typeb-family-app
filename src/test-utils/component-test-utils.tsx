@@ -17,29 +17,82 @@ import authReducer from '../store/slices/authSlice';
 import familyReducer from '../store/slices/familySlice';
 import tasksReducer from '../store/slices/tasksSlice';
 import notificationReducer from '../store/slices/notificationSlice';
+import userReducer from '../store/slices/userSlice';
 import { RootState } from '../store/store';
 
 // Create a test store with initial state
 export const createTestStore = (initialState?: Partial<RootState>) => {
+  // Merge provided initial state over sensible defaults to avoid unexpected key warnings
+  const baseState: Partial<RootState> = {
+    auth: {
+      user: null,
+      userProfile: null,
+      isLoading: false,
+      error: null,
+      isAuthenticated: false,
+      isEmailVerified: false,
+    } as any,
+    family: {
+      currentFamily: null,
+      members: [],
+      inviteCode: null,
+      isLoading: false,
+      isJoining: false,
+      isCreating: false,
+      error: null,
+    } as any,
+    tasks: {
+      tasks: [],
+      userTasks: [],
+      overdueTasks: [],
+      selectedTask: null,
+      isLoading: false,
+      isCreating: false,
+      isUpdating: false,
+      error: null,
+      stats: { total: 0, pending: 0, completed: 0, overdue: 0, completionRate: 0 },
+      filters: {},
+    } as any,
+    notifications: {
+      notifications: [],
+      unreadCount: 0,
+      settings: {
+        enabled: true,
+        taskReminders: true,
+        taskAssignments: true,
+        taskCompletions: true,
+        familyUpdates: true,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      },
+      pushToken: null,
+      isLoading: false,
+      error: null,
+      lastFetchedAt: null,
+      hasPermission: false,
+    } as any,
+  } as any;
+
+  const preloaded = { ...(baseState as any), ...(initialState as any) };
+
   const store = configureStore({
     reducer: {
+      user: userReducer,
       auth: authReducer,
       family: familyReducer,
       tasks: tasksReducer,
       notifications: notificationReducer,
     },
-    preloadedState: initialState as any,
+    preloadedState: preloaded as any,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: {
-          // Ignore these action types
           ignoredActions: [
             'auth/setUser',
             'family/setFamily',
             'tasks/setTasks',
             'notifications/addNotification',
           ],
-          // Ignore these paths in the state
           ignoredPaths: [
             'auth.user',
             'family.currentFamily',

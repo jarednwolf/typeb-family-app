@@ -20,7 +20,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { performanceMonitor, PERFORMANCE_THRESHOLDS } from '../../utils/performance';
-import { testDataGenerator } from '../../../scripts/performance-test-data';
+// Dev-only generator imported dynamically to avoid app type dependencies
+let testDataGenerator: any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  testDataGenerator = require('../../../scripts/performance-test-data').testDataGenerator;
+} catch {}
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface MetricSummary {
@@ -143,6 +148,7 @@ const PerformanceDebugScreen: React.FC = () => {
             style: 'destructive',
             onPress: async () => {
               try {
+                if (!testDataGenerator) throw new Error('Generator unavailable in this build');
                 await testDataGenerator.generateTestData({
                   numMembers,
                   numTasks,

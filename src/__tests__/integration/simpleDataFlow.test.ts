@@ -103,8 +103,8 @@ describe('Simple Integration Tests', () => {
         { code: 'auth/email-already-in-use', expected: 'This email is already registered' },
         { code: 'auth/invalid-email', expected: 'Please enter a valid email address' },
         { code: 'auth/weak-password', expected: 'Password is too weak' },
-        { code: 'auth/user-not-found', expected: 'No account found with this email' },
-        { code: 'auth/wrong-password', expected: 'Incorrect password' },
+        { code: 'auth/user-not-found', expected: 'Invalid email or password' },
+        { code: 'auth/wrong-password', expected: 'Invalid email or password' },
       ];
       
       testErrors.forEach(({ code, expected }) => {

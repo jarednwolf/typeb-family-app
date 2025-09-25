@@ -14,7 +14,7 @@ export const useTheme = () => ({
       backgroundTexture: '#F7F7F7',
       textPrimary: '#000000',
       textSecondary: '#3C3C43',
-      textTertiary: '#C7C7CC',
+      textTertiary: '#595959',
       separator: '#E5E5EA',
       white: '#FFFFFF',
       black: '#000000',
@@ -43,6 +43,22 @@ export const useTheme = () => ({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 4,
+      },
+    },
+    shadows: {
+      small: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+      },
+      large: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 5,
       },
     },
     typography: {

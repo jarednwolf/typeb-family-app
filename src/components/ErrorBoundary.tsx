@@ -95,7 +95,7 @@ class ErrorBoundary extends Component<Props, State> {
     });
     
     // Track error in performance monitoring
-    performanceMonitoring.trackError(error, 'high', {
+    (performanceMonitoring as any)?.trackError?.(error, 'high', {
       componentStack: errorInfo.componentStack,
       retryCount: this.retryCount,
     });

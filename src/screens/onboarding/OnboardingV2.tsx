@@ -415,7 +415,10 @@ const PermissionsStep: React.FC<any> = ({ onNext, theme }) => {
           accessibilityRole="button"
           accessibilityState={{ disabled: notificationsGranted }}
         >
-          <View style={styles.permissionHeader}>
+          <View style={styles.permissionHeader}
+            accessibilityLabel="Push Notifications permission card"
+            accessibilityRole="summary"
+          >
             <View
               style={[
                 styles.permissionIcon,
@@ -459,7 +462,10 @@ const PermissionsStep: React.FC<any> = ({ onNext, theme }) => {
           accessibilityRole="button"
           accessibilityState={{ disabled: cameraGranted }}
         >
-          <View style={styles.permissionHeader}>
+          <View style={styles.permissionHeader}
+            accessibilityLabel="Camera Access permission card"
+            accessibilityRole="summary"
+          >
             <View
               style={[
                 styles.permissionIcon,
@@ -590,7 +596,7 @@ const QuickStartStep: React.FC<any> = ({ onComplete, theme }) => {
   );
 };
 
-const OnboardingV2: React.FC = () => {
+export const OnboardingV2: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const { theme, isDarkMode } = useTheme();
   const reduceMotion = useReduceMotion();

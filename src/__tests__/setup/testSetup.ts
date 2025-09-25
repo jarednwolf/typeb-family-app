@@ -561,13 +561,59 @@ jest.mock('../../hooks/redux', () => ({
 }));
 
 // Mock Redux selectors
-jest.mock('../../store/slices/familySlice', () => ({
-  selectFamilyMembers: (state: any) => state?.family?.members || [],
-}));
+jest.mock('../../store/slices/familySlice', () => {
+  const initialState = {
+    currentFamily: null,
+    members: [],
+    isLoading: false,
+    error: null,
+    inviteCode: null,
+    isJoining: false,
+    isCreating: false,
+  };
+  const reducer = (state = initialState, action: any) => {
+    switch (action?.type) {
+      case 'family/setFamily':
+        return { ...state, currentFamily: { ...action.payload } };
+      case 'family/setMembers':
+        return { ...state, members: Array.isArray(action.payload) ? [...action.payload] : [] };
+      default:
+        return state;
+    }
+  };
+  return {
+    __esModule: true,
+    default: reducer,
+    selectFamilyMembers: (state: any) => state?.family?.members || [],
+  };
+});
 
-jest.mock('../../store/slices/authSlice', () => ({
-  selectUserProfile: (state: any) => state?.auth?.userProfile || null,
-}));
+jest.mock('../../store/slices/authSlice', () => {
+  const initialState = {
+    user: null,
+    userProfile: null,
+    isLoading: false,
+    error: null,
+    isAuthenticated: false,
+    isEmailVerified: false,
+  };
+  const reducer = (state = initialState, action: any) => {
+    switch (action?.type) {
+      case 'auth/setUserProfile':
+        return { ...state, userProfile: { ...action.payload } };
+      case 'auth/setUser':
+        return { ...state, user: { ...action.payload }, isAuthenticated: !!action.payload };
+      default:
+        return state;
+    }
+  };
+  return {
+    __esModule: true,
+    default: reducer,
+    selectUserProfile: (state: any) => state?.auth?.userProfile || null,
+    selectUser: (state: any) => state?.auth?.user || null,
+  };
+});
 
 // Mock animation utilities
 jest.mock('../../utils/animations', () => ({

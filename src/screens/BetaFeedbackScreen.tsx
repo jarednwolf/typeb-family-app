@@ -177,12 +177,12 @@ export default function BetaFeedbackScreen({ navigation }: any) {
       paddingHorizontal: 20,
       paddingVertical: 15,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      borderBottomColor: theme.colors.separator,
     },
     headerTitle: {
       fontSize: 18,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.textSecondary,
     },
     closeButton: {
       padding: 5,
@@ -196,7 +196,7 @@ export default function BetaFeedbackScreen({ navigation }: any) {
     sectionTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.textSecondary,
       marginBottom: 12,
     },
     typeGrid: {
@@ -225,7 +225,7 @@ export default function BetaFeedbackScreen({ navigation }: any) {
     typeLabel: {
       fontSize: 11,
       textAlign: 'center',
-      color: theme.colors.text,
+      color: theme.colors.textSecondary,
     },
     severityContainer: {
       flexDirection: 'row',
@@ -250,13 +250,13 @@ export default function BetaFeedbackScreen({ navigation }: any) {
     },
     messageInput: {
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      borderColor: theme.colors.separator,
       borderRadius: 12,
       padding: 15,
       minHeight: 150,
       fontSize: 15,
-      color: theme.colors.text,
-      backgroundColor: theme.colors.card,
+      color: theme.colors.textPrimary,
+      backgroundColor: theme.colors.surface,
       textAlignVertical: 'top',
     },
     characterCount: {
@@ -269,9 +269,9 @@ export default function BetaFeedbackScreen({ navigation }: any) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.card,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      borderColor: theme.colors.separator,
       borderRadius: 12,
       padding: 15,
     },
@@ -364,7 +364,7 @@ export default function BetaFeedbackScreen({ navigation }: any) {
             style={styles.closeButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="close" size={24} color={theme.colors.text} />
+            <Ionicons name="close" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Send Feedback</Text>
           <View style={styles.betaBadge}>
@@ -427,7 +427,7 @@ export default function BetaFeedbackScreen({ navigation }: any) {
                       <Text
                         style={[
                           styles.severityLabel,
-                          { color: severity === level.value ? level.color : theme.colors.text },
+                          { color: severity === level.value ? level.color : theme.colors.textPrimary },
                         ]}
                       >
                         {level.label}

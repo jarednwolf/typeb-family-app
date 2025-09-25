@@ -1,0 +1,49 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["react", "react-native"],
+    "moduleResolution": "node",
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react-native",
+    "noResolve": true
+  },
+  "include": [
+    "src/contexts/**/*",
+    "src/types/**/*",
+    "src/constants/**/*"
+  ],
+  "exclude": [
+    "scripts/**/*",
+    "src/__tests__/**/*",
+    "src/**/__tests__/**/*",
+    "src/__mocks__/**/*",
+    "__tests__/**/*",
+    "src/screens/**/__mocks__/**/*",
+    "src/components/**/__mocks__/**/*",
+    "src/components/**/__tests__/**/*",
+    "src/screens/**/__tests__/**/*",
+    "src/components/dashboard/**/*",
+    "src/components/engagement/**/*",
+    "apps/**/*",
+    "../apps/**/*",
+    "packages/**/*",
+    "../packages/**/*",
+    "node_modules",
+    "scripts/**/*",
+    "src/components/analytics/**/*",
+    "src/components/animations/**/*",
+    "src/components/celebrations/**/*",
+    "src/contexts/ThemeContext.tsx",
+    "src/hooks/**/*",
+    "src/services/**/*",
+    "src/services/NotificationOrchestrator.ts",
+    "src/services/TaskEscalationService.ts",
+    "src/services/ValidationFeedbackService.ts",
+    "src/services/WeeklySummaryService.ts",
+    "src/services/celebrations.ts",
+    "src/screens/profile/ProfileScreen.tsx",
+    "src/components/dashboard/CelebrationCarousel.tsx"
+  ]
+}

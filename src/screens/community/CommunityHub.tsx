@@ -47,7 +47,7 @@ interface ActivityItem {
 
 export const CommunityHub: React.FC = () => {
   const navigation = useNavigation();
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { currentFamily } = useSelector((state: RootState) => state.family);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -140,7 +140,7 @@ export const CommunityHub: React.FC = () => {
           </View>
         )}
       </View>
-      <Text style={[styles.quickActionText, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+      <Text style={[styles.quickActionText, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
         {action.title}
       </Text>
     </TouchableOpacity>
@@ -149,7 +149,7 @@ export const CommunityHub: React.FC = () => {
   const renderActivityItem = (item: ActivityItem) => (
     <TouchableOpacity
       key={item.id}
-      style={[styles.activityItem, { backgroundColor: theme.isDark ? '#2C2C2E' : '#FFFFFF' }]}
+      style={[styles.activityItem, { backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF' }]}
       onPress={() => {
         // Navigate to appropriate screen based on type
         switch (item.type) {
@@ -172,20 +172,20 @@ export const CommunityHub: React.FC = () => {
         <Text style={{ fontSize: 24 }}>{item.icon}</Text>
       </View>
       <View style={styles.activityContent}>
-        <Text style={[styles.activityTitle, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+        <Text style={[styles.activityTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
           {item.title}
         </Text>
-        <Text style={[styles.activityDescription, { color: theme.isDark ? '#FFFFFF80' : '#00000080' }]}>
+        <Text style={[styles.activityDescription, { color: isDarkMode ? '#FFFFFF80' : '#00000080' }]}> 
           {item.description}
         </Text>
-        <Text style={[styles.activityTime, { color: theme.isDark ? '#FFFFFF60' : '#00000060' }]}>
+        <Text style={[styles.activityTime, { color: isDarkMode ? '#FFFFFF60' : '#00000060' }]}> 
           {format(item.timestamp, 'MMM d, h:mm a')}
         </Text>
       </View>
       <Ionicons 
         name="chevron-forward" 
         size={20} 
-        color={theme.isDark ? '#FFFFFF40' : '#00000040'}
+        color={isDarkMode ? '#FFFFFF40' : '#00000040'}
       />
     </TouchableOpacity>
   );
@@ -197,22 +197,22 @@ export const CommunityHub: React.FC = () => {
 
     return (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+        <Text style={[styles.sectionTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
           📌 Coming Up
         </Text>
         
         {upcomingItems.nextEvent && (
           <TouchableOpacity
-            style={[styles.upcomingCard, { backgroundColor: theme.colors.card }]}
+            style={[styles.upcomingCard, { backgroundColor: theme.colors.surface }]}
             onPress={() => navigateToScreen('EventDetail', { event: upcomingItems.nextEvent })}
           >
             <Text style={[styles.upcomingLabel, { color: theme.colors.primary }]}>
               Next Event
             </Text>
-            <Text style={[styles.upcomingTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.upcomingTitle, { color: theme.colors.textPrimary }]}> 
               {upcomingItems.nextEvent.title}
             </Text>
-            <Text style={[styles.upcomingTime, { color: theme.colors.text + '80' }]}>
+            <Text style={[styles.upcomingTime, { color: theme.colors.textSecondary }]}> 
               {format(upcomingItems.nextEvent.startDate, 'MMM d, h:mm a')}
             </Text>
           </TouchableOpacity>
@@ -220,13 +220,13 @@ export const CommunityHub: React.FC = () => {
 
         {upcomingItems.activeGoal && (
           <TouchableOpacity
-            style={[styles.upcomingCard, { backgroundColor: theme.colors.card }]}
+            style={[styles.upcomingCard, { backgroundColor: theme.colors.surface }]}
             onPress={() => navigateToScreen('GoalDetail', { goal: upcomingItems.activeGoal })}
           >
             <Text style={[styles.upcomingLabel, { color: '#4CAF50' }]}>
               Active Goal
             </Text>
-            <Text style={[styles.upcomingTitle, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+            <Text style={[styles.upcomingTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
               {upcomingItems.activeGoal.title}
             </Text>
             <View style={styles.progressBar}>
@@ -240,7 +240,7 @@ export const CommunityHub: React.FC = () => {
                 ]} 
               />
             </View>
-            <Text style={[styles.progressText, { color: theme.isDark ? '#FFFFFF80' : '#00000080' }]}>
+            <Text style={[styles.progressText, { color: isDarkMode ? '#FFFFFF80' : '#00000080' }]}> 
               {upcomingItems.activeGoal.progress}% Complete
             </Text>
           </TouchableOpacity>
@@ -248,16 +248,16 @@ export const CommunityHub: React.FC = () => {
 
         {upcomingItems.activeSession && (
           <TouchableOpacity
-            style={[styles.upcomingCard, { backgroundColor: theme.isDark ? '#2C2C2E' : '#FFFFFF' }]}
+            style={[styles.upcomingCard, { backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF' }]}
             onPress={() => navigateToScreen('PlanningDetail', { session: upcomingItems.activeSession })}
           >
             <Text style={[styles.upcomingLabel, { color: '#FF9800' }]}>
               Active Planning
             </Text>
-            <Text style={[styles.upcomingTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.upcomingTitle, { color: theme.colors.textPrimary }]}> 
               {upcomingItems.activeSession.title}
             </Text>
-            <Text style={[styles.upcomingTime, { color: theme.isDark ? '#FFFFFF80' : '#00000080' }]}>
+            <Text style={[styles.upcomingTime, { color: isDarkMode ? '#FFFFFF80' : '#00000080' }]}> 
               {upcomingItems.activeSession.votingDeadline 
                 ? `Voting ends ${format(upcomingItems.activeSession.votingDeadline, 'MMM d')}`
                 : 'Open for suggestions'
@@ -280,14 +280,14 @@ export const CommunityHub: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+        <Text style={[styles.headerTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
           🏡 Community Hub
         </Text>
         <TouchableOpacity
           onPress={() => navigateToScreen('CommunitySettings')}
           testID="community-settings-button"
         >
-          <Ionicons name="settings-outline" size={24} color={theme.isDark ? '#FFFFFF' : '#000000'} />
+          <Ionicons name="settings-outline" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
       </View>
 
@@ -309,17 +309,17 @@ export const CommunityHub: React.FC = () => {
 
         {/* Activity Feed */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}> 
             📊 Recent Activity
           </Text>
           {activities.length > 0 ? (
             activities.map(renderActivityItem)
           ) : (
-            <View style={[styles.emptyState, { backgroundColor: theme.isDark ? '#2C2C2E' : '#FFFFFF' }]}>
-              <Text style={[styles.emptyStateText, { color: theme.isDark ? '#FFFFFF60' : '#00000060' }]}>
+            <View style={[styles.emptyState, { backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF' }]}> 
+              <Text style={[styles.emptyStateText, { color: isDarkMode ? '#FFFFFF60' : '#00000060' }]}> 
                 No recent activity
               </Text>
-              <Text style={[styles.emptyStateSubtext, { color: theme.isDark ? '#FFFFFF40' : '#00000040' }]}>
+              <Text style={[styles.emptyStateSubtext, { color: isDarkMode ? '#FFFFFF40' : '#00000040' }]}> 
                 Start by creating an announcement or planning session
               </Text>
             </View>

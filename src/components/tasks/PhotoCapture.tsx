@@ -39,6 +39,7 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
   existingPhotoUrl,
 }) => {
   const theme = useTheme();
+  const colors = theme.theme.colors;
   const currentUser = useSelector(selectCurrentUser);
   const activeFamily = useSelector(selectActiveFamily);
   
@@ -189,7 +190,7 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
   const renderPhotoOptions = () => (
     <View style={styles.optionsContainer}>
       <TouchableOpacity
-        style={[styles.optionButton, { backgroundColor: theme.colors.primary }]}
+        style={[styles.optionButton, { backgroundColor: colors.primary }]}
         onPress={handleTakePhoto}
         activeOpacity={0.8}
       >
@@ -200,12 +201,12 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.optionButton, { backgroundColor: theme.colors.card }]}
+        style={[styles.optionButton, { backgroundColor: colors.surface }]}
         onPress={handleSelectPhoto}
         activeOpacity={0.8}
       >
-        <Ionicons name="images" size={32} color={theme.colors.text} />
-        <Text style={[styles.optionText, { color: theme.colors.text }]}>
+        <Ionicons name="images" size={32} color={colors.textPrimary} />
+        <Text style={[styles.optionText, { color: colors.textPrimary }]}>
           Choose Photo
         </Text>
       </TouchableOpacity>
@@ -218,12 +219,12 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       animationType="slide"
       onRequestClose={() => setShowPreview(false)}
     >
-      <View style={[styles.previewContainer, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.previewContainer, { backgroundColor: colors.background }]}> 
         <View style={styles.previewHeader}>
           <TouchableOpacity onPress={() => setShowPreview(false)}>
-            <Ionicons name="close" size={28} color={theme.colors.text} />
+            <Ionicons name="close" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.previewTitle, { color: theme.colors.text }]}>
+          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
             Review Photo
           </Text>
           <View style={{ width: 28 }} />
@@ -235,17 +236,17 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
 
         {isAnalyzing && (
           <View style={styles.analyzingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={[styles.analyzingText, { color: theme.colors.text }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.analyzingText, { color: colors.textPrimary }]}>
               Analyzing photo...
             </Text>
           </View>
         )}
 
         {analysisResult && !isAnalyzing && (
-          <View style={[styles.analysisCard, { backgroundColor: theme.colors.card }]}>
+          <View style={[styles.analysisCard, { backgroundColor: colors.surface }]}> 
             <View style={styles.confidenceRow}>
-              <Text style={[styles.confidenceLabel, { color: theme.colors.text }]}>
+              <Text style={[styles.confidenceLabel, { color: colors.textPrimary }]}>
                 Confidence:
               </Text>
               <Text
@@ -253,15 +254,15 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                   styles.confidenceValue,
                   {
                     color: analysisResult.confidence > 0.7
-                      ? theme.colors.success
-                      : theme.colors.warning,
+                      ? colors.success
+                      : colors.warning,
                   },
                 ]}
               >
                 {Math.round(analysisResult.confidence * 100)}%
               </Text>
             </View>
-            <Text style={[styles.feedbackText, { color: theme.colors.text }]}>
+            <Text style={[styles.feedbackText, { color: colors.textPrimary }]}>
               {analysisResult.feedback}
             </Text>
           </View>
@@ -269,11 +270,11 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
 
         <View style={styles.previewActions}>
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.colors.card }]}
+            style={[styles.actionButton, { backgroundColor: colors.surface }]}
             onPress={handleRetake}
           >
-            <Ionicons name="refresh" size={20} color={theme.colors.text} />
-            <Text style={[styles.actionButtonText, { color: theme.colors.text }]}>
+            <Ionicons name="refresh" size={20} color={colors.textPrimary} />
+            <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>
               Retake
             </Text>
           </TouchableOpacity>
@@ -283,7 +284,7 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               styles.actionButton,
               styles.submitButton,
               { 
-                backgroundColor: theme.colors.primary,
+                backgroundColor: colors.primary,
                 opacity: isUploading ? 0.7 : 1,
               },
             ]}
@@ -310,12 +311,12 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     <View style={styles.container}>
       {existingPhotoUrl ? (
         <TouchableOpacity
-          style={[styles.photoContainer, { backgroundColor: theme.colors.card }]}
+          style={[styles.photoContainer, { backgroundColor: colors.surface }]}
           onPress={() => setShowPreview(true)}
         >
           <Image source={{ uri: existingPhotoUrl }} style={styles.thumbnail} />
           <TouchableOpacity
-            style={[styles.changePhotoButton, { backgroundColor: theme.colors.primary }]}
+            style={[styles.changePhotoButton, { backgroundColor: colors.primary }]}
             onPress={handleTakePhoto}
           >
             <Ionicons name="camera" size={16} color="#FFFFFF" />

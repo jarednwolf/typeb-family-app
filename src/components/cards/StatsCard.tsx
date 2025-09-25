@@ -92,7 +92,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       
       <View style={styles.content}>
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, compact && styles.valueCompact]}>
+          <Text style={[styles.value, compact && styles.valueCompact, color ? { color } : null]}>
             {value}
           </Text>
           

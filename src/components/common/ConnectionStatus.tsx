@@ -8,13 +8,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import realtimeSyncService from '../../services/realtimeSyncEnhanced';
-import { SyncStatus } from '../../services/realtimeSyncEnhanced';
+import realtimeSyncService, { SyncStatus as RealtimeSyncStatus } from '../../services/realtimeSyncEnhanced';
 import * as Haptics from 'expo-haptics';
 
 export const ConnectionStatus: React.FC = () => {
-  const theme = useTheme();
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const [syncStatus, setSyncStatus] = useState<RealtimeSyncStatus>(
     realtimeSyncService.getSyncStatus()
   );
   const [isExpanded, setIsExpanded] = useState(false);
@@ -75,15 +75,15 @@ export const ConnectionStatus: React.FC = () => {
 
   const getStatusIcon = () => {
     if (!syncStatus.isOnline) {
-      return { name: 'cloud-offline', color: theme.colors.error };
+      return { name: 'cloud-offline', color: colors.error };
     }
     if (syncStatus.isSyncing) {
-      return { name: 'sync', color: theme.colors.warning };
+      return { name: 'sync', color: colors.warning };
     }
     if (syncStatus.pendingChanges > 0) {
-      return { name: 'cloud-upload', color: theme.colors.warning };
+      return { name: 'cloud-upload', color: colors.warning };
     }
-    return { name: 'cloud-done', color: theme.colors.success };
+    return { name: 'cloud-done', color: colors.success };
   };
 
   const getStatusText = () => {
@@ -144,7 +144,7 @@ export const ConnectionStatus: React.FC = () => {
         style={[
           styles.indicator,
           {
-            backgroundColor: theme.colors.card,
+            backgroundColor: colors.surface,
             borderColor: statusIcon.color,
           },
         ]}
@@ -156,7 +156,7 @@ export const ConnectionStatus: React.FC = () => {
           size={16}
           color={statusIcon.color}
         />
-        <Text style={[styles.statusText, { color: theme.colors.text }]}>
+        <Text style={[styles.statusText, { color: colors.textPrimary }]}>
           {getStatusText()}
         </Text>
       </TouchableOpacity>
@@ -165,33 +165,33 @@ export const ConnectionStatus: React.FC = () => {
         <View
           style={[
             styles.expandedContent,
-            { backgroundColor: theme.colors.card },
+            { backgroundColor: colors.surface },
           ]}
         >
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text + '99' }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
               Connection:
             </Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
               {syncStatus.isOnline ? 'Online' : 'Offline'}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text + '99' }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
               Last sync:
             </Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
               {formatLastSyncTime()}
             </Text>
           </View>
 
           {syncStatus.pendingChanges > 0 && (
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: theme.colors.text + '99' }]}>
+              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
                 Pending changes:
               </Text>
-              <Text style={[styles.detailValue, { color: theme.colors.warning }]}>
+              <Text style={[styles.detailValue, { color: colors.warning }]}>
                 {syncStatus.pendingChanges}
               </Text>
             </View>
@@ -202,23 +202,23 @@ export const ConnectionStatus: React.FC = () => {
               <Ionicons
                 name="warning"
                 size={16}
-                color={theme.colors.error}
+                color={colors.error}
               />
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
+              <Text style={[styles.errorText, { color: colors.error }]}>
                 {syncStatus.error}
               </Text>
             </View>
           )}
 
           {!syncStatus.isOnline && syncStatus.pendingChanges > 0 && (
-            <Text style={[styles.helpText, { color: theme.colors.text + '66' }]}>
+            <Text style={[styles.helpText, { color: colors.textSecondary }]}>
               Your changes will be synced when you're back online
             </Text>
           )}
 
           {syncStatus.isOnline && syncStatus.pendingChanges > 0 && !syncStatus.isSyncing && (
             <TouchableOpacity
-              style={[styles.syncButton, { backgroundColor: theme.colors.primary }]}
+              style={[styles.syncButton, { backgroundColor: colors.primary }]}
               onPress={handleForceSync}
             >
               <Ionicons name="sync" size={16} color="#FFFFFF" />
@@ -233,8 +233,9 @@ export const ConnectionStatus: React.FC = () => {
 
 // Minimal inline indicator for headers
 export const ConnectionStatusBadge: React.FC = () => {
-  const theme = useTheme();
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const [syncStatus, setSyncStatus] = useState<RealtimeSyncStatus>(
     realtimeSyncService.getSyncStatus()
   );
 
@@ -248,14 +249,14 @@ export const ConnectionStatusBadge: React.FC = () => {
   }
 
   const getColor = () => {
-    if (!syncStatus.isOnline) return theme.colors.error;
-    if (syncStatus.isSyncing) return theme.colors.warning;
-    if (syncStatus.pendingChanges > 0) return theme.colors.warning;
-    return theme.colors.success;
+    if (!syncStatus.isOnline) return colors.error;
+    if (syncStatus.isSyncing) return colors.warning;
+    if (syncStatus.pendingChanges > 0) return colors.warning;
+    return colors.success;
   };
 
   return (
-    <View style={[styles.badge, { backgroundColor: getColor() }]}>
+    <View style={[styles.badge, { backgroundColor: getColor() }]}> 
       {syncStatus.isSyncing && (
         <Ionicons name="sync" size={10} color="#FFFFFF" />
       )}

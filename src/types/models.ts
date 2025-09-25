@@ -3,7 +3,13 @@
  * Following zero-tech-debt policy with complete type safety
  */
 
-import { ParentReaction } from '../services/reactions';
+// Define a minimal ParentReaction type locally to avoid importing services
+export type ParentReaction = {
+  emoji: string;
+  timestamp: Date;
+  userId: string;
+  userName: string;
+};
 
 // User model - extends Firebase Auth user
 export interface User {

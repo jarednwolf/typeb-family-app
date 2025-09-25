@@ -10,6 +10,7 @@
 
 import { renderHook, act } from '@testing-library/react-hooks';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { renderWithProviders } from '../../test-utils/component-test-utils';
 import { PhotoCapture } from '../../components/tasks/PhotoCapture';
 import cameraService from '../../services/camera';
 import photoAnalysisService from '../../services/photoAnalysis';
@@ -30,7 +31,7 @@ describe('Photo Validation System', () => {
     it('should request camera permissions on mount', async () => {
       (cameraService.requestCameraPermissions as jest.Mock).mockResolvedValue(true);
       
-      render(
+      renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="chores" 
@@ -55,7 +56,7 @@ describe('Photo Validation System', () => {
       });
 
       const onPhotoTaken = jest.fn();
-      const { getByText } = render(
+      const { getByText } = renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="chores" 
@@ -81,7 +82,7 @@ describe('Photo Validation System', () => {
     it('should handle permission denial gracefully', async () => {
       (cameraService.requestCameraPermissions as jest.Mock).mockResolvedValue(false);
       
-      const { getByText } = render(
+      const { getByText } = renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="chores" 
@@ -113,7 +114,7 @@ describe('Photo Validation System', () => {
       (cameraService.uploadPhoto as jest.Mock).mockRejectedValue(uploadError);
 
       const onPhotoTaken = jest.fn();
-      const { getByText } = render(
+      const { getByText } = renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="chores" 
@@ -310,7 +311,7 @@ describe('Photo Validation System', () => {
       });
 
       const onPhotoValidated = jest.fn();
-      const { getByText } = render(
+      const { getByText } = renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="clean_room" 
@@ -361,7 +362,7 @@ describe('Photo Validation System', () => {
       });
 
       const onPhotoValidated = jest.fn();
-      const { getByText } = render(
+      const { getByText } = renderWithProviders(
         <PhotoCapture 
           taskId="123" 
           taskType="clean_room" 

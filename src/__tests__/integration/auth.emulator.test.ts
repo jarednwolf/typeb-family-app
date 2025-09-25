@@ -269,10 +269,10 @@ describe('Auth Emulator Integration Tests', () => {
       };
 
       // Create security profile
-      await setDoc(doc(testApp.firestore, 'userSecurity', userCred.user.uid), securityData);
+      await setDoc(doc(testApp.firestore, 'securityProfiles', userCred.user.uid), securityData);
 
       // Retrieve and verify
-      const securityDoc = await getDoc(doc(testApp.firestore, 'userSecurity', userCred.user.uid));
+      const securityDoc = await getDoc(doc(testApp.firestore, 'securityProfiles', userCred.user.uid));
       expect(securityDoc.exists()).toBe(true);
       expect(securityDoc.data()).toMatchObject(securityData);
     });

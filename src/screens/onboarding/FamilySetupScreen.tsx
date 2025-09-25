@@ -22,15 +22,15 @@ const FamilySetupScreen: React.FC = () => {
 
   const handleContinue = useCallback(() => {
     if (selectedOption === 'create') {
-      navigation.navigate('CreateFamily' as never);
+      (navigation as any).navigate('CreateFamily');
     } else if (selectedOption === 'join') {
       // Navigate to Family tab, then JoinFamily screen
-      navigation.navigate('Main', {
+      (navigation as any).navigate('Main', {
         screen: 'Family',
         params: {
           screen: 'JoinFamily'
         }
-      } as any);
+      });
     }
   }, [selectedOption, navigation]);
 

@@ -27,7 +27,7 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { db } from '../../services/firebase';
 import * as Haptics from 'expo-haptics';
 import * as Sentry from '@sentry/react-native';
 
@@ -56,8 +56,9 @@ const COLOR_OPTIONS = [
   '#9370DB', '#20B2AA', '#FF69B4', '#00CED1', '#FF8C00',
 ];
 
-export const CustomCategories: React.FC = () => {
+export const CustomCategories: React.FC<any> = ({ showPremiumBadge = false }) => {
   const theme = useTheme();
+  const colors = theme.theme.colors;
   const activeFamily = useSelector(selectActiveFamily);
   const currentUser = useSelector(selectCurrentUser);
 
@@ -197,42 +198,42 @@ export const CustomCategories: React.FC = () => {
       onRequestClose={() => setShowAddModal(false)}
     >
       <ScrollView
-        style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}
+        style={[styles.modalContainer, { backgroundColor: colors.surface }]}
         contentContainerStyle={styles.modalContent}
       >
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowAddModal(false)}>
-            <Ionicons name="close" size={28} color={theme.colors.text} />
+            <Ionicons name="close" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
             {editingCategory ? 'Edit Category' : 'Add Custom Category'}
           </Text>
           <View style={{ width: 28 }} />
         </View>
 
         <View style={styles.formSection}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             Category Name *
           </Text>
           <TextInput
             style={[
               styles.input,
               {
-                backgroundColor: theme.colors.card,
-                color: theme.colors.text,
-                borderColor: theme.colors.border,
+                backgroundColor: colors.surface,
+                color: colors.textPrimary,
+                borderColor: colors.separator,
               },
             ]}
             value={categoryName}
             onChangeText={setCategoryName}
             placeholder="e.g., Music Practice"
-            placeholderTextColor={theme.colors.text + '66'}
+            placeholderTextColor={colors.textPrimary + '66'}
             maxLength={30}
           />
         </View>
 
         <View style={styles.formSection}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             Description (Optional)
           </Text>
           <TextInput
@@ -240,15 +241,15 @@ export const CustomCategories: React.FC = () => {
               styles.input,
               styles.textArea,
               {
-                backgroundColor: theme.colors.card,
-                color: theme.colors.text,
-                borderColor: theme.colors.border,
+                backgroundColor: colors.surface,
+                color: colors.textPrimary,
+                borderColor: colors.separator,
               },
             ]}
             value={categoryDescription}
             onChangeText={setCategoryDescription}
             placeholder="Brief description of this category"
-            placeholderTextColor={theme.colors.text + '66'}
+            placeholderTextColor={colors.textPrimary + '66'}
             multiline
             numberOfLines={3}
             maxLength={100}
@@ -256,7 +257,7 @@ export const CustomCategories: React.FC = () => {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             Choose Icon
           </Text>
           <ScrollView
@@ -272,8 +273,8 @@ export const CustomCategories: React.FC = () => {
                   {
                     backgroundColor:
                       selectedIcon === icon
-                        ? theme.colors.primary
-                        : theme.colors.card,
+                        ? colors.primary
+                        : colors.surface,
                   },
                 ]}
                 onPress={() => setSelectedIcon(icon)}
@@ -281,7 +282,7 @@ export const CustomCategories: React.FC = () => {
                 <Ionicons
                   name={icon as any}
                   size={24}
-                  color={selectedIcon === icon ? '#FFFFFF' : theme.colors.text}
+                  color={selectedIcon === icon ? '#FFFFFF' : colors.textPrimary}
                 />
               </TouchableOpacity>
             ))}
@@ -289,7 +290,7 @@ export const CustomCategories: React.FC = () => {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             Choose Color
           </Text>
           <View style={styles.colorGrid}>
@@ -312,13 +313,13 @@ export const CustomCategories: React.FC = () => {
         </View>
 
         <View style={styles.preview}>
-          <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+          <Text style={[styles.previewLabel, { color: colors.textPrimary }]}>
             Preview
           </Text>
           <View
             style={[
               styles.previewCard,
-              { backgroundColor: theme.colors.card },
+              { backgroundColor: colors.surface },
             ]}
           >
             <View
@@ -334,11 +335,11 @@ export const CustomCategories: React.FC = () => {
               />
             </View>
             <View style={styles.previewTextContainer}>
-              <Text style={[styles.previewName, { color: theme.colors.text }]}>
+              <Text style={[styles.previewName, { color: colors.textPrimary }]}>
                 {categoryName || 'Category Name'}
               </Text>
               {categoryDescription ? (
-                <Text style={[styles.previewDescription, { color: theme.colors.text + '99' }]}>
+                <Text style={[styles.previewDescription, { color: colors.textPrimary + '99' }]}>
                   {categoryDescription}
                 </Text>
               ) : null}
@@ -350,7 +351,7 @@ export const CustomCategories: React.FC = () => {
           style={[
             styles.saveButton,
             {
-              backgroundColor: theme.colors.primary,
+              backgroundColor: colors.primary,
               opacity: isSaving || !categoryName.trim() ? 0.5 : 1,
             },
           ]}
@@ -373,7 +374,7 @@ export const CustomCategories: React.FC = () => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       );
     }
@@ -382,21 +383,21 @@ export const CustomCategories: React.FC = () => {
       <>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
               Custom Categories
             </Text>
-            <Text style={[styles.subtitle, { color: theme.colors.text + '99' }]}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Create personalized task categories for your family
             </Text>
           </View>
-          <PremiumIndicator />
+          {showPremiumBadge ? <PremiumIndicator /> : null}
         </View>
 
         <ScrollView style={styles.categoriesList}>
           {categories.map((category) => (
             <View
               key={category.id}
-              style={[styles.categoryCard, { backgroundColor: theme.colors.card }]}
+          style={[styles.categoryCard, { backgroundColor: colors.surface }]}
             >
               <View style={styles.categoryContent}>
                 <View
@@ -412,11 +413,11 @@ export const CustomCategories: React.FC = () => {
                   />
                 </View>
                 <View style={styles.categoryInfo}>
-                  <Text style={[styles.categoryName, { color: theme.colors.text }]}>
+                  <Text style={[styles.categoryName, { color: colors.textPrimary }]}>
                     {category.name}
                   </Text>
                   {category.description && (
-                    <Text style={[styles.categoryDescription, { color: theme.colors.text + '99' }]}>
+                    <Text style={[styles.categoryDescription, { color: colors.textSecondary }]}>
                       {category.description}
                     </Text>
                   )}
@@ -427,13 +428,13 @@ export const CustomCategories: React.FC = () => {
                   style={styles.actionButton}
                   onPress={() => handleEditCategory(category)}
                 >
-                  <Ionicons name="pencil" size={20} color={theme.colors.primary} />
+                  <Ionicons name="pencil" size={20} color={colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => handleDeleteCategory(category)}
                 >
-                  <Ionicons name="trash" size={20} color={theme.colors.error} />
+                  <Ionicons name="trash" size={20} color={colors.error} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -441,11 +442,11 @@ export const CustomCategories: React.FC = () => {
 
           {categories.length === 0 && (
             <View style={styles.emptyState}>
-              <Ionicons name="folder-open" size={48} color={theme.colors.text + '66'} />
-              <Text style={[styles.emptyText, { color: theme.colors.text + '99' }]}>
+              <Ionicons name="folder-open" size={48} color={colors.textSecondary + '66'} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 No custom categories yet
               </Text>
-              <Text style={[styles.emptySubtext, { color: theme.colors.text + '66' }]}>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary + '66' }]}>
                 Create your first category to get started
               </Text>
             </View>
@@ -453,7 +454,8 @@ export const CustomCategories: React.FC = () => {
         </ScrollView>
 
         <TouchableOpacity
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          testID="add-category-button"
+          style={[styles.fab, { backgroundColor: colors.primary }]}
           onPress={() => {
             setEditingCategory(null);
             setCategoryName('');
@@ -477,7 +479,7 @@ export const CustomCategories: React.FC = () => {
       featureName="Custom Categories"
       featureDescription="Create personalized task categories tailored to your family's unique needs and activities."
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
         {renderContent()}
       </View>
     </PremiumGate>

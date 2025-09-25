@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { auth, db as firestore } from '../../services/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { configureGoogleSignIn } from '../../services/auth';
+import { configureGoogleSignIn, validateEmail, validatePassword, formatAuthError } from '../../services/auth';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -42,6 +42,10 @@ export const SignUpScreen = () => {
     }
   };
 
+  const emailValidation = useMemo(() => validateEmail(email), [email]);
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const isFormValid = emailValidation.isValid && passwordValidation.isValid && !!firstName && !!birthYear && (!isUnder13 || parentConsent);
+
   const handleSignUp = async () => {
     setIsLoading(true);
     try {
@@ -56,17 +60,31 @@ export const SignUpScreen = () => {
         return;
       }
 
+      if (!isFormValid) {
+        const msg = !emailValidation.isValid
+          ? emailValidation.error
+          : !passwordValidation.isValid
+          ? passwordValidation.errors?.[0] || 'Invalid password'
+          : !firstName
+          ? 'Please enter your first name'
+          : !birthYear
+          ? 'Please enter your birth year'
+          : 'Please fix the highlighted errors';
+        Alert.alert('Sign Up', msg || 'Please fix the highlighted errors');
+        return;
+      }
+
       // Create auth account
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email,
+        email.trim().toLowerCase(),
         password
       );
 
       // Store user data with COPPA compliance
       await setDoc(doc(firestore, 'users', userCredential.user.uid), {
         firstName,
-        email,
+        email: email.trim().toLowerCase(),
         birthYear: parseInt(birthYear),
         age,
         createdAt: new Date(),
@@ -81,7 +99,7 @@ export const SignUpScreen = () => {
           doc(firestore, 'parentalConsents', userCredential.user.uid),
           {
             childId: userCredential.user.uid,
-            childEmail: email,
+            childEmail: email.trim().toLowerCase(),
             parentEmail,
             consentGiven: true,
             timestamp: new Date(),
@@ -90,10 +108,10 @@ export const SignUpScreen = () => {
         );
       }
 
-      Alert.alert('Success', 'Account created successfully!');
+      Alert.alert('Success', 'Account created successfully! Please verify your email.');
       // Navigation will be handled by auth state change
-    } catch (error) {
-      Alert.alert('Error', error.message);
+    } catch (error: any) {
+      Alert.alert('Error', formatAuthError(error));
     } finally {
       setIsLoading(false);
     }
@@ -104,31 +122,39 @@ export const SignUpScreen = () => {
       <Text style={styles.title}>Create Account</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !firstName ? { borderColor: '#f87171' } : null]}
         placeholder="First Name"
         value={firstName}
         onChangeText={setFirstName}
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !emailValidation.isValid && email.length > 0 ? { borderColor: '#f87171' } : null]}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      {!emailValidation.isValid && email.length > 0 && (
+        <Text style={{ color: '#f87171', marginBottom: 10 }}>{emailValidation.error}</Text>
+      )}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !passwordValidation.isValid && password.length > 0 ? { borderColor: '#f87171' } : null]}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+      {!passwordValidation.isValid && password.length > 0 && (
+        <Text style={{ color: '#f87171', marginBottom: 10 }}>
+          {(passwordValidation.errors && passwordValidation.errors[0]) || 'Invalid password'}
+        </Text>
+      )}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !birthYear ? { borderColor: '#f87171' } : null]}
         placeholder="Birth Year (YYYY)"
         value={birthYear}
         onChangeText={checkAge}
@@ -166,9 +192,9 @@ export const SignUpScreen = () => {
       )}
 
       <TouchableOpacity
-        style={[styles.button, (isLoading || !birthYear || (isUnder13 && !parentConsent)) && styles.disabled]}
+        style={[styles.button, (isLoading || !isFormValid) && styles.disabled]}
         onPress={handleSignUp}
-        disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
+        disabled={isLoading || !isFormValid}
       >
         {isLoading ? (
           <ActivityIndicator size="small" color="#fff" />
@@ -192,7 +218,7 @@ export const SignUpScreen = () => {
         disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
       />
 
-      <TouchableOpacity onPress={() => navigation.navigate('SignIn')} disabled={isLoading}>
+      <TouchableOpacity onPress={() => (navigation as any).navigate('SignIn' as never)} disabled={isLoading}>
         <Text style={styles.link}>Already have an account? Log in</Text>
       </TouchableOpacity>
 

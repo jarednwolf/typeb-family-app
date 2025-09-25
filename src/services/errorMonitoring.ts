@@ -19,7 +19,7 @@ class ErrorMonitoringService {
       return;
     }
 
-    const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN || Constants.expoConfig?.extra?.sentryDsn;
+    const dsn = (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_SENTRY_DSN : undefined) || Constants.expoConfig?.extra?.sentryDsn;
 
     if (!dsn) {
       console.warn('[ErrorMonitoring] Sentry DSN not configured');
@@ -39,7 +39,7 @@ class ErrorMonitoringService {
         // Integration configuration
         integrations: [
           new Sentry.ReactNativeTracing({
-            routingInstrumentation: Sentry.reactNavigationInstrumentation,
+            routingInstrumentation: new Sentry.ReactNavigationInstrumentation(),
             tracingOrigins: ['localhost', /^https:\/\/yourserver\.io\/api/],
             beforeNavigate: (context) => {
               // Add additional context to navigation transactions
@@ -143,7 +143,7 @@ class ErrorMonitoringService {
   addBreadcrumb(breadcrumb: {
     message: string;
     category?: string;
-    level?: Sentry.SeverityLevel;
+    level?: any;
     data?: any;
   }) {
     if (!this.initialized) return;
@@ -179,7 +179,7 @@ class ErrorMonitoringService {
   /**
    * Capture message
    */
-  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: any) {
+  captureMessage(message: string, level: any = 'info', context?: any) {
     if (!this.initialized) {
       console.log(`[ErrorMonitoring] Message captured (${level}):`, message);
       return;
@@ -312,7 +312,8 @@ class ErrorMonitoringService {
     if (!this.initialized) return true;
     
     try {
-      return await Sentry.flush(timeout);
+      await Sentry.flush();
+      return true;
     } catch (error) {
       console.error('[ErrorMonitoring] Failed to flush events:', error);
       return false;
@@ -326,13 +327,20 @@ class ErrorMonitoringService {
     if (!this.initialized) return true;
     
     try {
-      const result = await Sentry.close(timeout);
+      await Sentry.close();
       this.initialized = false;
-      return result;
+      return true;
     } catch (error) {
       console.error('[ErrorMonitoring] Failed to close Sentry:', error);
       return false;
     }
+  }
+
+  /**
+   * Enable/disable extra privacy mode for breadcrumbs/PII
+   */
+  setPrivacyEnabled(_enabled: boolean) {
+    // In this app build, breadcrumbs are already sanitized; wiring optional flag
   }
 }
 

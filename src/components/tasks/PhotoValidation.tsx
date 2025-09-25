@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import photoAnalysisService from '../../services/photoAnalysis';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { db } from '../../services/firebase';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/userSlice';
 import * as Haptics from 'expo-haptics';
@@ -50,6 +50,7 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
   onClose,
 }) => {
   const theme = useTheme();
+  const colors = theme.colors;
   const currentUser = useSelector(selectCurrentUser);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -217,10 +218,10 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
     return quickReasons.map((reason) => (
       <TouchableOpacity
         key={reason}
-        style={[styles.quickReasonChip, { backgroundColor: theme.colors.card }]}
+        style={[styles.quickReasonChip, { backgroundColor: colors.surface }]}
         onPress={() => setRejectionReason(reason)}
       >
-        <Text style={[styles.quickReasonText, { color: theme.colors.text }]}>
+        <Text style={[styles.quickReasonText, { color: colors.textPrimary }]}> 
           {reason}
         </Text>
       </TouchableOpacity>
@@ -228,21 +229,21 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <View>
-          <Text style={[styles.taskTitle, { color: theme.colors.text }]}>
+          <Text style={[styles.taskTitle, { color: colors.textPrimary }]}> 
             {task.title}
           </Text>
           {task.description && (
-            <Text style={[styles.taskDescription, { color: theme.colors.text + '99' }]}>
+            <Text style={[styles.taskDescription, { color: colors.textSecondary }]}> 
               {task.description}
             </Text>
           )}
         </View>
         {onClose && (
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={24} color={theme.colors.text} />
+          <TouchableOpacity onPress={onClose}> 
+            <Ionicons name="close" size={24} color={colors.textPrimary} /> 
           </TouchableOpacity>
         )}
       </View>
@@ -272,22 +273,22 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
 
       {isAnalyzing ? (
         <View style={styles.analyzingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.analyzingText, { color: theme.colors.text }]}>
+          <ActivityIndicator size="large" color={colors.primary} /> 
+          <Text style={[styles.analyzingText, { color: colors.textPrimary }]}> 
             Analyzing photo with AI...
           </Text>
         </View>
       ) : aiConfidence !== null && (
-        <View style={[styles.aiCard, { backgroundColor: theme.colors.card }]}>
+        <View style={[styles.aiCard, { backgroundColor: colors.surface }]}> 
           <View style={styles.aiHeader}>
-            <Ionicons name="sparkles" size={20} color={theme.colors.primary} />
-            <Text style={[styles.aiTitle, { color: theme.colors.text }]}>
+            <Ionicons name="sparkles" size={20} color={colors.primary} />
+            <Text style={[styles.aiTitle, { color: colors.textPrimary }]}> 
               AI Analysis
             </Text>
           </View>
           
           <View style={styles.confidenceContainer}>
-            <Text style={[styles.confidenceLabel, { color: theme.colors.text }]}>
+            <Text style={[styles.confidenceLabel, { color: colors.textPrimary }]}> 
               Confidence Score:
             </Text>
             <View style={styles.confidenceBar}>
@@ -298,10 +299,10 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
                     width: `${aiConfidence * 100}%`,
                     backgroundColor:
                       aiConfidence > 0.7
-                        ? theme.colors.success
+                        ? colors.success
                         : aiConfidence > 0.4
-                        ? theme.colors.warning
-                        : theme.colors.error,
+                        ? colors.warning
+                        : colors.error,
                   },
                 ]}
               />
@@ -312,10 +313,10 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
                 {
                   color:
                     aiConfidence > 0.7
-                      ? theme.colors.success
+                      ? colors.success
                       : aiConfidence > 0.4
-                      ? theme.colors.warning
-                      : theme.colors.error,
+                      ? colors.warning
+                      : colors.error,
                 },
               ]}
             >
@@ -325,16 +326,16 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
 
           {aiLabels.length > 0 && (
             <View style={styles.labelsContainer}>
-              <Text style={[styles.labelsTitle, { color: theme.colors.text }]}>
+              <Text style={[styles.labelsTitle, { color: colors.textPrimary }]}> 
                 Expected elements:
               </Text>
               <View style={styles.labels}>
                 {aiLabels.map((label, index) => (
                   <View
                     key={index}
-                    style={[styles.label, { backgroundColor: theme.colors.primary + '20' }]}
+                    style={[styles.label, { backgroundColor: colors.primary + '20' }]}
                   >
-                    <Text style={[styles.labelText, { color: theme.colors.primary }]}>
+                    <Text style={[styles.labelText, { color: colors.primary }]}>
                       {label}
                     </Text>
                   </View>
@@ -346,8 +347,8 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
       )}
 
       {showRejectionInput ? (
-        <View style={[styles.rejectionContainer, { backgroundColor: theme.colors.card }]}>
-          <Text style={[styles.rejectionTitle, { color: theme.colors.text }]}>
+        <View style={[styles.rejectionContainer, { backgroundColor: colors.surface }]}> 
+          <Text style={[styles.rejectionTitle, { color: colors.textPrimary }]}> 
             Reason for Rejection
           </Text>
           
@@ -359,13 +360,13 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
             style={[
               styles.rejectionInput,
               {
-                backgroundColor: theme.colors.background,
-                color: theme.colors.text,
-                borderColor: theme.colors.border,
+                backgroundColor: colors.background,
+                color: colors.textPrimary,
+                borderColor: colors.separator,
               },
             ]}
             placeholder="Or type your own reason..."
-            placeholderTextColor={theme.colors.text + '66'}
+            placeholderTextColor={colors.textSecondary}
             value={rejectionReason}
             onChangeText={setRejectionReason}
             multiline
@@ -375,13 +376,13 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
 
           <View style={styles.rejectionActions}>
             <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: theme.colors.card }]}
+              style={[styles.cancelButton, { backgroundColor: colors.surface }]}
               onPress={() => {
                 setShowRejectionInput(false);
                 setRejectionReason('');
               }}
             >
-              <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>
+              <Text style={[styles.cancelButtonText, { color: colors.textPrimary }]}> 
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -390,7 +391,7 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
               style={[
                 styles.confirmRejectButton,
                 { 
-                  backgroundColor: theme.colors.error,
+                  backgroundColor: colors.error,
                   opacity: isProcessing || !rejectionReason.trim() ? 0.5 : 1,
                 },
               ]}
@@ -411,7 +412,7 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
             style={[
               styles.rejectButton,
               { 
-                backgroundColor: theme.colors.error,
+                backgroundColor: colors.error,
                 opacity: isProcessing ? 0.5 : 1,
               },
             ]}
@@ -426,7 +427,7 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
             style={[
               styles.approveButton,
               { 
-                backgroundColor: theme.colors.success,
+                backgroundColor: colors.success,
                 opacity: isProcessing ? 0.5 : 1,
               },
             ]}
@@ -446,9 +447,9 @@ export const PhotoValidation: React.FC<PhotoValidationProps> = ({
       )}
 
       {task.points && (
-        <View style={[styles.pointsInfo, { backgroundColor: theme.colors.card }]}>
-          <Ionicons name="star" size={20} color={theme.colors.warning} />
-          <Text style={[styles.pointsText, { color: theme.colors.text }]}>
+        <View style={[styles.pointsInfo, { backgroundColor: colors.surface }]}> 
+          <Ionicons name="star" size={20} color={colors.warning} />
+          <Text style={[styles.pointsText, { color: colors.textPrimary }]}> 
             {task.points} points will be awarded upon approval
           </Text>
         </View>

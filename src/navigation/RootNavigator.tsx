@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import RootNavigation from '../utils/rootNavigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator } from 'react-native';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
@@ -8,10 +9,13 @@ import { subscribeToAuthState } from '../services/auth';
 import { performanceMonitoring } from '../services/performanceMonitoring';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OnboardingV2 } from '../screens/onboarding/OnboardingV2';
 
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Onboarding: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -24,6 +28,7 @@ const LoadingScreen = () => (
 
 const RootNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const dispatch = useAppDispatch();
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
@@ -40,6 +45,19 @@ const RootNavigator: React.FC = () => {
     return () => unsubscribe();
   }, [dispatch]);
 
+  // Check onboarding completion flag whenever auth state changes
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('@onboarding_completed');
+        setIsOnboardingComplete(stored === 'true');
+      } catch (e) {
+        setIsOnboardingComplete(false);
+      }
+    };
+    checkOnboarding();
+  }, [isAuthenticated]);
+
   // Track app startup performance
   useEffect(() => {
     performanceMonitoring.mark('app_startup_start');
@@ -51,13 +69,16 @@ const RootNavigator: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isOnboardingComplete === null) {
     return <LoadingScreen />;
   }
 
   return (
     <NavigationContainer
-      ref={navigationRef}
+      ref={(ref) => {
+        (navigationRef as any).current = ref;
+        (RootNavigation as any).navigationRef.current = ref;
+      }}
       onReady={() => {
         // Track the initial route
         const currentRoute = navigationRef.current?.getCurrentRoute();
@@ -87,20 +108,30 @@ const RootNavigator: React.FC = () => {
           headerShown: false,
         }}
       >
-        {isAuthenticated ? (
-          <Stack.Screen
-            name="Main"
-            component={MainNavigator}
-            options={{
-              animationTypeForReplace: 'push',
-            }}
-          />
-        ) : (
+        {!isAuthenticated && (
           <Stack.Screen
             name="Auth"
             component={AuthNavigator}
             options={{
               animationTypeForReplace: 'pop',
+            }}
+          />
+        )}
+        {isAuthenticated && !isOnboardingComplete && (
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingV2}
+            options={{
+              animationTypeForReplace: 'push',
+            }}
+          />
+        )}
+        {isAuthenticated && isOnboardingComplete && (
+          <Stack.Screen
+            name="Main"
+            component={MainNavigator}
+            options={{
+              animationTypeForReplace: 'push',
             }}
           />
         )}

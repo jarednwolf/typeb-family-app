@@ -41,7 +41,7 @@ import {
   PROFANITY_LIST,
   SAFE_DOMAINS,
 } from '../types/chat';
-import { addReaction, removeReaction } from './reactions';
+import { addReaction as addSocialReaction, removeReaction as removeSocialReaction, ReactionType, REACTION_TYPE_TO_EMOJI } from './reactions';
 
 // Constants
 const MESSAGES_COLLECTION = 'messages';
@@ -583,7 +583,11 @@ export const addMessageReaction = async (
   userName: string,
   reactionType: string
 ): Promise<void> => {
-  return addReaction('comment', messageId, userId, userName, reactionType as any);
+  const normalized = (reactionType || '').toLowerCase();
+  const validTypes = Object.keys(REACTION_TYPE_TO_EMOJI) as ReactionType[] as unknown as string[];
+  const isValid = (validTypes as string[]).includes(normalized);
+  const type = (isValid ? (normalized as unknown as ReactionType) : ('like' as unknown as ReactionType));
+  return addSocialReaction('message', messageId, userId, userName, type as any);
 };
 
 /**
@@ -593,7 +597,7 @@ export const removeMessageReaction = async (
   messageId: string,
   userId: string
 ): Promise<void> => {
-  return removeReaction('comment', messageId, userId);
+  return removeSocialReaction('message', messageId, userId);
 };
 
 /**

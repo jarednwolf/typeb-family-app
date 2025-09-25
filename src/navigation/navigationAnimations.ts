@@ -283,7 +283,7 @@ export const customTransitionPresets = {
         }),
       },
     }),
-  } as TransitionPreset,
+  } as unknown as TransitionPreset,
 
   /**
    * Modal slide from bottom
@@ -340,7 +340,7 @@ export const customTransitionPresets = {
         }),
       },
     }),
-  } as TransitionPreset,
+  } as unknown as TransitionPreset,
 
   /**
    * Fade transition
@@ -392,7 +392,7 @@ export const customTransitionPresets = {
         }),
       },
     }),
-  } as TransitionPreset,
+  } as unknown as TransitionPreset,
 
   /**
    * Scale from center
@@ -449,7 +449,7 @@ export const customTransitionPresets = {
         }),
       },
     }),
-  } as TransitionPreset,
+  } as unknown as TransitionPreset,
 };
 
 /**

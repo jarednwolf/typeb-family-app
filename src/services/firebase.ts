@@ -11,33 +11,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Check if running in E2E test mode
 // For E2E tests, we'll use a simple approach: check if we're in dev mode and if localhost:9099 is accessible
-const isE2ETest = __DEV__ && (
-  // Check if we're in development mode and potentially running E2E tests
-  typeof global !== 'undefined' &&
-  (global as any).__E2E_TEST__ === true
-);
+const isE2ETest = __DEV__ && (typeof global !== 'undefined') && (global as any)?.__E2E_TEST__ === true;
 
 // Firebase configuration - Use emulators for dev when enabled, otherwise read from env
-const firebaseConfig = __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true'
+const firebaseConfig = __DEV__ && (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_USE_EMULATOR === 'true')
   ? {
-      apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+      apiKey: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_API_KEY : undefined),
       authDomain: 'localhost',
-      projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+      projectId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_PROJECT_ID : undefined),
+      storageBucket: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET : undefined),
+      messagingSenderId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID : undefined),
+      appId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_APP_ID : undefined),
     }
   : {
-      apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-      measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+      apiKey: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_API_KEY : undefined),
+      authDomain: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN : undefined),
+      projectId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_PROJECT_ID : undefined),
+      storageBucket: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET : undefined),
+      messagingSenderId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID : undefined),
+      appId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_APP_ID : undefined),
+      measurementId: (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID : undefined),
     };
 
-console.log('🔥 Firebase Mode:', __DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' ? 'Development/E2E (using emulators)' : 'Staging/Production');
+console.log('🔥 Firebase Mode:', __DEV__ && (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_USE_EMULATOR === 'true') ? 'Development/E2E (using emulators)' : 'Staging/Production');
 
 // Initialize Firebase only if it hasn't been initialized
 let app: FirebaseApp;
@@ -58,22 +54,22 @@ const storage = getStorage(app);
 const functions = getFunctions(app);
 
 // Connect to emulators if explicitly enabled
-if (__DEV__ && process.env.EXPO_PUBLIC_USE_EMULATOR === 'true' && typeof global !== 'undefined') {
+if (__DEV__ && (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_USE_EMULATOR === 'true') && typeof global !== 'undefined') {
   // Track if emulators are already connected
   const globalAny = global as any;
   if (!globalAny.__FIREBASE_EMULATORS_CONNECTED__) {
     try {
       // Connect to Auth emulator
-      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
       
       // Connect to Firestore emulator
-      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectFirestoreEmulator(db, 'localhost', 8080);
       
       // Connect to Storage emulator
-      connectStorageEmulator(storage, '127.0.0.1', 9199);
+      connectStorageEmulator(storage, 'localhost', 9199);
       
       // Connect to Functions emulator (if needed)
-      // connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+      // connectFunctionsEmulator(functions, 'localhost', 5001);
       
       globalAny.__FIREBASE_EMULATORS_CONNECTED__ = true;
       console.log('🔧 Connected to Firebase emulators');

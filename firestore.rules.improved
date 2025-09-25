@@ -32,6 +32,7 @@ service cloud.firestore {
       // Users can read profiles of family members (check both users have same non-null familyId)
       allow read: if isAuthenticated() && 
         resource.data.familyId != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         resource.data.familyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId;
       
       // Users can only create their own profile

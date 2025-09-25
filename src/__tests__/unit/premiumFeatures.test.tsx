@@ -23,11 +23,13 @@ jest.mock('react-native/Libraries/Alert/Alert', () => ({
 }));
 
 // Create mock store
-const createMockStore = (initialState = {}) => {
+const createMockStore = (initialState: any = {}) => {
   return configureStore({
     reducer: {
-      user: (state = { isPremium: false, ...initialState }) => state,
-      premium: (state = { features: [], ...initialState }) => state,
+      user: (state = { isPremium: false, ...initialState.user }) => state,
+      premium: (state = { features: [], ...initialState.premium }) => state,
+      family: (state = { currentFamily: { id: 'family-1', isPremium: initialState.user?.isPremium || false }, members: [] }) => state,
+      auth: (state = { user: { uid: 'test-user-123' }, userProfile: { id: 'test-user-123', role: 'parent' } }) => state,
     },
   });
 };

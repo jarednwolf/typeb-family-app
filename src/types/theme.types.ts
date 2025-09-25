@@ -8,7 +8,7 @@
 import { TextStyle, ViewStyle } from 'react-native';
 
 // Re-export the theme types from constants
-export type { AppTheme } from '../contexts/ThemeContext';
+export type AppTheme = any;
 
 // Typography style type
 export interface TypographyStyle extends TextStyle {

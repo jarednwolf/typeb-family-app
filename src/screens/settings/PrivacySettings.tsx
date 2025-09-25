@@ -31,6 +31,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { HapticFeedback } from '../../utils/haptics';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { selectUserProfile, logOut } from '../../store/slices/authSlice';
+import errorMonitoring from '../../services/errorMonitoring';
 
 const PRIVACY_SETTINGS_KEY = '@privacy_settings';
 
@@ -98,6 +99,8 @@ const PrivacySettings: React.FC = () => {
       await AsyncStorage.setItem(PRIVACY_SETTINGS_KEY, JSON.stringify(newPreferences));
       setPreferences(newPreferences);
       HapticFeedback.notification.success();
+      // Apply runtime privacy setting to Sentry
+      errorMonitoring.setPrivacyEnabled(Boolean(newPreferences.shareAnalytics));
     } catch (error) {
       console.error('Error saving privacy preferences:', error);
       Alert.alert('Error', 'Failed to save privacy settings');
@@ -410,7 +413,7 @@ const PrivacySettings: React.FC = () => {
                 </Text>
               </View>
               <Text style={[styles.settingDescription, { color: theme.colors.textTertiary }]}>
-                Help improve the app with anonymous analytics
+                Help improve the app with anonymous analytics and diagnostics
               </Text>
             </View>
             <Switch

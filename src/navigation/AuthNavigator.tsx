@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import SignInScreen from '../screens/auth/SignInScreen';
-import SignUpScreen from '../screens/auth/SignUpScreen';
+import { SignUpScreen } from '../screens/auth/SignUpScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 export type AuthStackParamList = {
@@ -53,7 +53,7 @@ const AuthNavigator: React.FC = () => {
         component={ForgotPasswordScreen}
         options={{
           title: 'Reset Password',
-          headerBackTitle: 'Back',
+          headerBackTitleVisible: false,
         }}
       />
     </Stack.Navigator>

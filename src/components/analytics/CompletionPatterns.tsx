@@ -368,7 +368,7 @@ export const CompletionPatterns: React.FC<CompletionPatternsProps> = ({
                 const intensity = data ? data.value / 100 : 0;
                 const backgroundColor = data
                   ? `rgba(76, 175, 80, ${0.2 + intensity * 0.8})`
-                  : theme.colors.backgroundTertiary;
+                  : theme.colors.background;
                 
                 return (
                   <TouchableOpacity
@@ -500,7 +500,7 @@ export const CompletionPatterns: React.FC<CompletionPatternsProps> = ({
             key={index}
             style={[
               styles.insightCard,
-              { backgroundColor: theme.colors.backgroundSecondary },
+              { backgroundColor: theme.colors.background },
             ]}
             onPress={() => onInsightTap?.({ type: 'insight', text: insight })}
           >

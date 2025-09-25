@@ -188,7 +188,7 @@ describe('Basic Firebase Emulator Test', () => {
       // Get download URL
       const downloadURL = await getDownloadURL(storageRef);
       expect(downloadURL).toBeDefined();
-      expect(downloadURL).toContain('localhost:9199');
+      expect(downloadURL).toMatch(/(localhost|127\.0\.0\.1):9199/);
     });
   });
 

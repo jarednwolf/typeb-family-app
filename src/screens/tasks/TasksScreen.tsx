@@ -65,10 +65,7 @@ export const TasksScreen: FC = () => {
     try {
       await dispatch(fetchFamilyTasks({ familyId: family.id, userId: userProfile.id }) as any).unwrap();
     } catch (error) {
-      handleTaskError(error, {
-        showAlert: false, // Don't show alert since we're in a refresh
-        context: { familyId: family.id, userId: userProfile.id }
-      });
+      console.error('Task refresh error:', error, { familyId: family.id, userId: userProfile.id });
     } finally {
       setRefreshing(false);
     }
@@ -174,10 +171,7 @@ export const TasksScreen: FC = () => {
       }
       await dispatch(completeTask({ taskId, userId: userProfile.id }) as any).unwrap();
     } catch (error) {
-      handleTaskError(error, {
-        context: { taskId, userId: userProfile?.id },
-        onRetry: () => handleTaskComplete(taskId)
-      });
+      console.error('Task complete error:', error, { taskId, userId: userProfile?.id });
     }
   };
 
@@ -266,7 +260,12 @@ export const TasksScreen: FC = () => {
   // Render search bar only
   const renderSearchBar = () => (
     <View style={styles.searchContainer}>
-      <Feather name="search" size={20} color={theme.colors.textSecondary} />
+      <Feather
+        name="search"
+        size={20}
+        color={theme.colors.textSecondary}
+        accessibilityLabel="Search icon"
+      />
       <TextInput
         style={styles.searchInput}
         placeholder="Search tasks..."
@@ -487,7 +486,12 @@ export const TasksScreen: FC = () => {
       {renderSearchBar()}
 
       {/* Filter Dropdowns - Outside of FlatList for proper touch handling */}
-      <View style={styles.filtersContainer} pointerEvents="box-none">
+      <View
+        style={styles.filtersContainer}
+        pointerEvents="box-none"
+        accessibilityRole="toolbar"
+        accessibilityLabel="Task filters toolbar"
+      >
         {/* Sort By Dropdown */}
         {renderDropdown(
           showSortMenu,
@@ -523,6 +527,10 @@ export const TasksScreen: FC = () => {
         data={filteredAndSortedTasks}
         renderItem={renderTaskItem}
         keyExtractor={(item) => item.id}
+        initialNumToRender={10}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        removeClippedSubviews={true}
         ListEmptyComponent={
           <EmptyState
             icon="check-circle"
@@ -551,6 +559,7 @@ export const TasksScreen: FC = () => {
         testID="create-task-fab"
         accessibilityLabel="Create new task"
         accessibilityRole="button"
+        accessibilityHint="Opens the create task form"
       >
         <Feather name="plus" size={24} color={theme.colors.surface} />
       </TouchableOpacity>

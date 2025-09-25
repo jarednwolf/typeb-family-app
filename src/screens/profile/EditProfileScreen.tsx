@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Edit Profile Screen
  * Allows users to edit their profile information

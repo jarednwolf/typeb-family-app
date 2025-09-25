@@ -22,6 +22,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingState from '../../components/common/LoadingState';
+import { FamilyScreenSkeleton } from '../../components/common/Skeletons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { AppDispatch, RootState } from '../../store/store';
 import {
@@ -34,6 +35,7 @@ import {
 } from '../../store/slices/familySlice';
 import { canAddFamilyMember, getMemberLimitText, needsPremiumFor } from '../../utils/premiumGates';
 import { getRoleLabel } from '../../utils/roleHelpers';
+import PremiumBadge from '../../components/premium/PremiumBadge';
 
 const FamilyScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -192,7 +194,7 @@ const FamilyScreen: React.FC = () => {
   const styles = React.useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   if (isLoading && !refreshing) {
-    return <LoadingState message="Loading family..." />;
+    return <FamilyScreenSkeleton />;
   }
 
   if (!family) {
@@ -202,7 +204,6 @@ const FamilyScreen: React.FC = () => {
           icon="users"
           title="No Family Yet"
           message="Create a new family or join an existing one to get started"
-          onAction={() => {}}
         />
         <View style={styles.noFamilyActions}>
           <Button
@@ -268,9 +269,9 @@ const FamilyScreen: React.FC = () => {
                     <Feather name="star" size={24} color={theme.colors.premium} />
                   </View>
                   <View style={styles.premiumTextContainer}>
-                    <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                    <Text style={styles.premiumTitle}>Unlock Premium</Text>
                     <Text style={styles.premiumDescription}>
-                      Add family members, photo validation, and advanced features
+                      Invite more members, enable photo validation, and access pro features.
                     </Text>
                   </View>
                 </View>
@@ -292,6 +293,11 @@ const FamilyScreen: React.FC = () => {
                   <Text style={styles.inviteCode} testID="current-invite-code">
                     {inviteCode || family.inviteCode}
                   </Text>
+                  {!family.isPremium && (
+                    <View style={{ marginLeft: theme.spacing.S }}>
+                      <PremiumBadge size="small" />
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.inviteHint}>
                   {canAddFamilyMember(family)

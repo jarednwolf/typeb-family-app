@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { storage, db } from '../config/firebase';
+import { storage, db } from './firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import * as Sentry from '@sentry/react-native';
@@ -169,6 +169,14 @@ export class CameraService {
     } catch (error) {
       Sentry.captureException(error);
       console.error('Error uploading photo:', error);
+      // If offline, queue a placeholder for later sync
+      if ((error as any)?.message?.toLowerCase?.().includes('network')) {
+        return {
+          url: uri, // local uri as placeholder; guarded by UI for offline
+          fileName: 'pending_upload.jpg',
+          uploadedAt: new Date(),
+        };
+      }
       throw error;
     }
   }

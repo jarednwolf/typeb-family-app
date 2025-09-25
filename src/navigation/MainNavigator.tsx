@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Feather } from '@expo/vector-icons';
@@ -32,6 +32,7 @@ import {
   customTransitionPresets
 } from './navigationAnimations';
 import AnimatedTabBar from './AnimatedTabBar';
+import { ConnectionStatus } from '../components/common/ConnectionStatus';
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -109,7 +110,7 @@ const DashboardStackNavigator = () => {
         component={DashboardScreen}
         options={{
           title: 'Dashboard',
-          headerAccessibilityLabel: 'Dashboard Screen',
+          // headerAccessibilityLabel not supported by StackNavigationOptions
         }}
       />
       <DashboardStack.Screen
@@ -118,7 +119,7 @@ const DashboardStackNavigator = () => {
         options={{
           headerShown: false,
           presentation: 'modal' as any,
-          headerAccessibilityLabel: 'Analytics Dashboard',
+          
           ...modalAnimation,
         }}
       />
@@ -155,7 +156,7 @@ const TasksStackNavigator = () => {
         component={TasksScreen}
         options={{
           title: 'Tasks',
-          headerAccessibilityLabel: 'Tasks List',
+          
         }}
       />
       <TasksStack.Screen
@@ -164,7 +165,7 @@ const TasksStackNavigator = () => {
         options={{
           title: 'Create Task',
           presentation: 'modal' as any,
-          headerAccessibilityLabel: 'Create New Task',
+          
           ...modalAnimation,
         }}
       />
@@ -174,7 +175,7 @@ const TasksStackNavigator = () => {
         options={{
           title: 'Task Details',
           presentation: 'modal' as any,
-          headerAccessibilityLabel: 'Task Details',
+          
           ...modalAnimation,
         }}
       />
@@ -184,7 +185,7 @@ const TasksStackNavigator = () => {
         options={{
           headerShown: false,
           presentation: 'modal' as any,
-          headerAccessibilityLabel: 'Photo Validation',
+          
           ...modalAnimation,
         }}
       />
@@ -220,7 +221,7 @@ const FamilyStackNavigator = () => {
         component={FamilyScreen}
         options={{
           title: 'Family',
-          headerAccessibilityLabel: 'Family Members',
+          
         }}
       />
       <FamilyStack.Screen
@@ -228,7 +229,7 @@ const FamilyStackNavigator = () => {
         component={CreateFamilyScreen}
         options={{
           title: 'Create Family',
-          headerAccessibilityLabel: 'Create New Family',
+          
         }}
       />
       <FamilyStack.Screen
@@ -236,7 +237,7 @@ const FamilyStackNavigator = () => {
         component={JoinFamilyScreen}
         options={{
           title: 'Join Family',
-          headerAccessibilityLabel: 'Join Existing Family',
+          
         }}
       />
       <FamilyStack.Screen
@@ -244,7 +245,7 @@ const FamilyStackNavigator = () => {
         component={FamilySettingsScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Family Settings',
+          
         }}
       />
     </FamilyStack.Navigator>
@@ -280,7 +281,7 @@ const SettingsStackNavigator = () => {
         component={SettingsScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Settings',
+          
         }}
       />
       <SettingsStack.Screen
@@ -288,7 +289,7 @@ const SettingsStackNavigator = () => {
         component={EditProfileScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Edit Profile',
+          
         }}
       />
       <SettingsStack.Screen
@@ -297,7 +298,7 @@ const SettingsStackNavigator = () => {
         options={{
           headerShown: false,
           presentation: 'modal' as any,
-          headerAccessibilityLabel: 'Premium Features',
+          
           ...modalAnimation,
         }}
       />
@@ -306,7 +307,7 @@ const SettingsStackNavigator = () => {
         component={SupportScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Support',
+          
         }}
       />
       <SettingsStack.Screen
@@ -314,7 +315,7 @@ const SettingsStackNavigator = () => {
         component={PrivacyScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Privacy Policy',
+          
         }}
       />
       <SettingsStack.Screen
@@ -322,7 +323,7 @@ const SettingsStackNavigator = () => {
         component={TermsScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Terms of Service',
+          
         }}
       />
       <SettingsStack.Screen
@@ -330,7 +331,7 @@ const SettingsStackNavigator = () => {
         component={AboutScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'About',
+          
         }}
       />
       <SettingsStack.Screen
@@ -338,7 +339,7 @@ const SettingsStackNavigator = () => {
         component={NotificationSettings}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Notification Settings',
+          
         }}
       />
       <SettingsStack.Screen
@@ -346,7 +347,7 @@ const SettingsStackNavigator = () => {
         component={PerformanceDebugScreen}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Performance Debug',
+          
         }}
       />
       <SettingsStack.Screen
@@ -354,7 +355,7 @@ const SettingsStackNavigator = () => {
         component={PrivacySettings}
         options={{
           headerShown: false,
-          headerAccessibilityLabel: 'Privacy Settings',
+          
         }}
       />
     </SettingsStack.Navigator>
@@ -371,12 +372,15 @@ const MainNavigator: React.FC = () => {
   };
   
   return (
-    <Tab.Navigator
+    <>
+      {/* Global connection/offline banner */}
+      <ConnectionStatus />
+      <Tab.Navigator
       tabBar={props => <AnimatedTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
-    >
+      >
       <Tab.Screen
         name="Dashboard"
         component={DashboardStackNavigator}
@@ -384,14 +388,7 @@ const MainNavigator: React.FC = () => {
           title: 'Home',
           tabBarTestID: 'dashboard-tab',
           tabBarAccessibilityLabel: 'Home Dashboard',
-          tabBarButton: (props) => (
-            <props.Component
-              {...props}
-              accessibilityRole="button"
-              accessibilityLabel="Home Dashboard tab"
-              accessibilityHint="Double tap to navigate to your dashboard"
-            />
-          ),
+          // Use default tab bar button from AnimatedTabBar
         }}
         listeners={{
           tabPress: () => announceScreenChange('Home Dashboard'),
@@ -404,14 +401,7 @@ const MainNavigator: React.FC = () => {
           title: 'Tasks',
           tabBarTestID: 'tasks-tab',
           tabBarAccessibilityLabel: 'Tasks',
-          tabBarButton: (props) => (
-            <props.Component
-              {...props}
-              accessibilityRole="button"
-              accessibilityLabel="Tasks tab"
-              accessibilityHint="Double tap to view and manage your tasks"
-            />
-          ),
+          // Use default tab bar button
         }}
         listeners={{
           tabPress: () => announceScreenChange('Tasks'),
@@ -424,14 +414,7 @@ const MainNavigator: React.FC = () => {
           title: 'Family',
           tabBarTestID: 'family-tab',
           tabBarAccessibilityLabel: 'Family',
-          tabBarButton: (props) => (
-            <props.Component
-              {...props}
-              accessibilityRole="button"
-              accessibilityLabel="Family tab"
-              accessibilityHint="Double tap to view family members and settings"
-            />
-          ),
+          // Use default tab bar button
         }}
         listeners={{
           tabPress: () => announceScreenChange('Family'),
@@ -444,20 +427,14 @@ const MainNavigator: React.FC = () => {
           title: 'Settings',
           tabBarTestID: 'settings-tab',
           tabBarAccessibilityLabel: 'Settings',
-          tabBarButton: (props) => (
-            <props.Component
-              {...props}
-              accessibilityRole="button"
-              accessibilityLabel="Settings tab"
-              accessibilityHint="Double tap to access app settings"
-            />
-          ),
+          // Use default tab bar button
         }}
         listeners={{
           tabPress: () => announceScreenChange('Settings'),
         }}
       />
-    </Tab.Navigator>
+      </Tab.Navigator>
+    </>
   );
 };
 

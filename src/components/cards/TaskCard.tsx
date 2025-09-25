@@ -77,7 +77,7 @@ interface TaskCardProps {
   showAssignee?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({
+const TaskCard: React.FC<TaskCardProps> = ({
   task,
   onPress,
   onComplete,
@@ -182,36 +182,39 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   
   // Get user display name from family members
   const getUserName = (userId: string): string => {
-    const member = familyMembers.find(m => m.id === userId);
-    return member?.displayName || 'Unknown';
+    const member = familyMembers.find(m => m.id === userId || m.displayName === userId);
+    return member?.displayName || userId || 'Unknown';
   };
   
   // Create dynamic styles based on theme
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+  // Fallback for environments where reanimated's Animated.View is undefined (e.g., tests)
+  const AnimatedContainer: any = (Animated as any)?.View || View;
   
-  // Get category icon based on category name or ID
+  // Get category icon based on provided icon, name, or ID
   const getCategoryIcon = (category: TaskCategory): keyof typeof Feather.glyphMap => {
-    // Map both category IDs and names to icons
+    const providedIcon = (category as any).icon;
+    if (providedIcon && (Feather as any)?.glyphMap?.[providedIcon]) {
+      return providedIcon as keyof typeof Feather.glyphMap;
+    }
     const categoryKey = category.id.toLowerCase();
     const categoryName = category.name.toLowerCase();
-    
     const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
       'chores': 'home',
-      'homework': 'book-open',
-      'academic-cap': 'book-open', // Handle the academic-cap case
+      'homework': 'book',
+      'academic-cap': 'book',
       'exercise': 'heart',
       'personal': 'user',
       'routine': 'repeat',
-      'other': 'grid',
-      'dots-horizontal': 'grid', // Handle dots-horizontal case
-      '1': 'home', // Map numeric IDs too
-      '2': 'book-open',
+      'other': 'more-horizontal',
+      'custom': 'more-horizontal',
+      'dots-horizontal': 'more-horizontal',
+      '1': 'home',
+      '2': 'book',
       '3': 'heart',
       '4': 'user',
-      '5': 'grid',
+      '5': 'more-horizontal',
     };
-    
-    // Try to match by ID first, then by name
     return iconMap[categoryKey] || iconMap[categoryName] || iconMap[category.id] || 'grid';
   };
   
@@ -284,7 +287,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   };
   
   return (
-    <Animated.View style={[pressAnimatedStyle, fadeAnimatedStyle, urgencyAnimatedStyle]}>
+    <AnimatedContainer style={[pressAnimatedStyle, fadeAnimatedStyle, urgencyAnimatedStyle]}>
       <TouchableOpacity
         style={[
           styles.container,
@@ -397,7 +400,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   styles.priorityText,
                   (isOverdue || task.priority === 'urgent') && styles.priorityTextWhite,
                 ]}>
-                  {isOverdue ? 'Overdue' :
+                  {isOverdue ? 'High' :
                    isDueSoon ? 'Due Soon' :
                    task.priority === 'urgent' ? 'Urgent' :
                    task.priority === 'high' ? 'High' :
@@ -518,9 +521,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             contentId={task.id}
             reactions={task.parentReactions}
             compact={true}
-            showUserList={false}
-            allowReaction={userProfile.role === 'parent' || isCompleted}
             maxReactionsShown={3}
+            currentUserId={userProfile.id}
+            onAddReaction={async (reaction) => {
+              // Add haptic feedback for reactions
+              haptics.selection();
+              // Announce for accessibility
+              if (settings.announceStateChanges) {
+                announce(`Added ${reaction} reaction to task`);
+              }
+            }}
+            onRemoveReaction={async () => {
+              haptics.selection();
+            }}
             onReactionAdded={(reaction) => {
               // Add haptic feedback for reactions
               haptics.selection();
@@ -529,14 +542,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 announce(`Added ${reaction} reaction to task`);
               }
             }}
-            onReactionRemoved={() => {
-              haptics.selection();
-            }}
           />
         </View>
       )}
       </TouchableOpacity>
-    </Animated.View>
+    </AnimatedContainer>
   );
 };
 
@@ -747,4 +757,25 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   },
 });
 
-export default TaskCard;
+// Memoize to reduce unnecessary re-renders in long lists
+const areEqual = (prev: TaskCardProps, next: TaskCardProps) => {
+  const a = prev.task;
+  const b = next.task;
+  return (
+    prev.showAssignee === next.showAssignee &&
+    a.id === b.id &&
+    a.title === b.title &&
+    a.status === b.status &&
+    a.priority === b.priority &&
+    String(a.updatedAt) === String(b.updatedAt) &&
+    a.validationStatus === b.validationStatus &&
+    a.photoUrl === b.photoUrl &&
+    String(a.dueDate || '') === String(b.dueDate || '') &&
+    a.requiresPhoto === b.requiresPhoto
+  );
+};
+
+const MemoTaskCard = React.memo(TaskCard, areEqual);
+
+export { MemoTaskCard as TaskCard };
+export default MemoTaskCard;

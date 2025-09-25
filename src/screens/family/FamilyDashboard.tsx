@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Family Dashboard Screen
  * Shows collective progress and celebrations

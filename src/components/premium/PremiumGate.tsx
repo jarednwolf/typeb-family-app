@@ -30,7 +30,8 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
   fallback,
   showUpgradePrompt = true,
 }) => {
-  const theme = useTheme();
+  const themeCtx = useTheme();
+  const colors = themeCtx.theme.colors;
   const navigation = useNavigation<any>();
   const { isPremium, isLoading } = feature 
     ? usePremiumFeature(feature)
@@ -43,8 +44,8 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
 
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}> 
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -62,19 +63,19 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.card, { backgroundColor: colors.surface }]}> 
         <View style={styles.iconContainer}>
-          <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
-            <Ionicons name="lock-closed" size={32} color={theme.colors.primary} />
+          <View style={[styles.iconCircle, { backgroundColor: colors.primary + '20' }]}> 
+            <Ionicons name="lock-closed" size={32} color={colors.primary} />
           </View>
         </View>
 
-        <Text style={[styles.title, { color: theme.colors.text }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}> 
           {featureName || 'Premium Feature'}
         </Text>
 
-        <Text style={[styles.description, { color: theme.colors.text + 'CC' }]}>
+        <Text style={[styles.description, { color: colors.textSecondary }]}> 
           {featureDescription || 'This feature is available for premium members only.'}
         </Text>
 
@@ -89,9 +90,9 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
               <Ionicons 
                 name="checkmark-circle" 
                 size={20} 
-                color={theme.colors.success} 
+                color={colors.success} 
               />
-              <Text style={[styles.benefitText, { color: theme.colors.text }]}>
+              <Text style={[styles.benefitText, { color: colors.textPrimary }]}>
                 {benefit}
               </Text>
             </View>
@@ -99,7 +100,7 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.upgradeButton, { backgroundColor: theme.colors.primary }]}
+          style={[styles.upgradeButton, { backgroundColor: colors.primary }]}
           onPress={handleUpgrade}
           activeOpacity={0.8}
         >
@@ -111,7 +112,7 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
           style={styles.learnMoreButton}
           onPress={handleUpgrade}
         >
-          <Text style={[styles.learnMoreText, { color: theme.colors.primary }]}>
+          <Text style={[styles.learnMoreText, { color: colors.primary }]}> 
             Learn more about premium features
           </Text>
         </TouchableOpacity>
@@ -125,6 +126,7 @@ export const PremiumBadge: React.FC<{ size?: 'small' | 'medium' | 'large' }> = (
   size = 'small' 
 }) => {
   const theme = useTheme();
+  const colors = theme.theme.colors;
   const { isPremium } = usePremium();
 
   if (!isPremium) return null;
@@ -138,30 +140,21 @@ export const PremiumBadge: React.FC<{ size?: 'small' | 'medium' | 'large' }> = (
   const sizeConfig = sizes[size];
 
   return (
-    <View
-      style={[
-        styles.badge,
-        {
-          width: sizeConfig.container,
-          height: sizeConfig.container,
-          padding: sizeConfig.padding,
-          backgroundColor: theme.colors.primary,
-        },
-      ]}
-    >
-      <Ionicons name="sparkles" size={sizeConfig.icon} color="#FFFFFF" />
+    <View style={[styles.badge, { backgroundColor: colors.premium, width: sizeConfig.container, height: sizeConfig.container }]}> 
+      <Ionicons name="star" size={sizeConfig.icon} color="#000" />
     </View>
   );
 };
 
 // Inline premium indicator for list items
 export const PremiumIndicator: React.FC<{ text?: string }> = ({ text = 'Premium' }) => {
-  const theme = useTheme();
+  const themeCtx = useTheme();
+  const colors = themeCtx.theme.colors;
   
   return (
-    <View style={[styles.indicator, { backgroundColor: theme.colors.primary + '20' }]}>
-      <Ionicons name="sparkles" size={12} color={theme.colors.primary} />
-      <Text style={[styles.indicatorText, { color: theme.colors.primary }]}>
+    <View style={[styles.indicator, { backgroundColor: colors.primary + '20' }]}> 
+      <Ionicons name="sparkles" size={12} color={colors.primary} />
+      <Text style={[styles.indicatorText, { color: colors.primary }]}> 
         {text}
       </Text>
     </View>

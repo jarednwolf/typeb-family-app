@@ -1,4 +1,4 @@
-import { firestore, auth, storage } from '../firebase';
+import { db as firestore, auth, storage } from '../firebase';
 import { 
   collection, 
   doc, 

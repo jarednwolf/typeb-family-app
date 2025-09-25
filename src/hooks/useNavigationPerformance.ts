@@ -21,7 +21,7 @@ export function useNavigationPerformance() {
 
   // Track navigation state changes
   useEffect(() => {
-    const unsubscribe = navigation.addListener('state', (e) => {
+    const unsubscribe = navigation.addListener('state', (e: any) => {
       const state = e.data.state;
       if (state && state.routes && state.index !== undefined) {
         const currentRoute = state.routes[state.index];

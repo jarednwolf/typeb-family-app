@@ -70,6 +70,24 @@ target 'TypeBFamily' do
         end
       end
     end
+
+    # Workaround: prevent copying iphoneos .metallib filters for simulator builds (react-native-svg)
+    installer.pods_project.targets.each do |t|
+      next unless t.name.include?('RNSVG')
+      # Remove file references
+      t.resources_build_phase.files_references.each do |res|
+        if res.path =~ /RNSVG.*\.iphoneos\.metallib$/
+          res.remove_from_project
+        end
+      end
+      # Also remove build files from Copy Bundle Resources
+      t.resources_build_phase.files.each do |bf|
+        fr = bf.file_ref
+        if fr && fr.path =~ /RNSVG.*\.iphoneos\.metallib$/
+          t.resources_build_phase.remove_build_file(bf)
+        end
+      end
+    end
   end
 
   post_integrate do |installer|

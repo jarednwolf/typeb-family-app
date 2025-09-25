@@ -73,8 +73,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   
   const inputRef = useRef<TextInput>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-  const recordingIntervalRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<number | undefined>();
+  const recordingIntervalRef = useRef<number | undefined>();
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Update typing indicator
@@ -91,7 +91,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       // Clear typing indicator after 3 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
         updateTypingIndicator(chatId, userProfile.id, userProfile.displayName, false);
-      }, 3000);
+      }, 3000) as unknown as number;
     } else if (message.length === 0 && userProfile) {
       // Clear typing indicator immediately when message is empty
       updateTypingIndicator(chatId, userProfile.id, userProfile.displayName, false);
@@ -204,7 +204,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       // Start duration counter
       recordingIntervalRef.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
-      }, 1000);
+      }, 1000) as unknown as number;
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       

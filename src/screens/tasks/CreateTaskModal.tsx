@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
+// @ts-ignore - type shim provided in src/types/patches.d.ts
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/forms/Input';
@@ -29,6 +30,7 @@ import notificationService from '../../services/notifications';
 import { useTheme } from '../../contexts/ThemeContext';
 import { MIDDLE_SCHOOL_TASK_TEMPLATES, TaskTemplate } from '../../data/MiddleSchoolTaskTemplates';
 import { recurringTaskScheduler } from '../../services/RecurringTaskScheduler';
+import { createTaskSchema, validateData } from '../../utils/validation';
 
 interface CreateTaskModalProps {
   visible: boolean;
@@ -134,26 +136,28 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
     setShowCategoryScrollIndicator(!isAtEnd);
   };
 
-  const validateForm = useCallback(() => {
-    const newErrors: Record<string, string> = {};
-
-    if (!title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
-    }
-
-    if (description && description.length > 500) {
-      newErrors.description = 'Description must be less than 500 characters';
-    }
-
-    if (!assignedTo) {
-      newErrors.assignedTo = 'Please select a family member';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [title, description, assignedTo]);
+  const validateForm = useCallback(async () => {
+    const data = {
+      title: title.trim(),
+      description: description || undefined,
+      categoryId,
+      assignedTo,
+      dueDate,
+      isRecurring,
+      recurrencePattern: isRecurring ? {
+        frequency: recurrenceType,
+        interval: 1,
+        daysOfWeek: recurrenceType === 'weekly' ? recurrenceDays : undefined,
+      } : undefined,
+      requiresPhoto,
+      reminderEnabled: enableReminder,
+      priority,
+      points: selectedTemplate?.points || 10,
+    };
+    const { isValid, errors } = await validateData(createTaskSchema, data as any);
+    setErrors(errors);
+    return isValid;
+  }, [title, description, categoryId, assignedTo, dueDate, isRecurring, recurrenceType, recurrenceDays, requiresPhoto, enableReminder, priority, selectedTemplate]);
 
   // Handle template selection
   const handleTemplateSelect = useCallback((template: TaskTemplate) => {
@@ -186,7 +190,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
   }, [categories]);
 
   const handleSubmit = useCallback(async () => {
-    if (!validateForm()) {
+    if (!(await validateForm())) {
       return;
     }
 
@@ -228,11 +232,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
         // Create one-time task
         const newTask: CreateTaskInput = {
           title: title.trim(),
-          description: description.trim(),
+          description: description.trim() || undefined,
           categoryId: categoryId,
           priority,
           assignedTo,
-          dueDate: dueDate, // Keep as Date object
+          dueDate: dueDate,
           points: selectedTemplate?.points || 10,
           isRecurring: false,
           requiresPhoto: requiresPhoto,
@@ -428,6 +432,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
             error={errors.title}
             maxLength={100}
             testID="task-title-input"
+            returnKeyType="next"
+            onSubmitEditing={() => {
+              // focus moves to description if present
+            }}
           />
 
           {/* Description Input - Input component has its own margin */}
@@ -441,6 +449,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
             maxLength={500}
             error={errors.description}
             testID="task-description-input"
+            returnKeyType="done"
+            onSubmitEditing={async () => {
+              await handleSubmit();
+            }}
           />
 
           {/* Category Selector */}

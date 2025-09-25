@@ -24,7 +24,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { addReaction, removeReaction } from './reactions';
+import { addReaction as addSocialReaction, removeReaction as removeSocialReaction, ReactionType, REACTION_TYPE_TO_EMOJI } from './reactions';
 
 // Comment types that can be attached to different content
 export type CommentableContentType = 
@@ -366,7 +366,11 @@ export const addCommentReaction = async (
   reactionType: string,
   userAvatar?: string
 ): Promise<void> => {
-  return addReaction('comment', commentId, userId, userName, reactionType as any, userAvatar);
+  const normalized = (reactionType || '').toLowerCase();
+  const validTypes = Object.keys(REACTION_TYPE_TO_EMOJI) as ReactionType[] as unknown as string[];
+  const isValid = (validTypes as string[]).includes(normalized);
+  const type = (isValid ? (normalized as unknown as ReactionType) : ('like' as unknown as ReactionType));
+  return addSocialReaction('comment', commentId, userId, userName, type as any);
 };
 
 /**
@@ -376,7 +380,7 @@ export const removeCommentReaction = async (
   commentId: string,
   userId: string
 ): Promise<void> => {
-  return removeReaction('comment', commentId, userId);
+  return removeSocialReaction('comment', commentId, userId);
 };
 
 /**

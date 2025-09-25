@@ -311,9 +311,12 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
             contentId={achievement.id}
             reactions={achievement.reactions}
             compact={size === 'small'}
-            showUserList={false}
-            allowReaction={true}
             maxReactionsShown={3}
+            currentUserId={userProfile.id}
+            onAddReaction={async (reaction) => {
+              // onReactionAdded?.(reaction); // This prop is not in the original BadgeDisplayProps
+            }}
+            onRemoveReaction={async () => {}}
             onReactionAdded={(reaction) => {
               haptics.selection();
               // Celebrate the reaction with a small animation

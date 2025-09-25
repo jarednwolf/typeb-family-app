@@ -551,6 +551,10 @@ export const DashboardScreen: FC = () => {
               ],
             },
           ]}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Today's progress"
+          accessibilityHint="Completion percentage of today's tasks"
+          accessibilityValue={{ min: 0, max: 100, now: completionPercentage }}
         >
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Today's Progress</Text>

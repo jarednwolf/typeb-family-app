@@ -80,15 +80,19 @@ export const usePremium = () => {
     checkPremiumStatus();
     
     // Set up listener for subscription changes
-    const listener = revenueCatService.addCustomerInfoUpdateListener(() => {
+    // Guard: if service exposes listener, use it; otherwise, fallback to interval poll
+    const maybeListener = (revenueCatService as any).addCustomerInfoUpdateListener?.(() => {
       checkPremiumStatus();
     });
 
-    return () => {
-      if (listener && typeof listener === 'function') {
-        listener();
-      }
-    };
+    if (typeof maybeListener === 'function') {
+      return () => { maybeListener(); };
+    }
+
+    const intervalId = setInterval(() => {
+      checkPremiumStatus();
+    }, 60_000);
+    return () => clearInterval(intervalId);
   }, [checkPremiumStatus]);
 
   const refresh = useCallback(async () => {

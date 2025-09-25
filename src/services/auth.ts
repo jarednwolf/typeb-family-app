@@ -49,8 +49,8 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
 
 // Collections
-const rateLimitCollection = 'rateLimit';
-const userSecurityCollection = 'userSecurity';
+const rateLimitCollection = 'rateLimits';
+const userSecurityCollection = 'securityProfiles';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,7 +59,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const configureGoogleSignIn = () => {
   try {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '388132461668-9q5v8u1i3b8j9q5v8u1i3b8j9q5v.apps.googleusercontent.com', // You'll need to get this from Firebase Console
+      webClientId: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) || '388132461668-9q5v8u1i3b8j9q5v8u1i3b8j9q5v.apps.googleusercontent.com', // You'll need to get this from Firebase Console
       offlineAccess: true,
       scopes: ['email', 'profile'],
       forceCodeForRefreshToken: true,
@@ -182,7 +182,8 @@ export const validateDisplayName = (displayName: string): { isValid: boolean; er
 // Check rate limit
 const checkRateLimit = async (identifier: string, action: string): Promise<void> => {
   // Skip rate limiting in development/emulator mode
-  if (__DEV__) {
+  // Allow rate-limit behavior in Jest unit tests (NODE_ENV === 'test')
+  if (__DEV__ && process.env.JEST_WORKER_ID == null) {
     console.log('[AUTH] Skipping rate limit check in development mode');
     return;
   }
@@ -238,7 +239,7 @@ const checkRateLimit = async (identifier: string, action: string): Promise<void>
 // Clear rate limit on successful action
 const clearRateLimit = async (identifier: string, action: string): Promise<void> => {
   // Skip rate limiting in development/emulator mode
-  if (__DEV__) {
+  if (__DEV__ && process.env.JEST_WORKER_ID == null) {
     return;
   }
   
@@ -318,7 +319,7 @@ export const signUp = async ({ email, password, displayName }: SignUpData): Prom
     return userCredential;
   } catch (error: any) {
     console.error('[AUTH DEBUG] Sign up error:', error);
-    throw error;
+    throw new Error(formatAuthError(error));
   }
 };
 
@@ -416,7 +417,7 @@ export const signIn = async ({ email, password }: SignInData): Promise<UserCrede
       console.warn('[AUTH] Post-error delay failed (non-critical):', delayError);
     }
     
-    throw error;
+    throw new Error(formatAuthError(error));
   }
 };
 
@@ -478,7 +479,7 @@ export const resetPassword = async (email: string): Promise<void> => {
       return;
     }
     
-    throw error;
+    throw new Error(formatAuthError(error));
   }
 };
 
@@ -532,7 +533,7 @@ export const resendVerificationEmail = async (): Promise<void> => {
     await clearRateLimit(email, 'resend_verification');
   } catch (error: any) {
     console.error('Resend verification email error:', error);
-    throw error;
+    throw new Error(formatAuthError(error));
   }
 };
 

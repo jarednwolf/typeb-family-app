@@ -3,7 +3,8 @@
  * Safe, moderated family communication with positive interactions only
  */
 
-import { ReactionType } from '../services/reactions';
+// Avoid importing heavy services in type space; define minimal ReactionType here
+export type ReactionType = 'like' | 'celebrate' | 'support' | 'star' | 'fire' | 'heart' | 'smile' | 'rocket';
 
 // Message types
 export type MessageType = 'text' | 'voice' | 'image' | 'system' | 'celebration';
