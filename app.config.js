@@ -125,9 +125,6 @@ export default ({ config }) => {
       }
     },
     plugins: [
-      '@react-native-firebase/app',
-      '@react-native-firebase/auth',
-      '@react-native-firebase/firestore',
       [
         'expo-camera',
         {
