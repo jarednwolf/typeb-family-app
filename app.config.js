@@ -138,8 +138,7 @@ export default ({ config }) => {
           savePhotosPermission: 'Allow TypeB to save photos to your photo library.',
           isAccessMediaLocationEnabled: false
         }
-      ],
-      'sentry-expo'
+      ]
     ]
   };
 };
