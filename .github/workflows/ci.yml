@@ -8,7 +8,6 @@ on:
 jobs:
   web-build:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('apps/web/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,7 +48,6 @@ jobs:
           else
             echo "APP_DIR=." >> $GITHUB_ENV
           fi
-          echo "Using app dir: $APP_DIR"
       - name: Install app deps
         working-directory: ${{ env.APP_DIR }}
         run: npm ci
