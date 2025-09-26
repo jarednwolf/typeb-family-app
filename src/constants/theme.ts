@@ -1,0 +1,378 @@
+/**
+ * Theme constants for TypeB Family App
+ * Premium, minimal design system inspired by Apple's HIG
+ */
+
+import { TextStyle, ViewStyle } from 'react-native';
+
+// Color Palette
+export const colors = {
+  // Primary colors
+  primary: '#0A0A0A',      // Premium black from logo
+  success: '#34C759',      // Apple green
+  warning: '#FF9500',      // Apple amber
+  error: '#FF3B30',        // Apple red
+  info: '#007AFF',         // Apple blue
+  
+  // Backgrounds
+  background: '#FAF8F5',   // Warm background from logo
+  surface: '#FFFFFF',      // Cards, modals
+  backgroundTexture: '#F5F2ED', // Subtle depth
+  inputBackground: '#F2F2F7',   // Input fields
+  
+  // Text colors - Updated for WCAG AA compliance
+  textPrimary: '#0A0A0A',  // Black
+  textSecondary: '#404040', // Updated from #6B6B6B for better contrast (7.43:1 ratio)
+  textTertiary: '#595959',  // Updated from #9B9B9B for WCAG compliance (5.25:1 ratio)
+  
+  // UI elements
+  separator: '#D1D1D1',     // Updated from #E8E5E0 for better visibility
+  white: '#FFFFFF',
+  black: '#000000',
+  
+  // Category colors
+  categories: {
+    chores: '#10B981',      // Emerald
+    homework: '#3B82F6',    // Blue
+    exercise: '#F59E0B',    // Amber
+    personal: '#8B5CF6',    // Purple
+    routine: '#06B6D4',     // Cyan
+    other: '#6B7280',       // Gray
+  },
+  
+  // Premium
+  premium: '#FFD700',       // Gold
+  
+  // Loading states
+  skeleton: '#E5E5E5',      // Light gray for skeleton screens
+  
+  // Semantic task state colors
+  taskCompleted: '#34C759', // Green - same as success
+  taskPending: '#007AFF',   // Blue - same as info
+  taskOverdue: '#DC2626',   // Darker red for better contrast (#DC2626 has 5.87:1 ratio)
+  taskUpcoming: '#FF9500',  // Orange - same as warning
+} as const;
+
+// Typography System
+interface TypographyStyle extends TextStyle {
+  fontSize: number;
+  lineHeight: number;
+  fontWeight: TextStyle['fontWeight'];
+}
+
+export const typography: Record<string, TypographyStyle> = {
+  largeTitle: {
+    fontSize: 34,
+    lineHeight: 41,
+    fontWeight: '400',
+  },
+  title1: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '400',
+  },
+  title2: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '400',
+  },
+  title3: {
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: '400',
+  },
+  headline: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '600',
+  },
+  body: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  callout: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '400',
+  },
+  subheadline: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '400',
+  },
+  footnote: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+  },
+  caption1: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+  },
+  caption2: {
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: '400',
+  },
+};
+
+// Spacing System
+export const spacing = {
+  XXS: 4,
+  XS: 8,
+  S: 12,
+  M: 16,
+  L: 24,
+  XL: 32,
+  XXL: 48,
+} as const;
+
+// Border Radius
+export const borderRadius = {
+  small: 4,
+  medium: 8,
+  large: 12,
+  xlarge: 16,
+  round: 999,
+} as const;
+
+// Shadows
+interface ShadowStyle {
+  shadowColor: string;
+  shadowOffset: { width: number; height: number };
+  shadowOpacity: number;
+  shadowRadius: number;
+  elevation: number;
+}
+
+export const shadows: Record<string, ShadowStyle> = {
+  small: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  large: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+};
+
+// Layout Constants
+export const layout = {
+  headerHeight: 44,
+  tabBarHeight: 49,
+  buttonHeight: {
+    large: 50,
+    medium: 44,
+    small: 44, // Updated from 36 to meet minimum touch target
+  },
+  inputHeight: 44,
+  cardPadding: spacing.M,
+  screenPadding: spacing.M,
+  minimumTouchTarget: 44, // iOS HIG minimum touch target
+  touchTargetWithPadding: 48, // Comfortable touch target with padding
+} as const;
+
+// Animation Durations
+export const animations = {
+  fast: 200,
+  normal: 300,
+  slow: 500,
+  veryFast: 150,
+  verySlow: 800,
+  spring: {
+    tension: 40,
+    friction: 7,
+  },
+  easing: {
+    standard: 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Material Design standard
+    decelerate: 'cubic-bezier(0.0, 0.0, 0.2, 1)', // Enter
+    accelerate: 'cubic-bezier(0.4, 0.0, 1, 1)', // Exit
+    sharp: 'cubic-bezier(0.4, 0.0, 0.6, 1)', // Quick movement
+  },
+} as const;
+
+// Elevation System - iOS and Android compatible
+export const elevation = {
+  0: {
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  2: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  4: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  8: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  16: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+} as const;
+
+// Icon Sizes
+export const iconSizes = {
+  small: 16,
+  medium: 20,
+  large: 24,
+  xlarge: 28,
+  xxlarge: 32,
+  huge: 48,
+  giant: 64,
+} as const;
+
+// Common Styles
+export const commonStyles = {
+  // Containers
+  screenContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  } as ViewStyle,
+  
+  contentContainer: {
+    padding: spacing.M,
+  } as ViewStyle,
+  
+  // Cards
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.large,
+    padding: spacing.M,
+    ...shadows.small,
+  } as ViewStyle,
+  
+  // Buttons
+  buttonBase: {
+    borderRadius: borderRadius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  } as ViewStyle,
+  
+  // Inputs
+  inputContainer: {
+    backgroundColor: colors.inputBackground,
+    borderRadius: borderRadius.medium,
+    borderWidth: 1,
+    borderColor: colors.separator,
+    paddingHorizontal: spacing.S,
+  } as ViewStyle,
+  
+  // Lists
+  listSeparator: {
+    height: 1,
+    backgroundColor: colors.separator,
+    marginLeft: spacing.M,
+  } as ViewStyle,
+  
+  // Centered content
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  
+  // Row layouts
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  } as ViewStyle,
+  
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+};
+
+// Platform-specific adjustments
+import { Platform } from 'react-native';
+
+export const platformStyles = {
+  headerTitleStyle: Platform.select({
+    ios: {
+      ...typography.headline,
+      color: colors.textPrimary,
+    },
+    android: {
+      ...typography.title3,
+      color: colors.textPrimary,
+    },
+  }),
+  
+  shadowStyle: Platform.select({
+    ios: shadows.small,
+    android: {
+      ...shadows.small,
+      // Android only uses elevation for shadows
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+    },
+  }),
+};
+
+// Dark mode colors (for future implementation)
+export const darkColors = {
+  primary: '#FFFFFF',
+  background: '#000000',
+  surface: '#1C1C1E',
+  backgroundTexture: '#2C2C2E',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#EBEBF5',
+  textTertiary: '#C7C7CC',
+  separator: '#38383A',
+  skeleton: '#2C2C2E',  // Dark gray for skeleton screens in dark mode
+};
+
+// Export theme object for easy access
+export const theme = {
+  colors,
+  typography,
+  spacing,
+  borderRadius,
+  shadows,
+  elevation,
+  layout,
+  animations,
+  iconSizes,
+  commonStyles,
+  platformStyles,
+} as const;
+
+export default theme;

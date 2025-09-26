@@ -240,22 +240,7 @@ export const SocialProof: React.FC = () => {
       </section>
 
 
-      <style jsx>{`
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
-        }
-      `}</style>
+      {/* Animation styles moved to global CSS to avoid styled-jsx in app router */}
     </>
   );
 };

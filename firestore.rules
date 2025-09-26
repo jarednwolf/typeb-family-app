@@ -1,0 +1,244 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid));
+    }
+    
+    function isFamilyAdmin(familyId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid)).data.role == 'parent';
+    }
+    
+    function isPremium() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
+    }
+    
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    // Rate limiting - ensure at least 1 second between updates
+    function rateLimitCheck() {
+      return !exists(resource) || 
+        request.time > resource.data.updatedAt + duration.value(1, 's');
+    }
+    
+    // Validate task data
+    function isValidTask() {
+      return request.resource.data.keys().hasAll(['title', 'familyId', 'createdBy', 'status']) &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 200 &&
+        request.resource.data.status in ['pending', 'in_progress', 'completed', 'approved'];
+    }
+    
+    // Validate photo data
+    function isValidPhoto() {
+      return request.resource.data.keys().hasAll(['url', 'taskId', 'familyId', 'uploadedBy']) &&
+        request.resource.data.url is string &&
+        request.resource.data.url.matches('^https://') &&
+        request.resource.data.size() < 10 * 1024 * 1024; // 10MB limit
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || 
+        (isAuthenticated() && 
+         exists(/databases/$(database)/documents/families/$(resource.data.familyId)/members/$(request.auth.uid)));
+      
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasAll(['email', 'displayName', 'createdAt']) &&
+        isValidEmail(request.resource.data.email);
+      
+      allow update: if isOwner(userId) && 
+        rateLimitCheck() &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'uid']) ||
+         request.auth.token.admin == true);
+      
+      allow delete: if false; // Soft delete only via update
+    }
+
+    // Families collection
+    match /families/{familyId} {
+      allow read: if isFamilyMember(familyId);
+      
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['name', 'createdBy', 'inviteCode']) &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 100;
+      
+      allow update: if isFamilyAdmin(familyId) && 
+        rateLimitCheck() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy', 'id']);
+      
+      allow delete: if false; // Families cannot be deleted
+      
+      // Family members subcollection
+      match /members/{memberId} {
+        allow read: if isFamilyMember(familyId);
+        
+        allow create: if isFamilyAdmin(familyId) &&
+          request.resource.data.keys().hasAll(['userId', 'role', 'displayName']) &&
+          request.resource.data.role in ['parent', 'child'] &&
+          (isPremium() || 
+           get(/databases/$(database)/documents/families/$(familyId)).data.memberCount < 6);
+        
+        allow update: if isFamilyAdmin(familyId) &&
+          rateLimitCheck() &&
+          request.resource.data.role in ['parent', 'child'];
+        
+        allow delete: if isFamilyAdmin(familyId) && 
+          memberId != request.auth.uid; // Can't remove yourself
+      }
+    }
+
+    // Tasks collection
+    match /tasks/{taskId} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      
+      allow create: if isAuthenticated() && 
+        isFamilyMember(request.resource.data.familyId) &&
+        isValidTask() &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      allow update: if isFamilyMember(resource.data.familyId) && 
+        rateLimitCheck() &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['familyId', 'createdBy']) ||
+         isFamilyAdmin(resource.data.familyId));
+      
+      allow delete: if isFamilyAdmin(resource.data.familyId);
+    }
+
+    // Photos collection
+    match /photos/{photoId} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      
+      allow create: if isAuthenticated() &&
+        isFamilyMember(request.resource.data.familyId) &&
+        isValidPhoto() &&
+        request.resource.data.uploadedBy == request.auth.uid &&
+        (isPremium() || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoCount < 50);
+      
+      allow update: if isFamilyMember(resource.data.familyId) &&
+        (request.auth.uid == resource.data.uploadedBy ||
+         isFamilyAdmin(resource.data.familyId)) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['url', 'uploadedBy', 'familyId']);
+      
+      allow delete: if false; // Photos are never deleted, only marked as deleted
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      
+      allow create: if isAuthenticated() &&
+        isFamilyMember(request.resource.data.familyId) &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.content.size() > 0 &&
+        request.resource.data.content.size() <= 500;
+      
+      allow update: if request.auth.uid == resource.data.authorId &&
+        rateLimitCheck() &&
+        request.time < resource.data.createdAt + duration.value(5, 'm'); // 5 minute edit window
+      
+      allow delete: if request.auth.uid == resource.data.authorId ||
+        isFamilyAdmin(resource.data.familyId);
+    }
+
+    // Premium categories (premium feature)
+    match /categories/{categoryId} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      
+      allow create: if isFamilyMember(request.resource.data.familyId) && 
+        isPremium() &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      allow update: if isFamilyMember(resource.data.familyId) && 
+        isPremium() &&
+        (request.auth.uid == resource.data.createdBy ||
+         isFamilyAdmin(resource.data.familyId));
+      
+      allow delete: if isFamilyMember(resource.data.familyId) && 
+        isPremium() &&
+        isFamilyAdmin(resource.data.familyId);
+    }
+
+    // Analytics collection (premium feature)
+    match /analytics/{analyticsId} {
+      allow read: if isFamilyMember(resource.data.familyId) && isPremium();
+      allow write: if false; // Only written by Cloud Functions
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if request.auth.uid == resource.data.userId;
+      
+      allow update: if request.auth.uid == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      
+      allow create, delete: if false; // Only managed by Cloud Functions
+    }
+
+    // Achievements collection
+    match /achievements/{achievementId} {
+      allow read: if request.auth.uid == resource.data.userId ||
+        isFamilyMember(resource.data.familyId);
+      
+      allow write: if false; // Only managed by Cloud Functions
+    }
+
+    // Offline queue (for sync)
+    match /offlineQueue/{queueId} {
+      allow read: if request.auth.uid == resource.data.userId;
+      
+      allow create: if request.auth.uid == request.resource.data.userId &&
+        request.resource.data.operations.size() <= 100; // Limit queue size
+      
+      allow update: if request.auth.uid == resource.data.userId &&
+        request.resource.data.operations.size() <= 100;
+      
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // Activity logs (for audit trail)
+    match /activityLogs/{logId} {
+      allow read: if isFamilyAdmin(resource.data.familyId);
+      allow write: if false; // Only written by Cloud Functions
+    }
+
+    // Support tickets
+    match /support/{ticketId} {
+      allow read: if request.auth.uid == resource.data.userId ||
+        request.auth.token.admin == true;
+      
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.message.size() > 10 &&
+        request.resource.data.message.size() <= 2000;
+      
+      allow update: if request.auth.uid == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastUpdated']);
+      
+      allow delete: if false;
+    }
+
+    // Admin access (for support staff)
+    match /{document=**} {
+      allow read, write: if request.auth.token.admin == true;
+    }
+  }
+}

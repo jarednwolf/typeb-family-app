@@ -1,0 +1,196 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && userExists() && getUserData().role == role;
+    }
+    
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && userExists() && 
+        familyId in getUserData().familyIds;
+    }
+    
+    function isFamilyManager(familyId) {
+      return isFamilyMember(familyId) && hasRole('parent');
+    }
+    
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    function isValidString(text, minLength, maxLength) {
+      return text is string && 
+        text.size() >= minLength && 
+        text.size() <= maxLength;
+    }
+    
+    function hasRequiredTaskFields() {
+      return request.resource.data.keys().hasAll(['title', 'assignedTo', 'familyId', 'createdBy']) &&
+        isValidString(request.resource.data.title, 3, 100) &&
+        request.resource.data.assignedTo is string &&
+        request.resource.data.familyId is string &&
+        request.resource.data.createdBy == request.auth.uid;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Allow authenticated users to read their own document
+      allow read: if isOwner(userId);
+      
+      // Allow authenticated users to read family members' documents
+      allow read: if isAuthenticated() && userExists() && resource != null &&
+        resource.data.familyIds.size() > 0 &&
+        resource.data.familyIds[0] in getUserData().familyIds;
+      
+      // Allow creating own user document during sign-up
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasAll(['email', 'displayName', 'role']) &&
+        isValidEmail(request.resource.data.email) &&
+        isValidString(request.resource.data.displayName, 2, 50) &&
+        request.resource.data.role in ['parent', 'child'];
+      
+      // Allow updating own document with restrictions
+      allow update: if isOwner(userId) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'role']) ||
+         (userExists() && hasRole('parent')));
+      
+      allow delete: if false; // Users cannot be deleted
+    }
+    
+    // Families collection
+    match /families/{familyId} {
+      allow read: if isFamilyMember(familyId);
+      
+      allow create: if isAuthenticated() && userExists() &&
+        hasRole('parent') &&
+        request.resource.data.keys().hasAll(['name', 'createdBy', 'managers']) &&
+        isValidString(request.resource.data.name, 2, 50) &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.auth.uid in request.resource.data.managers &&
+        request.resource.data.managers.size() >= 1;
+      
+      allow update: if isFamilyManager(familyId) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy']) &&
+         request.resource.data.managers.size() >= 1);
+      
+      allow delete: if false; // Families cannot be deleted
+    }
+    
+    // Tasks collection
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && userExists() &&
+        (resource.data.assignedTo == request.auth.uid ||
+         isFamilyManager(resource.data.familyId));
+      
+      allow create: if isAuthenticated() && userExists() &&
+        hasRole('parent') &&
+        hasRequiredTaskFields() &&
+        isFamilyMember(request.resource.data.familyId);
+      
+      allow update: if isAuthenticated() && userExists() &&
+        (resource.data.assignedTo == request.auth.uid ||
+         isFamilyManager(resource.data.familyId)) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy', 'familyId']);
+      
+      allow delete: if isFamilyManager(resource.data.familyId);
+    }
+    
+    // Task validations collection
+    match /tasks/{taskId}/validations/{validationId} {
+      allow read: if isAuthenticated() && userExists() &&
+        (get(/databases/$(database)/documents/tasks/$(taskId)).data.assignedTo == request.auth.uid ||
+         isFamilyManager(get(/databases/$(database)/documents/tasks/$(taskId)).data.familyId));
+      
+      allow create: if isAuthenticated() && userExists() &&
+        get(/databases/$(database)/documents/tasks/$(taskId)).data.assignedTo == request.auth.uid &&
+        request.resource.data.keys().hasAll(['type', 'submittedBy', 'submittedAt']) &&
+        request.resource.data.type in ['photo', 'text'] &&
+        request.resource.data.submittedBy == request.auth.uid;
+      
+      allow update: if false; // Validations cannot be updated
+      allow delete: if false; // Validations cannot be deleted
+    }
+    
+    // Notifications settings
+    match /notificationSettings/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) &&
+        request.resource.data.keys().hasAll(['enabled']) &&
+        request.resource.data.enabled is bool;
+    }
+    
+    // Rate limiting collections (for development)
+    match /rateLimit/{limitId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Allow in dev for testing
+    }
+    
+    match /authRateLimits/{identifier} {
+      allow read: if false;
+      allow write: if false;
+    }
+    
+    // User security collection
+    match /userSecurity/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+    
+    // Family invitations
+    match /invitations/{inviteCode} {
+      allow read: if isAuthenticated();
+      
+      allow create: if isAuthenticated() && userExists() &&
+        hasRole('parent') &&
+        isFamilyManager(request.resource.data.familyId) &&
+        request.resource.data.keys().hasAll(['familyId', 'createdBy', 'expiresAt']) &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      allow update: if false; // Invitations cannot be updated
+      allow delete: if isAuthenticated() && userExists() &&
+        (resource.data.createdBy == request.auth.uid ||
+         isFamilyManager(resource.data.familyId));
+    }
+    
+    // Scheduled notifications (managed by cloud functions)
+    match /scheduledNotifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false; // Only cloud functions can write
+    }
+    
+    // Audit logs (write-only for users, read for admins)
+    match /auditLogs/{logId} {
+      allow read: if false; // Admin only via cloud functions
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['userId', 'action', 'timestamp']) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.timestamp == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

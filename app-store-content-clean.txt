@@ -1,0 +1,123 @@
+=== APP STORE SUBMISSION CONTENT (CLEAN VERSION) ===
+Copy and paste these exactly as shown - no special characters
+
+=== PROMOTIONAL TEXT (170 chars max) ===
+7-day FREE trial! Transform family tasks with photo validation & rewards. Kids complete, parents verify, everyone wins. Join thousands of organized families!
+
+=== DESCRIPTION ===
+TypeB revolutionizes how families manage daily tasks, chores, and responsibilities. Built by parents for parents, our app transforms the chaos of household management into an organized, motivating system that actually works.
+
+KEY FEATURES:
+
+Photo Validation System
+Every task can require photo proof of completion. Kids snap a photo when done, parents approve with one tap. No more "did you really clean your room?" debates.
+
+Smart Family Management
+- Automatic role assignment based on age
+- Parents create and manage tasks
+- Kids complete and earn rewards
+- Multiple parents can co-manage
+- Up to 5 family members free
+
+Task Management That Works
+- One-time or recurring tasks
+- Custom categories for organization
+- Priority levels (Low, Medium, High)
+- Due date reminders
+- Flexible scheduling options
+- Bulk task creation (Premium)
+
+Motivation Through Gamification
+- Points for completed tasks
+- Streak tracking for consistency
+- Achievement badges
+- Family leaderboard
+- Custom reward systems (Premium)
+
+Premium Features ($4.99/mo or $39.99/yr)
+- Unlimited family members
+- Advanced analytics dashboard
+- Task completion insights
+- Performance trends
+- Custom reward values
+- Export reports as PDF
+- Priority support
+- Ad-free experience
+
+START WITH 7-DAY FREE TRIAL
+Try all premium features free for 7 days. Cancel anytime.
+
+PERFECT FOR:
+- Busy parents juggling multiple schedules
+- Families with kids ages 5-18
+- Separated parents coordinating responsibilities
+- Multi-generational households
+- Anyone wanting a more organized home
+
+WHY FAMILIES LOVE TYPEB:
+"Finally, an app that holds everyone accountable!"
+"The photo feature is genius - no more lying about chores"
+"My kids actually ASK for tasks now to earn points"
+"Best investment for family harmony"
+
+SUBSCRIPTION PRICING:
+- Monthly: $4.99 (after 7-day trial)
+- Annual: $39.99 (after 7-day trial) - Save 33%!
+
+Subscriptions auto-renew unless cancelled 24 hours before the trial or billing period ends. Manage subscriptions in your Apple ID settings.
+
+PRIVACY & SECURITY:
+Your family's data is encrypted and never shared. We comply with COPPA regulations for children's privacy.
+
+SUPPORT:
+Need help? Contact us at support@typebapp.com
+Visit our website: www.typebapp.com
+
+Privacy Policy: www.typebapp.com/privacy
+Terms of Service: www.typebapp.com/terms
+
+Download TypeB today and transform your family's daily routine!
+
+=== KEYWORDS (100 chars) ===
+family,tasks,chores,kids,parenting,organize,todo,household,rewards,photos,validation,productivity
+
+=== SUPPORT URL ===
+https://typebapp.com/support
+
+=== MARKETING URL (Optional) ===
+https://typebapp.com
+
+=== COPYRIGHT ===
+Copyright 2024 TypeB App. All rights reserved.
+
+=== NOTES FOR REVIEW ===
+TypeB is a family task management app with photo validation and gamification features.
+
+TEST ACCOUNT:
+Email: demo@typebapp.com
+Password: Demo123!
+
+The demo account has a pre-configured family with sample tasks to review all features.
+
+KEY FEATURES TO TEST:
+1. Task creation with photo requirements
+2. Photo upload and validation
+3. Family member management
+4. Points and rewards system
+5. Premium features (7-day trial automatically activated)
+
+SUBSCRIPTION INFO:
+- New users get 7-day free trial
+- Monthly: $4.99, Annual: $39.99
+- Subscriptions managed via RevenueCat
+- All premium features unlocked during trial
+
+The app uses Firebase for backend services and RevenueCat for subscription management. Photo storage is handled securely through Firebase Storage.
+
+Please note: The app is designed for family use, so features are best experienced with multiple family members. The demo account simulates this environment.
+
+=== IMPORTANT NOTES ===
+1. Use plain text only - no smart quotes, em dashes, or special characters
+2. The copyright field should NOT use the © symbol in some forms - use "Copyright" instead
+3. All apostrophes should be straight quotes (') not curly quotes (')
+4. All quotation marks should be straight quotes (") not curly quotes ("")

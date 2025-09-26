@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "TypeB Family",
+    "slug": "typeb-family-app",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.typeb.familyapp",
+      "infoPlist": {
+        "NSCameraUsageDescription": "TypeB uses the camera to take photos for task validation.",
+        "NSPhotoLibraryUsageDescription": "TypeB accesses your photo library to upload images for task validation.",
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized features and measure app performance.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "2",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.typeb.familyapp",
+      "versionCode": 2,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "sentryDsn": "$EXPO_PUBLIC_SENTRY_DSN",
+      "eas": {
+        "projectId": "0b1cab38-fdeb-4b64-a3bb-874e84c9d5c9"
+      }
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "expo-notifications",
+      "expo-camera",
+      "expo-image-picker"
+    ],
+    "owner": "wolfjn1"
+  }
+}

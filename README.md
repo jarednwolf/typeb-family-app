@@ -1,201 +1,229 @@
 # TypeB Family App
 
-**Transform household chaos into organized success** - A task management platform for families with photo validation and rewards.
+ADHD-Friendly Family Task Management System
 
-🌐 **Production Web**: https://typebapp.com  
-📱 **Mobile**: iOS TestFlight (Beta) | Android (Coming Soon)  
-📊 **Status**: Beta Testing → Production Launch (1 week)  
+## 🚀 Current Status
 
-## Quick Start
+**Version**: 1.1.0  
+**Build**: #24 (Successfully submitted to TestFlight)  
+**Status**: In Beta Testing  
+**TestFlight**: Available for internal testing  
+**App Store**: Preparing for submission after beta phase  
+
+## 📱 Demo Accounts
+
+For testing purposes, use these pre-configured accounts:
+
+- **Parent Account**: demo@typebapp.com (Password: Demo123!)
+- **Child Account**: demo.child@typebapp.com (Password: Demo123!)
+- **Family Invite Code**: DEMO2025
+
+## 🏗️ Project Structure
+
+```
+typeb-family-app/
+├── src/                    # Source code
+│   ├── screens/           # App screens
+│   ├── components/        # Reusable components
+│   ├── services/          # Firebase & API services
+│   ├── store/            # Redux state management
+│   ├── navigation/       # Navigation configuration
+│   └── utils/            # Utility functions
+├── ios/                   # iOS native code
+├── android/              # Android native code
+├── assets/               # Images and static assets
+├── docs/                 # Documentation
+├── scripts/              # Build and utility scripts
+└── functions/            # Firebase Cloud Functions
+```
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React Native with Expo SDK 50
+- **State Management**: Redux Toolkit
+- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
+- **Navigation**: React Navigation 6
+- **UI Components**: React Native Elements, Expo components
+- **Testing**: Jest, Detox (E2E)
+- **Build System**: EAS Build
+- **Distribution**: TestFlight (iOS), Google Play Console (Android)
+
+## 🚦 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and pnpm 8+
-- Firebase project (with Blaze plan)
-- Apple Developer account (for iOS)
-- RevenueCat account (for payments)
+- Node.js 18+
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- EAS CLI (`npm install -g eas-cli`)
+- iOS Simulator (Mac only) or Android Emulator
 
 ### Installation
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone [repository-url]
-cd tybeb_b
+cd typeb-family-app
 
 # Install dependencies
-pnpm install
+npm install
 
-# Build shared packages
-pnpm build
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your Firebase configuration
 
-# Set up environment
-cp .env.example .env.local
-# Edit .env.local with your values
+# iOS specific setup (Mac only)
+cd ios && pod install && cd ..
 ```
 
 ### Development
 
 ```bash
-# Run everything in dev mode
-pnpm dev
+# Start the development server
+npm start
 
-# Run specific apps
-pnpm dev:web    # Next.js web app
-pnpm dev:mobile # React Native app
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator
+npm run android
 
 # Run tests
-pnpm test
+npm test
 
-# Type checking
-pnpm type-check
+# Run E2E tests
+npm run e2e:ios
 ```
 
-### Deployment
+### Building for Production
 
 ```bash
-# Deploy web to production
-pnpm deploy:web:prod
-
-# Build mobile for TestFlight
-cd typeb-family-app
+# Build for iOS (TestFlight/App Store)
 eas build --platform ios --profile production
 
-# Deploy Firebase rules
-firebase deploy --only firestore:rules
+# Build for Android (Google Play)
+eas build --platform android --profile production
+
+# Submit to stores
+eas submit --platform ios --latest
+eas submit --platform android --latest
 ```
 
-## Architecture
+## 📋 Key Features
 
-```
-tybeb_b/
-├── apps/
-│   └── web/              # Next.js web application
-├── typeb-family-app/     # React Native mobile app (to be moved)
-├── packages/
-│   ├── core/             # Business logic & validators  
-│   ├── store/            # Redux configuration
-│   └── types/            # TypeScript definitions
-└── docs/                 # Documentation
-```
-
-### Tech Stack
-- **Frontend**: React Native (Expo SDK 50), Next.js 15.4
-- **Backend**: Firebase (Auth, Firestore, Storage, Functions)
-- **Payments**: RevenueCat
-- **State**: Redux Toolkit
-- **Deployment**: Vercel (web), EAS Build (mobile)
-
-## Features
-
-### Core (Free)
-- ✅ Family management (up to 5 members)
-- ✅ Task creation and assignment
-- ✅ Photo validation
-- ✅ Points and basic rewards
+### Core Functionality
+- ✅ User authentication (Email/Password)
+- ✅ Family creation and management
+- ✅ Task creation with categories and priorities
+- ✅ Photo validation for task completion
+- ✅ Real-time synchronization
 - ✅ Push notifications
+- ✅ Points and rewards system
+- ✅ Role-based permissions (Parent/Child)
 
-### Premium ($4.99/mo or $39.99/yr)
-- 📸 Priority photo validation queue
-- 🏷️ Unlimited custom categories
-- 📊 Advanced analytics dashboard
-- 🔔 Smart notifications with escalation
-- 👥 Unlimited family members
-- 🎯 Priority support (2-hour response)
+### ADHD-Specific Features
+- ✅ Visual task cards with colors and icons
+- ✅ Smart reminders and escalation
+- ✅ Simple, uncluttered interface
+- ✅ Positive reinforcement system
+- ✅ Flexible scheduling options
 
-## Documentation
+### Premium Features (In Development)
+- 🔄 Advanced analytics dashboard
+- 🔄 Custom categories and rewards
+- 🔄 Unlimited family members
+- 🔄 Priority support
 
-| Document | Purpose |
-|----------|---------|
-| [Architecture](./docs/ARCHITECTURE.md) | System design and technical decisions |
-| [Operations](./docs/OPERATIONS.md) | Deployment, monitoring, and maintenance |
-| [Security](./docs/SECURITY.md) | Security policies and compliance (COPPA) |
-| [Contributing](./docs/CONTRIBUTING.md) | Development workflow and guidelines |
-| [Roadmap](./docs/ROADMAP.md) | Product timeline and milestones |
+## 📱 Platform Support
 
-### Quick Links
-- [Production Checklist](./docs/PRODUCTION-READINESS-TRACKER.md)
-- [API Documentation](./docs/API.md)
-- [Troubleshooting](./docs/TROUBLESHOOTING.md)
+- **iOS**: 13.0+ (iPhone and iPad)
+- **Android**: API 21+ (Android 5.0+)
+- **Web**: Not currently supported
 
-## Environment Configuration
+## 🔐 Security & Privacy
 
-### Required Environment Variables
+- End-to-end encryption for sensitive data
+- COPPA compliant for children under 13
+- GDPR compliant data handling
+- Secure photo storage with access controls
+- Regular security audits
 
-```bash
-# Firebase
-FIREBASE_PROJECT_ID=typeb-family-app
-FIREBASE_API_KEY=your_api_key
-FIREBASE_AUTH_DOMAIN=your_auth_domain
+## 📚 Documentation
 
-# RevenueCat
-EXPO_PUBLIC_REVENUECAT_API_KEY_IOS=appl_xxxxx
-EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_xxxxx
+- [Architecture Overview](docs/architecture.md)
+- [Development Standards](docs/development-standards.md)
+- [Firebase Setup Guide](docs/firebase-setup-guide.md)
+- [TestFlight Submission Guide](docs/TESTFLIGHT-SUBMISSION-GUIDE.md)
+- [App Store Submission Guide](docs/APP-STORE-SUBMISSION-GUIDE.md)
 
-# Monitoring
-EXPO_PUBLIC_SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
+## 🧪 Testing
 
-# Environment
-EXPO_PUBLIC_ENVIRONMENT=development|staging|production
-```
+The app includes comprehensive testing:
+- Unit tests for utilities and services
+- Integration tests for Firebase operations
+- E2E tests for critical user flows
+- Manual testing checklist for releases
 
-See [Operations Guide](./docs/OPERATIONS.md) for complete configuration.
+## 🚀 Deployment
 
-## Testing
+### Current Environments
+- **Development**: Local development with Firebase emulators
+- **Staging**: TestFlight beta testing
+- **Production**: App Store (pending)
 
-```bash
-# Unit tests
-pnpm test
+### CI/CD Pipeline
+- GitHub Actions for automated testing
+- EAS Build for native builds
+- Automatic submission to TestFlight
 
-# E2E tests (mobile)
-cd typeb-family-app
-pnpm e2e:ios
+## 📈 Monitoring
 
-# E2E tests (web)
-cd apps/web
-pnpm test:e2e
-```
+- Firebase Crashlytics for crash reporting
+- Firebase Analytics for usage metrics
+- Sentry for error tracking (configured)
+- Firebase Performance Monitoring
 
-## Production Launch Status
+## 🤝 Contributing
 
-### ✅ Completed
-- Feature development (100%)
-- Firebase configuration
-- Payment integration
-- Web deployment
+Please read our contributing guidelines before submitting PRs.
 
-### 🚧 In Progress (Week 1 Sprint)
-- CI/CD pipeline setup
-- COPPA compliance implementation
-- Staging environment configuration
-- Google SSO integration
+## 📄 License
 
-### 📋 Pending
-- Android app build
-- App Store submission
-- Load testing
-- Customer support setup
+Proprietary - All rights reserved
 
-See [Production Tracker](./docs/PRODUCTION-READINESS-TRACKER.md) for detailed status.
+## 📞 Support
 
-## Support
-
-### Development
-- GitHub Issues: [Link to issues]
-- Discord: [Development channel]
-
-### Production
 - Email: support@typebapp.com
-- Premium: 2-hour response SLA
-- Status Page: https://status.typebapp.com (coming soon)
+- Website: https://typebapp.com (coming soon)
+- Documentation: [docs/](docs/)
 
-## License
+## 🎯 Roadmap
 
-Copyright © 2025 TypeB. All rights reserved.
+### Phase 1 (Complete) ✅
+- Core task management
+- Family system
+- Basic notifications
+- TestFlight release
+
+### Phase 2 (Current) 🚧
+- Beta testing feedback incorporation
+- Bug fixes and performance improvements
+- App Store submission preparation
+
+### Phase 3 (Upcoming) 📅
+- Website launch (typebapp.com)
+- Advanced analytics
+- Family photo sharing
+- Custom avatars
+- Android release
+
+### Phase 4 (Future) 🔮
+- Web app version
+- School integration
+- Therapist portal
+- AI-powered suggestions
 
 ---
 
-**Version**: 1.0.1-beta  
-**Last Updated**: January 2025  
-**Maintainers**: TypeB Team  
-
-For detailed setup instructions, see [Operations Guide](./docs/OPERATIONS.md).  
-For contribution guidelines, see [Contributing](./docs/CONTRIBUTING.md).
+**Last Updated**: February 10, 2025  
+**Build Status**: ✅ Passing  
+**TestFlight Status**: 🟢 Live (Build #24)
