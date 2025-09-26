@@ -8,8 +8,11 @@ on:
 jobs:
   web-build:
     runs-on: ubuntu-latest
+    if: ${{ hashFiles('apps/web/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -28,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -36,9 +41,18 @@ jobs:
         with:
           version: 8
           run_install: false
+      - name: Determine app directory
+        id: appdir
+        run: |
+          if [ -f "typeb-family-app/package.json" ]; then
+            echo "APP_DIR=typeb-family-app" >> $GITHUB_ENV
+          else
+            echo "APP_DIR=." >> $GITHUB_ENV
+          fi
+          echo "Using app dir: $APP_DIR"
       - name: Install app deps
-        working-directory: typeb-family-app
+        working-directory: ${{ env.APP_DIR }}
         run: npm ci
       - name: Run unit tests
-        working-directory: typeb-family-app
+        working-directory: ${{ env.APP_DIR }}
         run: npm run test:unit --silent
