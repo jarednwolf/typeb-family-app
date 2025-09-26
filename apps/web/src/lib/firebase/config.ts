@@ -3,6 +3,8 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+const isBrowser = typeof window !== 'undefined';
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -12,12 +14,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase only if it hasn't been initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Avoid initializing Firebase during Next.js server-side prerender
+let app: any = null;
+if (isBrowser) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+}
 
-// Initialize services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Export service singletons when in the browser; provide no-op stubs on server
+export const auth = isBrowser ? getAuth(app) : ({} as any);
+export const db = isBrowser ? getFirestore(app) : ({} as any);
+export const storage = isBrowser ? getStorage(app) : ({} as any);
 
-export default app;
+export default app as any;
