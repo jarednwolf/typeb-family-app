@@ -9,6 +9,7 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 export default function FamilyPage() {
   const [members, setMembers] = useState<User[]>([]);
   const [inviteCode, setInviteCode] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -18,8 +19,10 @@ export default function FamilyPage() {
         const membersQuery = query(collection(db, 'users'), where('familyId', '==', current.familyId));
         const snapshot = await getDocs(membersQuery);
         setMembers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User)));
-        // Invite code placeholder (in a real app this would come from family doc)
-        setInviteCode(current.familyId.slice(0, 6).toUpperCase());
+        // Invite code/link (placeholder using familyId)
+        const code = current.familyId.slice(0, 6).toUpperCase();
+        setInviteCode(code);
+        setInviteLink(`${window.location.origin}/signup?invite=${code}`);
       }
     })();
   }, []);
@@ -31,6 +34,13 @@ export default function FamilyPage() {
     } catch {}
   };
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      alert('Invite link copied');
+    } catch {}
+  };
+
   return (
     <div className="space-y-6 section-y">
       <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -39,10 +49,14 @@ export default function FamilyPage() {
       </div>
 
       <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Invite code</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Invite</h2>
         <div className="mt-2 flex items-center gap-3">
           <code className="px-3 py-1 rounded bg-gray-100 text-gray-800">{inviteCode || '------'}</code>
           <button onClick={copyInvite} className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50">Copy</button>
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <input value={inviteLink} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
+          <button onClick={copyLink} className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap">Copy link</button>
         </div>
       </div>
 

@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
+import { auth, db } from '@/lib/firebase/config';
+import { updateProfile } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState(true);
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -14,9 +19,36 @@ export default function SettingsPage() {
       if (current) {
         setUser(current);
         setNotifications(!!current.notificationsEnabled);
+        setName(current.displayName || '');
       }
     })();
   }, []);
+
+  const saveProfile = async () => {
+    if (!auth.currentUser || !user) return;
+    setSaving(true);
+    try {
+      await updateProfile(auth.currentUser, { displayName: name });
+      await updateDoc(doc(db, 'users', user.id), { displayName: name });
+      setUser({ ...user, displayName: name });
+      alert('Profile updated');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleNotifications = async (value: boolean) => {
+    setNotifications(value);
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.id), { notificationsEnabled: value });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="space-y-6 section-y">
@@ -31,12 +63,15 @@ export default function SettingsPage() {
         <div className="mt-4 grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600">Name</label>
-            <input value={user?.displayName || ''} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
+            <input value={name} onChange={(e)=>setName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" />
           </div>
           <div>
             <label className="block text-sm text-gray-600">Email</label>
             <input value={user?.email || ''} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
           </div>
+        </div>
+        <div className="mt-4">
+          <button onClick={saveProfile} disabled={saving} className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
         </div>
       </div>
 
@@ -48,7 +83,7 @@ export default function SettingsPage() {
             type="checkbox"
             className="rounded border-gray-300 text-black focus:ring-black mr-2"
             checked={notifications}
-            onChange={(e) => setNotifications(e.target.checked)}
+            onChange={(e) => toggleNotifications(e.target.checked)}
           />
           <span className="text-gray-700">Enable notifications</span>
         </label>
