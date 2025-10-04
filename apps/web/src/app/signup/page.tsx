@@ -9,7 +9,8 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 export default function SignUpPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    displayName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -26,8 +27,12 @@ export default function SignUpPage() {
   };
 
   const validateForm = () => {
-    if (!formData.displayName.trim()) {
-      setError('Please enter your name');
+    if (!formData.firstName.trim()) {
+      setError('Please enter your first name');
+      return false;
+    }
+    if (!formData.lastName.trim()) {
+      setError('Please enter your last name');
       return false;
     }
     if (!formData.email.trim()) {
@@ -60,10 +65,11 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
+      const displayName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
       await authAdapter.signUp(
         formData.email,
         formData.password,
-        formData.displayName
+        displayName
       );
       router.push('/dashboard');
     } catch (err: any) {
@@ -120,26 +126,49 @@ export default function SignUpPage() {
 
           {/* Sign Up Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                id="displayName"
-                name="displayName"
-                type="text"
-                autoComplete="name"
-                value={formData.displayName}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
-                placeholder="John Doe"
-                required
-                style={{ 
-                  backgroundColor: 'white',
-                  WebkitTextFillColor: '#000000',
-                  color: '#000000'
-                }}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  autoComplete="given-name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                  placeholder="John"
+                  required
+                  style={{ 
+                    backgroundColor: 'white',
+                    WebkitTextFillColor: '#000000',
+                    color: '#000000'
+                  }}
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                  placeholder="Doe"
+                  required
+                  style={{ 
+                    backgroundColor: 'white',
+                    WebkitTextFillColor: '#000000',
+                    color: '#000000'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
