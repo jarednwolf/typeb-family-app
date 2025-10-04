@@ -93,7 +93,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 section-y">
       {/* Welcome Header */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">

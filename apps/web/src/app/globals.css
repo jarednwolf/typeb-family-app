@@ -215,6 +215,16 @@ body {
   animation: slide-up 0.3s ease-out;
 }
 
+/* Type scale helpers for consistency */
+.heading-1 { font-size: 2rem; line-height: 1.1; letter-spacing: -0.01em; }
+.heading-2 { font-size: 1.5rem; line-height: 1.2; letter-spacing: -0.005em; }
+.body-lg   { font-size: 1rem; line-height: 1.6; }
+.body-sm   { font-size: 0.875rem; line-height: 1.5; }
+
+/* Section spacing helpers */
+.section-y { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.section-y-sm { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
 /* Premium badge gradient */
 .premium-gradient {
   background: linear-gradient(135deg, #FFD700, #FFA500);
