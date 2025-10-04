@@ -91,7 +91,10 @@ export default function DashboardLayout({
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b">
-            <h1 className="text-2xl font-bold">TypeB</h1>
+            <div className="flex items-center gap-2">
+              <img src="/type_b_logo.png" alt="TypeB" className="h-8 w-8" />
+              <h1 className="text-xl font-semibold">TypeB Family</h1>
+            </div>
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="lg:hidden"

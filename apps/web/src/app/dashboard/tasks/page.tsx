@@ -167,12 +167,12 @@ export default function TasksPage() {
               onChange={(e) => setFilter(e.target.value as typeof filter)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
             >
-              <option value="all">All Tasks</option>
+              <option value="all">All</option>
               <option value="pending">Pending</option>
               <option value="in_progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
-            <p className="mt-1 text-xs text-gray-500">Selected: {filter.replace('_',' ')}</p>
+            
           </div>
           
           <div className="flex-1">
@@ -182,11 +182,11 @@ export default function TasksPage() {
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
             >
-              <option value="dueDate">Due Date</option>
+              <option value="dueDate">Due date</option>
               <option value="priority">Priority</option>
               <option value="status">Status</option>
             </select>
-            <p className="mt-1 text-xs text-gray-500">Selected: {sortBy}</p>
+            
           </div>
         </div>
       </div>
