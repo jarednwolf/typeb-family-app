@@ -92,24 +92,9 @@ export const FeatureGrid: React.FC = () => {
     },
   ];
 
-  const getColorClasses = (color: Feature['color']) => {
-    switch (color) {
-      case 'primary':
-        return {
-          bg: 'bg-gray-100',
-          text: 'text-black',
-        };
-      case 'secondary':
-        return {
-          bg: 'bg-green-100',
-          text: 'text-black',
-        };
-      case 'accent':
-        return {
-          bg: 'bg-blue-100',
-          text: 'text-black',
-        };
-    }
+  const getColorClasses = (_color: Feature['color']) => {
+    // Standardize icon backgrounds to a single neutral tone with black icons
+    return { bg: 'bg-neutral-100', text: 'text-black' };
   };
 
   return (
@@ -136,33 +121,33 @@ export const FeatureGrid: React.FC = () => {
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             {features.map((feature, index) => {
               const colors = getColorClasses(feature.color);
               return (
                 <div
                   key={feature.id}
-                  className="group relative bg-white rounded-2xl p-7 sm:p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1"
+                  className="group relative bg-white rounded-2xl p-7 sm:p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1 h-full"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Hover gradient border effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                   
-                  <div className="relative z-10">
+                  <div className="relative z-10 flex flex-col h-full">
                     {/* Icon with enhanced styling */}
-                    <div className={`w-14 h-14 ${colors.bg} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 ${colors.bg} rounded-xl flex items-center justify-center mb-4 ring-1 ring-neutral-200 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                       <div className={`${colors.text} transform group-hover:rotate-3 transition-transform duration-300`}>
                         {feature.icon}
                       </div>
                     </div>
                     
                     {/* Title with better typography */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                    <h3 className="text-[20px] sm:text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
                       {feature.title}
                     </h3>
                     
                     {/* Description with improved readability */}
-                    <p className="text-gray-600 leading-relaxed text-base">
+                    <p className="text-gray-600 leading-relaxed text-[15px] sm:text-base">
                       {feature.description}
                     </p>
                     
