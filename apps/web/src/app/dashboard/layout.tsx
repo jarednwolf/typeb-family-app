@@ -133,10 +133,11 @@ export default function DashboardLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-3 py-2 rounded-lg transition ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center px-3 py-2 rounded-lg transition border-l-2 ${
                     isActive
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-black text-white border-l-black'
+                      : 'text-gray-700 hover:bg-gray-100 border-l-transparent'
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>

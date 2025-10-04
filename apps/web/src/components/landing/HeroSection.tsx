@@ -77,7 +77,7 @@ export const HeroSection: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black"
                 style={{ backgroundColor: '#0A0A0A' }}
                 data-analytics="hero-cta-start-trial"
               >
@@ -88,7 +88,7 @@ export const HeroSection: React.FC = () => {
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium transition-all duration-200 border shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium transition-all duration-200 border shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black"
                 style={{ backgroundColor: '#FFFFFF', borderColor: '#D1D1D1', color: '#0A0A0A' }}
                 data-analytics="hero-cta-login"
               >

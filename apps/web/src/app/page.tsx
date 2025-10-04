@@ -48,7 +48,7 @@ export default function LandingPage() {
   return (
     <>
       {/* Main Content */}
-      <main className="min-h-screen">
+      <main className="min-h-screen section-y">
         {/* Hero Section */}
         <HeroSection />
 
