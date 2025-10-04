@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { auth, db } from '@/lib/firebase/config';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, updatePassword, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 
@@ -73,7 +73,7 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="mt-4">
-          <button onClick={saveProfile} disabled={saving} className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
+          <button onClick={saveProfile} disabled={saving || !name} className="px-4 py-2 btn btn-primary disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
         </div>
       </div>
 
@@ -137,6 +137,26 @@ export default function SettingsPage() {
             onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); alert('Account deleted'); location.href='/'; } catch { alert('Delete failed'); } } }}
             className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
           >Delete account</button>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="text-md font-semibold text-gray-900 mb-2">Change password</h3>
+          <button
+            onClick={async ()=>{
+              try {
+                if (!auth.currentUser) return;
+                // Prompt reauth via Google if available; otherwise noop
+                try { await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider()); } catch {}
+                const pwd = prompt('Enter new password (min 6 chars)');
+                if (!pwd || pwd.length < 6) return alert('Password too short');
+                await updatePassword(auth.currentUser, pwd);
+                alert('Password updated');
+              } catch (e) {
+                alert('Password update failed');
+              }
+            }}
+            className="px-4 py-2 btn btn-secondary"
+          >Update password</button>
         </div>
       </div>
     </div>

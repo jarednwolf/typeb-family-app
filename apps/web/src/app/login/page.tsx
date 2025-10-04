@@ -71,7 +71,7 @@ export default function LoginPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" aria-live="polite">
               {error}
             </div>
           )}
@@ -134,8 +134,8 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              disabled={isLoading || !email || !password}
+              className="w-full py-3 px-4 btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>

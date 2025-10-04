@@ -229,6 +229,14 @@ a:hover { color: #0A0A0A; }
 .section-y { padding-top: 2.5rem; padding-bottom: 2.5rem; }
 .section-y-sm { padding-top: 1.5rem; padding-bottom: 1.5rem; }
 
+/* CTA buttons */
+.btn { min-height: 48px; border-radius: 12px; }
+.btn-primary { background: #0A0A0A; color: #fff; }
+.btn-primary:hover { background: #1a1a1a; }
+.btn-secondary { border: 1px solid var(--color-separator); background: #fff; color: var(--color-text-primary); }
+.btn-secondary:hover { background: #f9f9f9; }
+.btn:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
+
 /* Premium badge gradient */
 .premium-gradient {
   background: linear-gradient(135deg, #FFD700, #FFA500);

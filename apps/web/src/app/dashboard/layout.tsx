@@ -129,11 +129,14 @@ export default function DashboardLayout({
           <nav className="flex-1 px-4 py-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
+              const isValidation = item.name === 'Validation';
+              if (isValidation && user?.role !== 'parent') return null;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
+                  title={item.name}
                   className={`flex items-center px-3 py-2 rounded-lg transition border-l-2 ${
                     isActive
                       ? 'bg-black text-white border-l-black'

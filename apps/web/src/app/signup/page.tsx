@@ -130,7 +130,7 @@ export default function SignUpPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" aria-live="polite">
               {error}
             </div>
           )}
@@ -272,8 +272,8 @@ export default function SignUpPage() {
 
             <button
               type="submit"
-              disabled={isLoading || !agreedToTerms}
-              className="w-full py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              disabled={isLoading || !agreedToTerms || !formData.firstName || !formData.lastName || !formData.email || formData.password.length < 6 || formData.password !== formData.confirmPassword}
+              className="w-full py-3 px-4 btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>

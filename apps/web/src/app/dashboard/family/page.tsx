@@ -74,7 +74,9 @@ export default function FamilyPage() {
                 <button
                   className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
                   onClick={async () => {
+                    if (user?.role !== 'parent') return;
                     const newRole = m.role === 'parent' ? 'child' : 'parent';
+                    if (!confirm(`Change ${m.displayName}'s role to ${newRole}?`)) return;
                     await updateDoc(doc(db, 'users', m.id), { role: newRole, updatedAt: new Date() });
                     setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: newRole as any } : x));
                   }}

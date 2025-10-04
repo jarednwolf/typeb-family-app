@@ -151,7 +151,7 @@ export default function TasksPage() {
         </div>
         <Link
           href="/dashboard/tasks/new"
-          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+          className="btn btn-primary px-4 transition"
         >
           + New Task
         </Link>
@@ -208,11 +208,14 @@ export default function TasksPage() {
           {filter === 'all' && (
             <Link
               href="/dashboard/tasks/new"
-              className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+              className="inline-flex items-center btn btn-primary px-4 transition"
             >
               Create Task
             </Link>
           )}
+          <div className="mt-3">
+            <a href="/help" className="text-sm text-gray-600 hover:underline">Need help? Visit the Help Center</a>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -285,8 +288,10 @@ export default function TasksPage() {
                           submittedAt: new Date().toISOString(),
                           status: 'pending',
                         });
+                        document.body.removeChild(fileInput);
                         alert('Photo submitted for validation');
                       };
+                      document.body.appendChild(fileInput);
                       fileInput.click();
                     }}
                     className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"

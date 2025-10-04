@@ -210,8 +210,8 @@ export default function DashboardPage() {
                           {task.priority || 'normal'}
                         </span>
                         {task.dueDate && (
-                          <span className="text-xs text-gray-500">
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          <span className="text-xs text-gray-500" title={new Date(task.dueDate).toLocaleString()}>
+                            Due: {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         )}
                         {task.points && (
