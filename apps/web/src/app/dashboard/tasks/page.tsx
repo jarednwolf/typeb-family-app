@@ -172,6 +172,7 @@ export default function TasksPage() {
               <option value="in_progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">Selected: {filter.replace('_',' ')}</p>
           </div>
           
           <div className="flex-1">
@@ -185,6 +186,7 @@ export default function TasksPage() {
               <option value="priority">Priority</option>
               <option value="status">Status</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">Selected: {sortBy}</p>
           </div>
         </div>
       </div>
