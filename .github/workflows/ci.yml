@@ -18,7 +18,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
           run_install: false
       - name: Install deps (no frozen)
         run: pnpm install --no-frozen-lockfile
@@ -38,7 +38,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
           run_install: false
       - name: Determine app directory
         id: appdir
@@ -50,7 +50,7 @@ jobs:
           fi
       - name: Install app deps
         working-directory: ${{ env.APP_DIR }}
-        run: npm ci
+        run: pnpm install --no-frozen-lockfile
       - name: Run unit tests
         working-directory: ${{ env.APP_DIR }}
-        run: npm run test:unit --silent
+        run: pnpm run test:unit --silent
