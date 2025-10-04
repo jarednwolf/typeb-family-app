@@ -67,7 +67,7 @@ export const AppScreenshots: React.FC = () => {
   const filteredScreenshots = screenshots.filter(s => s.category === activeTab);
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}

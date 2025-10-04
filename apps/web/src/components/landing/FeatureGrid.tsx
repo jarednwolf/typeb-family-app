@@ -96,24 +96,24 @@ export const FeatureGrid: React.FC = () => {
     switch (color) {
       case 'primary':
         return {
-          bg: 'bg-gray-900/90',
-          text: 'text-white',
+          bg: 'bg-gray-100',
+          text: 'text-black',
         };
       case 'secondary':
         return {
-          bg: 'bg-green-600/90',
-          text: 'text-white',
+          bg: 'bg-green-100',
+          text: 'text-black',
         };
       case 'accent':
         return {
-          bg: 'bg-blue-600/90',
-          text: 'text-white',
+          bg: 'bg-blue-100',
+          text: 'text-black',
         };
     }
   };
 
   return (
-    <section className="py-20 sm:py-32 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl"></div>
@@ -123,7 +123,7 @@ export const FeatureGrid: React.FC = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Section Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
               Get Complete{' '}
               <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">

@@ -180,7 +180,7 @@ export const SocialProof: React.FC = () => {
       )}
 
       {/* Social Proof Bar */}
-      <section className="bg-neutral-50 border-y border-neutral-200 py-8">
+      <section className="bg-neutral-50 border-t border-neutral-200 py-6 sm:py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             {/* Family Count */}

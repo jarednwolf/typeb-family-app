@@ -21,7 +21,7 @@ export const HeroSection: React.FC = () => {
   const isNewHeroEnabled = useFeatureFlag('enableNewHeroSection');
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden" style={{ backgroundColor: '#FAF8F5' }}>
+    <section className="relative flex items-center overflow-hidden py-12 sm:py-16" style={{ backgroundColor: '#FAF8F5' }}>
       {/* Subtle background texture */}
       <div className="absolute inset-0 opacity-5">
         <div 
@@ -33,7 +33,7 @@ export const HeroSection: React.FC = () => {
         />
       </div>
 
-      <div className="container mx-auto px-4 py-16 relative z-10">
+      <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-center lg:text-left">
