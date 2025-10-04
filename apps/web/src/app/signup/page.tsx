@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
+import { joinFamilyByInviteCode, createFamilyForUser } from '@/lib/family';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -66,11 +67,21 @@ export default function SignUpPage() {
 
     try {
       const displayName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
-      await authAdapter.signUp(
+      const newUser = await authAdapter.signUp(
         formData.email,
         formData.password,
         displayName
       );
+      // Onboarding parity: accept invite or create family
+      const urlParams = new URLSearchParams(window.location.search);
+      const invite = urlParams.get('invite');
+      try {
+        if (invite) {
+          await joinFamilyByInviteCode(newUser as any, invite);
+        } else {
+          await createFamilyForUser(newUser as any);
+        }
+      } catch {}
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
