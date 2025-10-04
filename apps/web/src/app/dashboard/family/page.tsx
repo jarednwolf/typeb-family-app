@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { User } from '@typeb/types';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
@@ -69,7 +69,19 @@ export default function FamilyPage() {
                 <p className="font-medium text-gray-900">{m.displayName}</p>
                 <p className="text-sm text-gray-500">{m.email}</p>
               </div>
-              <span className="text-sm text-gray-600 capitalize">{m.role}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 capitalize">{m.role}</span>
+                <button
+                  className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                  onClick={async () => {
+                    const newRole = m.role === 'parent' ? 'child' : 'parent';
+                    await updateDoc(doc(db, 'users', m.id), { role: newRole, updatedAt: new Date() });
+                    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: newRole as any } : x));
+                  }}
+                >
+                  Toggle role
+                </button>
+              </div>
             </li>
           ))}
           {members.length === 0 && (

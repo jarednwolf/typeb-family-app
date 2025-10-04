@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
 import Link from 'next/link';
@@ -270,12 +270,36 @@ export default function TasksPage() {
                     {task.status === 'pending' ? 'Start' : 'Complete'}
                   </button>
                 )}
+                {task.requiresPhoto && (
+                  <button
+                    onClick={async () => {
+                      const fileInput = document.createElement('input');
+                      fileInput.type = 'file';
+                      fileInput.accept = 'image/*';
+                      fileInput.onchange = async () => {
+                        const file = fileInput.files?.[0];
+                        if (!file) return;
+                        // For MVP, store metadata-only submission for validation queue
+                        await setDoc(doc(db, 'task_submissions', `${task.id}`), {
+                          taskId: task.id,
+                          submittedAt: new Date().toISOString(),
+                          status: 'pending',
+                        });
+                        alert('Photo submitted for validation');
+                      };
+                      fileInput.click();
+                    }}
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    Upload Photo
+                  </button>
+                )}
                 
                 <Link
                   href={`/dashboard/tasks/${task.id}`}
                   className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                 >
-                  View
+                  Edit
                 </Link>
                 
                 {user?.role === 'parent' && (

@@ -59,6 +59,9 @@ export default function DashboardLayout({
     { name: 'Analytics', href: '/dashboard/analytics', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 13l3 3 7-7" /></svg>
     ) },
+    { name: 'Validation', href: '/dashboard/validation', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    ) },
     { name: 'Settings', href: '/dashboard/settings', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l.7 2.154a1 1 0 00.95.69h2.262a1 1 0 01.592 1.806l-1.833 1.333a1 1 0 00-.364 1.118l.7 2.154c.3.921-.755 1.688-1.54 1.118l-1.833-1.333a1 1 0 00-1.175 0l-1.833 1.333c-.784.57-1.838-.197-1.539-1.118l.7-2.154a1 1 0 00-.364-1.118L5.54 7.577A1 1 0 016.132 5.77h2.262a1 1 0 00.95-.69l.7-2.154z" /></svg>
     ) },

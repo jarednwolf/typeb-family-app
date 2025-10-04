@@ -12,6 +12,8 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -87,6 +89,18 @@ export default function SettingsPage() {
           />
           <span className="text-gray-700">Enable notifications</span>
         </label>
+        {/* Web push opt-in (best-effort) */}
+        <button
+          className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          onClick={async () => {
+            try {
+              const perm = await Notification.requestPermission();
+              alert(`Notifications permission: ${perm}`);
+            } catch {}
+          }}
+        >
+          Request browser notifications
+        </button>
       </div>
 
       {/* Support */}
@@ -95,6 +109,34 @@ export default function SettingsPage() {
         <div className="mt-4 flex gap-3">
           <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Contact Support</a>
           <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Report a Bug</a>
+        </div>
+      </div>
+
+      {/* Account */}
+      <div className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-gray-600">Change email</label>
+            <div className="flex gap-2">
+              <input value={newEmail} onChange={(e)=>setNewEmail(e.target.value)} placeholder="new@email.com" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg" />
+              <button
+                onClick={async ()=>{
+                  if (!auth.currentUser || !newEmail) return;
+                  setEmailSaving(true);
+                  try { await auth.currentUser.updateEmail?.(newEmail as any); alert('Email updated'); } catch { alert('Email update failed'); } finally { setEmailSaving(false); }
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={emailSaving}
+              >{emailSaving ? 'Saving...' : 'Update'}</button>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <button
+            onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); alert('Account deleted'); location.href='/'; } catch { alert('Delete failed'); } } }}
+            className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+          >Delete account</button>
         </div>
       </div>
     </div>

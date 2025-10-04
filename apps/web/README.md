@@ -26,6 +26,16 @@ This app aligns web UI with the mobile design system. Key tokens live in `src/ap
 - Empty states: icon (48px), headline, body, and primary action.
 - Quick actions: rounded-xl, strong contrast for primary action.
 
+## Deployment checklist (web)
+- Set env: NEXT_PUBLIC_FIREBASE_* and GA4/FB Pixel IDs in Vercel
+- Enable Firebase Firestore and Storage rules (see repo rules files)
+- Verify redirect URLs for Google SSO
+- Vercel project connected to repo; production branch main
+
+## Feature flags
+- Local dev: set localStorage `featureFlags` JSON to toggle features
+- Flags: enableSocialProof, enableDemoVideo, etc.
+
 Duplicate web app folder
 
 This folder mirrors `apps/web` in the monorepo and exists temporarily for reference during consolidation. Do not use. Work in `/apps/web`.

@@ -235,6 +235,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick Actions already present */}
+
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link

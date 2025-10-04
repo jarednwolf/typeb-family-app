@@ -152,6 +152,10 @@ body {
   outline-offset: 2px;
 }
 
+/* Improve link contrast */
+a { color: #111827; }
+a:hover { color: #0A0A0A; }
+
 /* Button hover effects */
 .btn-hover-lift {
   transition: all 0.2s ease;
