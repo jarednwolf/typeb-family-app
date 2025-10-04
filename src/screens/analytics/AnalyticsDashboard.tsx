@@ -472,6 +472,34 @@ const AnalyticsDashboard: React.FC = () => {
           
           {/* Weekly Trend */}
           {renderTrendChart()}
+          {/* Soft upsell for non-premium */}
+          {!family?.isPremium && (
+            <View style={{ padding: 16 }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Premium' as never)}
+                style={{
+                  backgroundColor: theme.colors.primary + '10',
+                  borderRadius: 12,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+                accessibilityLabel="Upgrade to Premium to unlock more insights"
+                accessibilityRole="button"
+              >
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={{ color: theme.colors.textPrimary, fontWeight: '700', marginBottom: 4 }}>
+                    Unlock deeper insights
+                  </Text>
+                  <Text style={{ color: theme.colors.textSecondary }}>
+                    Upgrade to Premium for historical trends, category heatmaps, and more.
+                  </Text>
+                </View>
+                <Feather name="star" size={20} color={theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </PremiumGate>

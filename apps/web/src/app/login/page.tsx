@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
@@ -11,6 +11,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +23,8 @@ export default function LoginPage() {
       await authAdapter.signIn(email, password);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      setError(err.message || 'Invalid email or password. Please try again.');
+      passwordRef.current?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -80,10 +83,11 @@ export default function LoginPage() {
                 Email
               </label>
               <input
+                ref={emailRef}
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setError(''); setEmail(e.target.value); }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="you@example.com"
                 required
@@ -101,10 +105,11 @@ export default function LoginPage() {
                 Password
               </label>
               <input
+                ref={passwordRef}
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setError(''); setPassword(e.target.value); }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 required

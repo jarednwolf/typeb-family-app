@@ -105,3 +105,4 @@ eas-build-*.tar.gz
 tmp/
 temp/
 .env.production
+env_backups/

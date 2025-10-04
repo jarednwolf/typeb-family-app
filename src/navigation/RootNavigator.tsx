@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef, LinkingOptions } from '@react-navigation/native';
 import RootNavigation from '../utils/rootNavigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator } from 'react-native';
@@ -73,8 +73,27 @@ const RootNavigator: React.FC = () => {
     return <LoadingScreen />;
   }
 
+  const linking: LinkingOptions<any> = {
+    prefixes: ['typebapp://', 'https://typebapp.com'],
+    config: {
+      screens: {
+        Onboarding: 'onboarding',
+        Main: {
+          screens: {
+            Family: {
+              screens: {
+                JoinFamily: 'join',
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
   return (
     <NavigationContainer
+      linking={linking}
       ref={(ref) => {
         (navigationRef as any).current = ref;
         (RootNavigation as any).navigationRef.current = ref;

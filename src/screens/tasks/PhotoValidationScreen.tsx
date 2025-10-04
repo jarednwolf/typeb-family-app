@@ -28,6 +28,7 @@ import {
   selectTasks,
   selectTasksLoading,
 } from '../../store/slices/tasksSlice';
+import analytics from '../../services/analytics';
 import { selectFamilyMembers } from '../../store/slices/familySlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getRoleLabel } from '../../utils/roleHelpers';
@@ -60,6 +61,7 @@ const PhotoValidationScreen: React.FC = () => {
   const familyMembers = useSelector(selectFamilyMembers);
   
   const [selectedItem, setSelectedItem] = useState<ValidationItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [validationNotes, setValidationNotes] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -153,6 +155,10 @@ const PhotoValidationScreen: React.FC = () => {
           setValidationNotes('');
         }}]
       );
+      analytics.track(approved ? 'validation_approve' : 'validation_reject', {
+        taskId: selectedItem.taskId,
+        validatorId: userProfile.id,
+      });
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to validate task');
     } finally {
@@ -200,13 +206,22 @@ const PhotoValidationScreen: React.FC = () => {
     }
   }, [selectedItem]);
   
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const renderValidationItem = (item: ValidationItem) => (
     <TouchableOpacity
       key={item.taskId}
       onPress={() => setSelectedItem(item)}
+      onLongPress={() => toggleSelect(item.taskId)}
       activeOpacity={0.7}
     >
-      <Card style={styles.validationCard}>
+      <Card style={[styles.validationCard, selectedIds.has(item.taskId) && styles.validationCardSelected]}>
         <View style={styles.cardHeader}>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryIcon}>{item.category.icon}</Text>
@@ -214,6 +229,9 @@ const PhotoValidationScreen: React.FC = () => {
               {item.category.name}
             </Text>
           </View>
+          <TouchableOpacity onPress={() => toggleSelect(item.taskId)} accessibilityLabel={selectedIds.has(item.taskId) ? 'Deselect' : 'Select'}>
+            <Feather name={selectedIds.has(item.taskId) ? 'check-square' : 'square'} size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
           {item.points && (
             <View style={styles.pointsBadge}>
               <Feather name="star" size={14} color={theme.colors.warning} />
@@ -453,12 +471,55 @@ const PhotoValidationScreen: React.FC = () => {
             <View style={styles.guidanceBanner}>
               <Feather name="info" size={16} color={theme.colors.info} />
               <Text style={styles.guidanceBannerText}>
-                Tap a submission to review. Add notes to give helpful feedback.
+                Tap a submission to review. Long-press to multi-select, then approve or reject in bulk.
               </Text>
             </View>
             <Text style={styles.sectionTitle}>
               Tasks Awaiting Validation ({validationQueue.length})
             </Text>
+            {selectedIds.size > 0 && (
+              <View style={styles.bulkActions}>
+                <Button
+                  title={`Approve (${selectedIds.size})`}
+                  variant="primary"
+                  onPress={async () => {
+                    if (!userProfile) return;
+                    setIsValidating(true);
+                    try {
+                      for (const id of Array.from(selectedIds)) {
+                        await dispatch(validateTask({ taskId: id, validatorId: userProfile.id, approved: true, notes: '' })).unwrap();
+                      }
+                      setSelectedIds(new Set());
+                    } catch (e: any) {
+                      Alert.alert('Error', e.message || 'Failed to approve selected');
+                    } finally {
+                      setIsValidating(false);
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title={`Reject (${selectedIds.size})`}
+                  variant="danger"
+                  onPress={async () => {
+                    if (!userProfile) return;
+                    setIsValidating(true);
+                    try {
+                      for (const id of Array.from(selectedIds)) {
+                        await dispatch(validateTask({ taskId: id, validatorId: userProfile.id, approved: false, notes: validationNotes.trim() })).unwrap();
+                      }
+                      setSelectedIds(new Set());
+                      setValidationNotes('');
+                    } catch (e: any) {
+                      Alert.alert('Error', e.message || 'Failed to reject selected');
+                    } finally {
+                      setIsValidating(false);
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            )}
             {validationQueue.map(renderValidationItem)}
           </ScrollView>
         )}
@@ -514,6 +575,15 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   validationCard: {
     marginBottom: spacing.M,
     padding: spacing.M,
+  },
+  validationCardSelected: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+  bulkActions: {
+    flexDirection: 'row',
+    gap: spacing.M,
+    marginBottom: spacing.M,
   },
   cardHeader: {
     flexDirection: 'row',

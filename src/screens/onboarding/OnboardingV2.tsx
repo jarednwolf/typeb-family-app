@@ -52,6 +52,7 @@ import { setUserProfile } from '../../store/slices/authSlice';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ONBOARDING_KEY = '@onboarding_completed';
+const ONBOARDING_STEP_KEY = '@onboarding_current_step';
 
 interface OnboardingStep {
   id: string;
@@ -614,6 +615,17 @@ export const OnboardingV2: React.FC = () => {
   const progress = useSharedValue(0);
   
   useEffect(() => {
+    // Load persisted step
+    (async () => {
+      try {
+        const savedStep = await AsyncStorage.getItem(ONBOARDING_STEP_KEY);
+        if (savedStep) {
+          const idx = parseInt(savedStep, 10);
+          if (!Number.isNaN(idx)) setCurrentStep(Math.min(Math.max(idx, 0), steps.length - 1));
+        }
+      } catch {}
+    })();
+
     if (!reduceMotion) {
       progress.value = withTiming(
         (currentStep + 1) / steps.length,
@@ -622,6 +634,9 @@ export const OnboardingV2: React.FC = () => {
     } else {
       progress.value = (currentStep + 1) / steps.length;
     }
+
+    // Persist current step
+    AsyncStorage.setItem(ONBOARDING_STEP_KEY, String(currentStep)).catch(() => {});
   }, [currentStep, reduceMotion]);
   
   const handleNext = () => {
@@ -650,6 +665,8 @@ export const OnboardingV2: React.FC = () => {
   const completeOnboarding = async () => {
     try {
       await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      await AsyncStorage.removeItem(ONBOARDING_STEP_KEY);
+      try { (require('../../services/analytics').default as any).track('onboarding_complete'); } catch {}
       HapticFeedback.notification.success();
       navigation.reset({
         index: 0,

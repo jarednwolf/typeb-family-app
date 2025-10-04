@@ -12,6 +12,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
+import QRCode from 'qrcode';
 import Input from '../../components/forms/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -28,6 +30,8 @@ const JoinFamilyScreen: React.FC = () => {
   const userProfile = useSelector((state: RootState) => state.auth.userProfile);
   
   const [inviteCode, setInviteCode] = useState('');
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +47,18 @@ const JoinFamilyScreen: React.FC = () => {
     setError('');
     return true;
   }, [inviteCode]);
+
+  // Generate universal link and QR for easy joining
+  const generateJoinArtifacts = useCallback(async (code: string) => {
+    try {
+      const url = Linking.createURL('/join', { queryParams: { code } });
+      setInviteLink(url);
+      const dataUrl = await QRCode.toDataURL(url);
+      setQrDataUrl(dataUrl);
+    } catch (e) {
+      console.warn('Failed to generate QR/link', e);
+    }
+  }, []);
 
   const handleJoinFamily = useCallback(async () => {
     if (!validateCode()) return;
@@ -119,6 +135,12 @@ const JoinFamilyScreen: React.FC = () => {
                 const masked = sanitizeInviteCode(text).slice(0, 6);
                 setInviteCode(masked);
                 setError('');
+                if (masked.length === 6) {
+                  generateJoinArtifacts(masked);
+                } else {
+                  setInviteLink(null);
+                  setQrDataUrl(null);
+                }
               }}
               placeholder="XXXXXX"
               maxLength={6}
@@ -148,6 +170,23 @@ const JoinFamilyScreen: React.FC = () => {
               returnKeyType="done"
             />
           </View>
+
+          {/* Share Helpers */}
+          {inviteLink && (
+            <View style={{ marginTop: 16, alignItems: 'center' }}>
+              {qrDataUrl && (
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginBottom: 6 }}>Scan to Join</Text>
+                  <View style={{ backgroundColor: '#fff', padding: 8, borderRadius: 8 }}>
+                    <Image source={{ uri: qrDataUrl }} style={{ width: 160, height: 160 }} />
+                  </View>
+                </View>
+              )}
+              <TouchableOpacity onPress={() => { const Share = require('react-native').Share; Share.share({ message: inviteLink }); }}>
+                <Text style={{ color: isDarkMode ? theme.colors.info : theme.colors.primary }}>Share invite link</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </Card>
 
         <View style={styles.helpSection}>

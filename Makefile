@@ -13,15 +13,16 @@ install: ## Install all dependencies
 
 .PHONY: dev
 dev: ## Start all development servers
-	pnpm dev
+	@echo "Starting web dev server..."
+	make dev-web
 
 .PHONY: dev-web
 dev-web: ## Start web development server
-	pnpm dev:web
+	pnpm --filter @typeb/web dev
 
 .PHONY: dev-mobile
 dev-mobile: ## Start mobile development server
-	cd typeb-family-app && npm start
+	npm start
 
 .PHONY: build
 build: ## Build all packages and apps
@@ -59,13 +60,13 @@ clean: ## Clean all build artifacts and node_modules
 
 .PHONY: firebase-emulator
 firebase-emulator: ## Start Firebase emulators
-	firebase emulators:start
+	npx --yes firebase emulators:start
 
 .PHONY: deploy-staging
 deploy-staging: ## Deploy to staging environment
 	@echo "Deploying to staging..."
-	cd apps/web && vercel --env=staging
-	firebase deploy --only firestore:rules,firestore:indexes --project staging
+	cd apps/web && npx --yes vercel --yes
+	npx --yes firebase deploy --only firestore:rules,firestore:indexes --project staging
 
 .PHONY: deploy-production
 deploy-production: ## Deploy to production (requires confirmation)
@@ -73,8 +74,8 @@ deploy-production: ## Deploy to production (requires confirmation)
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		cd apps/web && vercel --prod; \
-		firebase deploy --only firestore:rules,firestore:indexes --project production; \
+		cd apps/web && npx --yes vercel --prod --yes; \
+		npx --yes firebase deploy --only firestore:rules,firestore:indexes --project production; \
 	fi
 
 .PHONY: backup-firestore
@@ -114,11 +115,11 @@ pre-launch-check: ## Run all checks before launch
 
 .PHONY: mobile-ios
 mobile-ios: ## Build iOS app
-	cd typeb-family-app && eas build --platform ios --profile production
+	eas build --platform ios --profile production
 
 .PHONY: mobile-android
 mobile-android: ## Build Android app
-	cd typeb-family-app && eas build --platform android --profile production
+	eas build --platform android --profile production
 
 .PHONY: docs-serve
 docs-serve: ## Serve documentation locally

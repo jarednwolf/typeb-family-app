@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { PurchasesPackage } from 'react-native-purchases';
 import revenueCatService, { PRODUCT_IDS } from '../../services/revenueCat';
+import analytics from '../../services/analytics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -87,6 +88,7 @@ const Paywall: React.FC<PaywallProps> = ({
       if (revenueCatService.checkPremiumStatus(customerInfo)) {
         Alert.alert('Success!', 'Welcome to TypeB Premium! 🎉');
         onSuccess?.();
+        analytics.track('purchase_success', { product: selectedPackage.identifier });
       }
     } catch (error: any) {
       if (!error.userCancelled) {
@@ -105,6 +107,7 @@ const Paywall: React.FC<PaywallProps> = ({
       if (revenueCatService.checkPremiumStatus(customerInfo)) {
         Alert.alert('Success!', 'Your purchases have been restored.');
         onSuccess?.();
+        analytics.track('purchase_restore');
       } else {
         Alert.alert('No Purchases', 'No active subscriptions found to restore.');
       }
@@ -246,13 +249,20 @@ const Paywall: React.FC<PaywallProps> = ({
           )}
         </TouchableOpacity>
 
-        {/* Restore Button */}
+        {/* Restore & Help Buttons */}
         <TouchableOpacity
           style={styles.restoreButton}
           onPress={handleRestore}
           disabled={isPurchasing}
         >
           <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.restoreButton}
+          onPress={() => Alert.alert('Need Help?', 'If you have trouble with billing or purchases, contact support@typebapp.com.')}
+          disabled={isPurchasing}
+        >
+          <Text style={styles.restoreButtonText}>Need Help?</Text>
         </TouchableOpacity>
 
         {/* Terms */}

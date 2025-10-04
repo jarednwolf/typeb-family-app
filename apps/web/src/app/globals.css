@@ -76,6 +76,35 @@
   }
 }
 
+/* Explicit theme overrides via data-theme to allow user toggle */
+:root[data-theme='light'] {
+  --color-primary: #0A0A0A;
+  --color-background: #FAF8F5;
+  --color-surface: #FFFFFF;
+  --color-background-texture: #F5F2ED;
+  --color-text-primary: #0A0A0A;
+  --color-text-secondary: #404040;
+  --color-text-tertiary: #595959;
+  --color-separator: #D1D1D1;
+  --color-skeleton: #E5E5E5;
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #FFFFFF;
+  --color-background: #000000;
+  --color-surface: #1C1C1E;
+  --color-background-texture: #2C2C2E;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #EBEBF5;
+  --color-text-tertiary: #C7C7CC;
+  --color-separator: #38383A;
+  --color-skeleton: #2C2C2E;
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

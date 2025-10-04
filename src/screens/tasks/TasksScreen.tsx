@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import CreateTaskModal from './CreateTaskModal';
 import { useNavigation } from '@react-navigation/native';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux';
 import { selectTasks, selectTasksLoading, fetchFamilyTasks, completeTask } from '../../store/slices/tasksSlice';
@@ -22,6 +23,8 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { TasksScreenSkeleton } from '../../components/common/Skeletons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Task, TaskStatus, TaskPriority, DEFAULT_TASK_CATEGORIES } from '../../types/models';
+import { NotificationPermissionHandler } from '../../components/notifications/NotificationPermissionHandler';
+import analytics from '../../services/analytics';
 
 type SortOption = 'dueDate' | 'priority' | 'createdAt' | 'title';
 type StatusFilter = 'all' | 'pending' | 'completed' | 'overdue';
@@ -44,6 +47,7 @@ export const TasksScreen: FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending');
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [showFastCreate, setShowFastCreate] = useState(false);
   
   // Dropdown states
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -170,6 +174,7 @@ export const TasksScreen: FC = () => {
         return;
       }
       await dispatch(completeTask({ taskId, userId: userProfile.id }) as any).unwrap();
+      analytics.track('task_complete', { taskId });
     } catch (error) {
       console.error('Task complete error:', error, { taskId, userId: userProfile?.id });
     }
@@ -178,7 +183,7 @@ export const TasksScreen: FC = () => {
   // Handle create task
   const handleCreateTask = () => {
     // Navigate to the Tasks tab first, then to CreateTask
-    navigation.navigate('Tasks', { screen: 'CreateTask' });
+    setShowFastCreate(true);
   };
 
   // Render task item
@@ -466,6 +471,8 @@ export const TasksScreen: FC = () => {
   
   return (
     <SafeAreaView style={styles.container} testID="tasks-screen">
+      {/* Contextual notifications prompt */}
+      <NotificationPermissionHandler showCard={false} onPermissionGranted={() => {}} />
       <View style={styles.headerContainer}>
         <Text style={styles.title} accessibilityRole="header">Tasks</Text>
         {isManager && family?.isPremium && pendingValidationCount > 0 && (
@@ -563,6 +570,9 @@ export const TasksScreen: FC = () => {
       >
         <Feather name="plus" size={24} color={theme.colors.surface} />
       </TouchableOpacity>
+
+      {/* Fast Create Modal */}
+      <CreateTaskModal visible={showFastCreate} onClose={() => setShowFastCreate(false)} />
     </SafeAreaView>
   );
 };

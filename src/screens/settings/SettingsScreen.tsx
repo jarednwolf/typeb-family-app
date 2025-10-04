@@ -248,6 +248,28 @@ const SettingsScreen: React.FC = () => {
       type: 'navigation',
       onPress: () => navigation.navigate('PrivacySettings' as never),
     },
+    {
+      id: 'manage-subscription',
+      title: 'Manage Subscription',
+      subtitle: 'Change or cancel your plan',
+      icon: 'credit-card',
+      type: 'action',
+      onPress: async () => {
+        try {
+          const info = await require('../../services/revenueCat').default.getCustomerInfo();
+          const url = info.managementURL;
+          if (url) {
+            // Open platform management URL
+            const Linking = require('react-native').Linking;
+            Linking.openURL(url);
+          } else {
+            Alert.alert('Manage Subscription', 'Open the App Store or Google Play to manage your subscription.');
+          }
+        } catch (e) {
+          Alert.alert('Manage Subscription', 'Unable to retrieve subscription info.');
+        }
+      },
+    },
   ];
 
   const supportSettings: SettingItem[] = [
@@ -257,6 +279,33 @@ const SettingsScreen: React.FC = () => {
       icon: 'help-circle',
       type: 'navigation',
       onPress: () => navigation.navigate('Support' as never),
+    },
+    {
+      id: 'report-bug',
+      title: 'Report a Bug',
+      subtitle: 'Send feedback with device info',
+      icon: 'alert-triangle',
+      type: 'action',
+      onPress: () => {
+        const Linking = require('react-native').Linking;
+        const Platform = require('react-native').Platform;
+        const subject = encodeURIComponent('TypeB Bug Report');
+        const body = encodeURIComponent(`Describe the issue:\n\nDevice: ${Platform.OS} ${Platform.Version}\nUser: ${userProfile?.email || 'unknown'}\nApp: v1.0.0\n\nSteps to reproduce:\n1)\n2)\n3)\n`);
+        Linking.openURL(`mailto:support@typebapp.com?subject=${subject}&body=${body}`);
+      },
+    },
+    {
+      id: 'contact-support',
+      title: 'Contact Support',
+      subtitle: 'support@typebapp.com',
+      icon: 'mail',
+      type: 'action',
+      onPress: () => {
+        const Linking = require('react-native').Linking;
+        const subject = encodeURIComponent('TypeB Support Request');
+        const body = encodeURIComponent(`App: TypeB\nVersion: 1.0.0\nUser: ${userProfile?.email || 'unknown'}\n\nDescribe your issue:`);
+        Linking.openURL(`mailto:support@typebapp.com?subject=${subject}&body=${body}`);
+      },
     },
     {
       id: 'privacy',

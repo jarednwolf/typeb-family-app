@@ -11,12 +11,12 @@ import {
   Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux';
 import { selectUserProfile } from '../../store/slices/authSlice';
-import { selectTasks, selectTaskStats, completeTask } from '../../store/slices/tasksSlice';
+import { selectTasks, selectTaskStats, completeTask, fetchFamilyTasks, fetchTaskStats } from '../../store/slices/tasksSlice';
 import { selectFamily } from '../../store/slices/familySlice';
 import { TaskCard } from '../../components/cards/TaskCard';
 import { StatsCard } from '../../components/cards/StatsCard';
@@ -26,6 +26,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { Button } from '../../components/common/Button';
 import { DashboardScreenSkeleton } from '../../components/common/Skeletons';
 import PremiumBadge from '../../components/premium/PremiumBadge';
+import analytics from '../../services/analytics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useReduceMotion } from '../../contexts/AccessibilityContext';
 import { TaskStatus } from '../../types/models';
@@ -68,13 +69,26 @@ export const DashboardScreen: FC = () => {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
+  // Refresh when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData(false);
+    }, [family?.id, userProfile?.id])
+  );
+
+  const loadDashboardData = async (showSkeleton: boolean = true) => {
     try {
-      setLoading(true);
-      // TODO: Dispatch actions to load tasks and family data
-      // await dispatch(fetchTasks()).unwrap();
-      // await dispatch(fetchFamily()).unwrap();
-      setTimeout(() => setLoading(false), 1000); // Simulated loading
+      if (showSkeleton) setLoading(true);
+      if (!family?.id || !userProfile?.id) {
+        setLoading(false);
+        return;
+      }
+      // Fetch tasks for family and task stats in parallel
+      await Promise.all([
+        dispatch(fetchFamilyTasks({ familyId: family.id, userId: userProfile.id }) as any).unwrap(),
+        dispatch(fetchTaskStats({ familyId: family.id, userId: userProfile.id }) as any).unwrap(),
+      ]);
+      setLoading(false);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setLoading(false);
@@ -608,7 +622,7 @@ export const DashboardScreen: FC = () => {
         >
           <TouchableOpacity
             style={styles.analyticsCard}
-            onPress={() => navigation.navigate('Analytics')}
+            onPress={() => { analytics.track('paywall_view', { source: 'dashboard_analytics_card' }); navigation.navigate('Analytics'); }}
             activeOpacity={0.8}
           >
             <View style={styles.analyticsHeader}>

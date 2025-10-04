@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { configureGoogleSignIn, validateEmail, validatePassword } from '../../services/auth';
 import VerificationBanner from '../../components/VerificationBanner';
+import analytics from '../../services/analytics';
 
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -33,6 +34,8 @@ const SignInScreen: React.FC = () => {
   const isEmailVerified = useAppSelector(selectIsEmailVerified);
   const currentUser = useAppSelector(selectUser);
   const { theme, isDarkMode } = useTheme();
+  const emailInputRef = useRef<any>(null);
+  const passwordInputRef = useRef<any>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,12 +56,11 @@ const SignInScreen: React.FC = () => {
 
   const handleSignIn = async () => {
     if (!isFormValid) {
-      const msg = !emailValidation.isValid
-        ? emailValidation.error
-        : !passwordValidation.isValid
-        ? passwordValidation.errors?.[0] || 'Invalid password'
-        : 'Please fix errors';
-      Alert.alert('Sign In', msg || 'Please fix errors');
+      if (!emailValidation.isValid) {
+        emailInputRef.current?.focus();
+      } else if (!passwordValidation.isValid) {
+        passwordInputRef.current?.focus();
+      }
       return;
     }
 
@@ -66,7 +68,10 @@ const SignInScreen: React.FC = () => {
     const result = await dispatch(signIn({ email, password }));
     
     if (signIn.rejected.match(result)) {
-      Alert.alert('Sign In Failed', result.payload as string);
+      // Focus password on failure to encourage retry
+      passwordInputRef.current?.focus();
+    } else {
+      analytics.track('auth_sign_in', { method: 'password' });
     }
   };
 
@@ -98,6 +103,13 @@ const SignInScreen: React.FC = () => {
             <Text style={styles.subtitle}>More than checking the box</Text>
           </View>
 
+          {/* Inline error banner */}
+          {!!error && (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{error}</Text>
+            </View>
+          )}
+
           {/* Email verification banner (only if signed in and unverified) */}
           {currentUser && !isEmailVerified && showVerification && (
             <VerificationBanner onDismiss={() => setShowVerification(false)} />
@@ -107,15 +119,17 @@ const SignInScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
+                ref={emailInputRef}
                 testID="email-input"
                 style={[styles.input, !emailValidation.isValid && email.length > 0 ? { borderColor: theme.colors.error } : null]}
                 placeholder="Enter your email"
                 placeholderTextColor={theme.colors.textTertiary}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(v) => { if (error) dispatch(clearError()); setEmail(v); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
                 editable={!isLoading}
               />
               {!emailValidation.isValid && email.length > 0 && (
@@ -127,17 +141,19 @@ const SignInScreen: React.FC = () => {
               <Text style={styles.label}>Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
+                  ref={passwordInputRef}
                   testID="password-input"
                   style={[styles.input, styles.passwordInput, !passwordValidation.isValid && password.length > 0 ? { borderColor: theme.colors.error } : null]}
                   placeholder="Enter your password"
                   placeholderTextColor={theme.colors.textTertiary}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(v) => { if (error) dispatch(clearError()); setPassword(v); }}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoComplete="off"
                   textContentType="none"
+                  onSubmitEditing={handleSignIn}
                   editable={!isLoading}
                 />
                 <TouchableOpacity
@@ -153,6 +169,9 @@ const SignInScreen: React.FC = () => {
                 <Text style={{ color: theme.colors.error, marginTop: 6 }}>
                   {(passwordValidation.errors && passwordValidation.errors[0]) || 'Invalid password'}
                 </Text>
+              )}
+              {password.length === 0 && (
+                <Text style={styles.helperText}>8+ characters, include a number and letter</Text>
               )}
             </View>
 
@@ -247,6 +266,18 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   form: {
     flex: 1,
   },
+  errorBanner: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: isDarkMode ? '#3b0d0d' : '#FEE2E2',
+    borderWidth: 1,
+    borderColor: isDarkMode ? '#7f1d1d' : '#FCA5A5',
+    borderRadius: 8,
+  },
+  errorBannerText: {
+    color: isDarkMode ? '#FCA5A5' : '#7F1D1D',
+    fontSize: 14,
+  },
   inputContainer: {
     marginBottom: 20,
   },
@@ -265,6 +296,11 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     fontSize: 16,
     color: theme.colors.textPrimary,
     backgroundColor: isDarkMode ? theme.colors.surface : '#F9FAFB',
+  },
+  helperText: {
+    color: theme.colors.textTertiary,
+    marginTop: 6,
+    fontSize: 12,
   },
   passwordContainer: {
     position: 'relative',

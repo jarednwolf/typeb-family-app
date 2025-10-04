@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,17 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { configureGoogleSignIn, validateEmail, validatePassword, formatAuthError } from '../../services/auth';
+import analytics from '../../services/analytics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
 export const SignUpScreen = () => {
   const navigation = useNavigation();
   const { theme, isDarkMode } = useTheme();
+  const emailRef = useRef<any>(null);
+  const passwordRef = useRef<any>(null);
+  const firstNameRef = useRef<any>(null);
+  const birthYearRef = useRef<any>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -61,16 +66,16 @@ export const SignUpScreen = () => {
       }
 
       if (!isFormValid) {
-        const msg = !emailValidation.isValid
-          ? emailValidation.error
-          : !passwordValidation.isValid
-          ? passwordValidation.errors?.[0] || 'Invalid password'
-          : !firstName
-          ? 'Please enter your first name'
-          : !birthYear
-          ? 'Please enter your birth year'
-          : 'Please fix the highlighted errors';
-        Alert.alert('Sign Up', msg || 'Please fix the highlighted errors');
+        if (!firstName) {
+          firstNameRef.current?.focus();
+        } else if (!emailValidation.isValid) {
+          emailRef.current?.focus();
+        } else if (!passwordValidation.isValid) {
+          passwordRef.current?.focus();
+        } else if (!birthYear) {
+          birthYearRef.current?.focus();
+        }
+        setIsLoading(false);
         return;
       }
 
@@ -109,6 +114,7 @@ export const SignUpScreen = () => {
       }
 
       Alert.alert('Success', 'Account created successfully! Please verify your email.');
+      analytics.track('auth_sign_up', { method: 'password' });
       // Navigation will be handled by auth state change
     } catch (error: any) {
       Alert.alert('Error', formatAuthError(error));
@@ -122,6 +128,7 @@ export const SignUpScreen = () => {
       <Text style={styles.title}>Create Account</Text>
 
       <TextInput
+        ref={firstNameRef}
         style={[styles.input, !firstName ? { borderColor: '#f87171' } : null]}
         placeholder="First Name"
         value={firstName}
@@ -129,6 +136,7 @@ export const SignUpScreen = () => {
       />
 
       <TextInput
+        ref={emailRef}
         style={[styles.input, !emailValidation.isValid && email.length > 0 ? { borderColor: '#f87171' } : null]}
         placeholder="Email"
         value={email}
@@ -141,6 +149,7 @@ export const SignUpScreen = () => {
       )}
 
       <TextInput
+        ref={passwordRef}
         style={[styles.input, !passwordValidation.isValid && password.length > 0 ? { borderColor: '#f87171' } : null]}
         placeholder="Password"
         value={password}
@@ -152,8 +161,12 @@ export const SignUpScreen = () => {
           {(passwordValidation.errors && passwordValidation.errors[0]) || 'Invalid password'}
         </Text>
       )}
+      {password.length === 0 && (
+        <Text style={styles.helperText}>8+ characters, include a number and letter</Text>
+      )}
 
       <TextInput
+        ref={birthYearRef}
         style={[styles.input, !birthYear ? { borderColor: '#f87171' } : null]}
         placeholder="Birth Year (YYYY)"
         value={birthYear}
@@ -235,6 +248,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#fff',
+  },
+  helperText: {
+    color: '#6b7280',
+    marginTop: 6,
+    fontSize: 12,
   },
   title: {
     fontSize: 24,

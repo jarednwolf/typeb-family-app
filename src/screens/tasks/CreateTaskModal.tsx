@@ -31,6 +31,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { MIDDLE_SCHOOL_TASK_TEMPLATES, TaskTemplate } from '../../data/MiddleSchoolTaskTemplates';
 import { recurringTaskScheduler } from '../../services/RecurringTaskScheduler';
 import { createTaskSchema, validateData } from '../../utils/validation';
+import analytics from '../../services/analytics';
 
 interface CreateTaskModalProps {
   visible: boolean;
@@ -248,6 +249,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onClose }) =
           userId: userProfile?.id || '',
           input: newTask
         })).unwrap();
+        analytics.track('task_create', { assignedTo, categoryId, priority });
       }
       
       // Don't schedule notifications - they might be causing issues

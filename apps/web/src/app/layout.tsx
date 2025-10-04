@@ -87,6 +87,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Theme toggle: persisted in localStorage, reflected via data-theme on :root
+  const setTheme = (theme: 'light' | 'dark') => {
+    try {
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      }
+    } catch {}
+  };
+  if (typeof document !== 'undefined') {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved as any);
+    }
+  }
   return (
     <html lang="en">
       <head>
@@ -191,6 +206,28 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 50 }}>
+          <button
+            onClick={() => {
+              try {
+                const current = document.documentElement.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                setTheme((next as any));
+              } catch {}
+            }}
+            aria-label="Toggle dark mode"
+            style={{
+              padding: '8px 12px',
+              borderRadius: 9999,
+              border: '1px solid var(--color-separator)',
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+              fontSize: 12,
+            }}
+          >
+            Toggle Theme
+          </button>
+        </div>
         {children}
         
         {/* Google Analytics 4 */}
