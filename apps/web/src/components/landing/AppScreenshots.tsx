@@ -107,7 +107,7 @@ export const AppScreenshots: React.FC = () => {
           </div>
 
           {/* Screenshots Grid */}
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
             {filteredScreenshots.map((screenshot, index) => (
               <div key={screenshot.id} className="group relative" style={{ animationDelay: `${index * 100}ms` }}>
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
@@ -119,9 +119,9 @@ export const AppScreenshots: React.FC = () => {
                       loading="lazy"
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{screenshot.title}</h3>
-                    <p className="text-gray-600">{screenshot.description}</p>
+                  <div className="p-5 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2">{screenshot.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{screenshot.description}</p>
                   </div>
                 </div>
               </div>

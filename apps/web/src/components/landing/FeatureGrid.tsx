@@ -136,13 +136,13 @@ export const FeatureGrid: React.FC = () => {
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((feature, index) => {
               const colors = getColorClasses(feature.color);
               return (
                 <div
                   key={feature.id}
-                  className="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1"
+                  className="group relative bg-white rounded-2xl p-7 sm:p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Hover gradient border effect */}

@@ -55,19 +55,19 @@ export const HeroSection: React.FC = () => {
             </div>
             
             {/* Main Headline with premium black */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-normal mb-6 leading-tight" style={{ color: '#0A0A0A' }}>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-normal mb-4 sm:mb-6 leading-[1.05] tracking-tight" style={{ color: '#0A0A0A' }}>
               {isNewHeroEnabled
                 ? <>Build <span style={{ color: '#007AFF' }}>Accountability</span></>
                 : <>Get <span style={{ color: '#007AFF' }}>Peace of Mind</span></>}
             </h1>
             
             {/* Tagline */}
-            <p className="text-lg sm:text-xl mb-4 italic" style={{ color: '#595959' }}>
+            <p className="text-lg sm:text-xl mb-2 sm:mb-3 italic" style={{ color: '#595959' }}>
               More than checking the box
             </p>
             
             {/* Subheadline */}
-            <p className="text-xl sm:text-2xl mb-8 leading-relaxed" style={{ color: '#404040' }}>
+            <p className="text-xl sm:text-2xl mb-8 sm:mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0" style={{ color: '#404040' }}>
               {isNewHeroEnabled
                 ? "Know your kids are doing what they should. Track responsibilities, verify completion, and build trust through accountability."
                 : "Finally relax knowing chores are getting done. Get notifications, photo proof, and real-time updates on your family's tasks."}

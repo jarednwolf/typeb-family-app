@@ -53,7 +53,9 @@ export default function LandingPage() {
         <HeroSection />
 
         {/* Social Proof Bar */}
-        <SocialProof />
+        <div className="mt-4 sm:mt-6">
+          <SocialProof />
+        </div>
 
         {/* Features Grid - Moved up for better flow */}
         <FeatureGrid />
