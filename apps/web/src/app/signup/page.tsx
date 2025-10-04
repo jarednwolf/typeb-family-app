@@ -65,7 +65,7 @@ export default function SignUpPage() {
         formData.password,
         formData.displayName
       );
-      router.push('/onboarding');
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -84,7 +84,7 @@ export default function SignUpPage() {
     
     try {
       await authAdapter.signInWithGoogle();
-      router.push('/onboarding');
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google');
     } finally {
