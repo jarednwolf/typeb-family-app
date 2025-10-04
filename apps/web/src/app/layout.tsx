@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
-import { ThemeToggle } from '@/components/ThemeToggle';
+// Removed ThemeToggle from landing layout per usability feedback
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -192,9 +192,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 50 }}>
-          <ThemeToggle />
-        </div>
+        {/* ThemeToggle removed */}
         {children}
         
         {/* Google Analytics 4 */}

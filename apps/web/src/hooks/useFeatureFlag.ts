@@ -30,7 +30,7 @@ export function useFeatureFlag(flagName: string): boolean {
         // Default feature flags for development
         const defaultFlags: Record<string, boolean> = {
           enableNewHeroSection: true,
-          enableDemoVideo: true,
+          enableDemoVideo: false,
           enableTestimonials: true,
           enableEmailCaptureModal: true,
           enableSocialProof: true,

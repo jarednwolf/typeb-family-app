@@ -96,18 +96,18 @@ export const FeatureGrid: React.FC = () => {
     switch (color) {
       case 'primary':
         return {
-          bg: 'bg-primary bg-opacity-10',
-          text: 'text-primary',
+          bg: 'bg-gray-900/90',
+          text: 'text-white',
         };
       case 'secondary':
         return {
-          bg: 'bg-secondary bg-opacity-10',
-          text: 'text-secondary',
+          bg: 'bg-green-600/90',
+          text: 'text-white',
         };
       case 'accent':
         return {
-          bg: 'bg-accent bg-opacity-10',
-          text: 'text-accent',
+          bg: 'bg-blue-600/90',
+          text: 'text-white',
         };
     }
   };

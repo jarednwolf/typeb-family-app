@@ -73,53 +73,28 @@ export const HeroSection: React.FC = () => {
                 : "Finally relax knowing chores are getting done. Get notifications, photo proof, and real-time updates on your family's tasks."}
             </p>
 
-            {/* CTA Buttons with minimal design */}
+            {/* CTA Buttons - refined styling; demo hidden until available */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Link
                 href="/signup"
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
                 style={{ backgroundColor: '#0A0A0A' }}
                 data-analytics="hero-cta-start-trial"
               >
-                Start Free Trial
-                <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span>Start Free Trial</span>
+                <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
               <Link
                 href="/login"
-                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-                style={{ 
-                  color: '#0A0A0A',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D1D1D1'
-                }}
+                className="inline-flex items-center justify-center rounded-full px-7 py-4 text-base font-medium transition-all duration-200 border shadow-sm hover:shadow-md"
+                style={{ backgroundColor: '#FFFFFF', borderColor: '#D1D1D1', color: '#0A0A0A' }}
                 data-analytics="hero-cta-login"
               >
-                Sign In
-                <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
+                <span>Sign In</span>
               </Link>
-              <button
-                onClick={() => {
-                  const demoSection = document.getElementById('demo-video');
-                  demoSection?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-                style={{ 
-                  color: '#0A0A0A',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D1D1D1'
-                }}
-                data-analytics="hero-cta-watch-demo"
-              >
-                <svg className="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#007AFF' }}>
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                </svg>
-                Watch Demo
-              </button>
+              {/* Demo button hidden until a real video is available */}
             </div>
 
             {/* Trust Indicators */}

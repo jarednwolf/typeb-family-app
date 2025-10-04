@@ -109,78 +109,19 @@ export const AppScreenshots: React.FC = () => {
           {/* Screenshots Grid */}
           <div className="grid md:grid-cols-3 gap-8">
             {filteredScreenshots.map((screenshot, index) => (
-              <div
-                key={screenshot.id}
-                className="group relative"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
+              <div key={screenshot.id} className="group relative" style={{ animationDelay: `${index * 100}ms` }}>
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-                  {/* Screenshot Placeholder */}
-                  <div className="aspect-[9/16] bg-gradient-to-br from-gray-100 to-gray-200 relative">
-                    {/* Phone Frame */}
-                    <div className="absolute inset-2 bg-white rounded-xl shadow-inner">
-                      {/* Status Bar */}
-                      <div className="h-6 bg-gray-900 rounded-t-xl flex items-center justify-between px-4">
-                        <div className="flex gap-1">
-                          <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
-                          <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
-                          <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
-                        </div>
-                        <div className="text-[8px] text-gray-400">9:41 AM</div>
-                        <div className="flex gap-1">
-                          <div className="w-3 h-2 bg-gray-600 rounded-sm"></div>
-                          <div className="w-1 h-2 bg-gray-600 rounded-sm"></div>
-                        </div>
-                      </div>
-                      
-                      {/* Screen Content Placeholder */}
-                      <div className="p-4 space-y-3">
-                        {activeTab === 'parent' ? (
-                          <>
-                            {/* Parent View Mock */}
-                            <div className="h-8 bg-blue-100 rounded-lg"></div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="h-20 bg-blue-50 rounded-lg"></div>
-                              <div className="h-20 bg-green-50 rounded-lg"></div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="h-12 bg-gray-100 rounded-lg"></div>
-                              <div className="h-12 bg-gray-100 rounded-lg"></div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* Child View Mock */}
-                            <div className="h-32 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center">
-                              <div className="text-4xl">🎯</div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="h-16 bg-green-100 rounded-lg"></div>
-                              <div className="h-16 bg-blue-100 rounded-lg"></div>
-                              <div className="h-16 bg-purple-100 rounded-lg"></div>
-                            </div>
-                            <div className="h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg"></div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Decorative Badge */}
-                    <div className={`absolute -top-2 -right-2 w-12 h-12 ${
-                      activeTab === 'parent' ? 'bg-blue-500' : 'bg-green-500'
-                    } rounded-full flex items-center justify-center text-white font-bold shadow-lg`}>
-                      {index + 1}
-                    </div>
+                  <div className="aspect-[9/16] bg-neutral-900 relative">
+                    <img
+                      src={screenshot.imagePath}
+                      alt={screenshot.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
-                  
-                  {/* Description */}
                   <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {screenshot.title}
-                    </h3>
-                    <p className="text-gray-600">
-                      {screenshot.description}
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{screenshot.title}</h3>
+                    <p className="text-gray-600">{screenshot.description}</p>
                   </div>
                 </div>
               </div>

@@ -35,6 +35,11 @@ export const DemoVideo: React.FC = () => {
     watchTime: 0,
   });
 
+  // Hide entirely unless explicitly enabled (no video yet)
+  if (!isDemoVideoEnabled) {
+    return null;
+  }
+
   // Track video events
   useEffect(() => {
     if (!videoRef.current) return;
@@ -136,10 +141,6 @@ export const DemoVideo: React.FC = () => {
       }
     };
   }, [isLoaded]);
-
-  if (!isDemoVideoEnabled) {
-    return null;
-  }
 
   const handlePlayClick = () => {
     setShowVideo(true);
