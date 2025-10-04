@@ -46,9 +46,14 @@ jobs:
           else
             echo "APP_DIR=." >> $GITHUB_ENV
           fi
+      - name: Skip if submodule not present
+        if: ${{ env.APP_DIR == '.' }}
+        run: echo "Mobile app submodule missing; skipping unit tests."
       - name: Install app deps
+        if: ${{ env.APP_DIR != '.' }}
         working-directory: ${{ env.APP_DIR }}
         run: pnpm install --no-frozen-lockfile
       - name: Run unit tests
+        if: ${{ env.APP_DIR != '.' }}
         working-directory: ${{ env.APP_DIR }}
         run: pnpm run test:unit --silent
