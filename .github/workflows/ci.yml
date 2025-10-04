@@ -18,7 +18,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
       - name: Install deps (no frozen)
         run: pnpm install --no-frozen-lockfile
@@ -38,7 +37,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
       - name: Determine app directory
         id: appdir
