@@ -5,7 +5,6 @@ import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/fire
 import { db } from '@/lib/firebase/config';
 import { User } from '@typeb/types';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
-import { authAdapter } from '@/lib/firebase/auth-adapter';
 
 export default function FamilyPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
