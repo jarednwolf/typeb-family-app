@@ -1,13 +1,13 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 type ModalProps = {
   open: boolean;
   title?: string;
   onClose: () => void;
-  children: ReactNode;
-  footer?: ReactNode;
+  children?: React.ReactNode;
+  footer?: React.ReactNode;
 };
 
 export default function Modal({ open, title, onClose, children, footer }: ModalProps) {
