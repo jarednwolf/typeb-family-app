@@ -5,6 +5,9 @@ import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc, 
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
 import Link from 'next/link';
+import PageHeader from '@/components/ui/PageHeader';
+import FiltersToolbar from '@/components/ui/FiltersToolbar';
+import EmptyState from '@/components/ui/EmptyState';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 
 export default function TasksPage() {
@@ -14,6 +17,7 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     loadTasks();
@@ -21,7 +25,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     filterAndSortTasks();
-  }, [tasks, filter, sortBy]);
+  }, [tasks, filter, sortBy, query]);
 
   const loadTasks = async () => {
     try {
@@ -58,6 +62,12 @@ export default function TasksPage() {
     // Apply filter
     if (filter !== 'all') {
       filtered = filtered.filter(task => task.status === filter);
+    }
+
+    // Apply text search
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(t => (t.title || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
     }
 
     // Apply sort
@@ -143,80 +153,31 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-6 section-y">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-600 mt-1">Manage your family's tasks and responsibilities</p>
-        </div>
-        <Link
-          href="/dashboard/tasks/new"
-          className="btn btn-primary px-4 transition"
-        >
-          + New Task
-        </Link>
-      </div>
+      <PageHeader
+        title="Tasks"
+        subtitle="Manage your family's tasks and responsibilities"
+        primaryAction={{ href: '/dashboard/tasks/new', label: '+ New Task', analyticsId: 'cta_new_task_header' }}
+      />
 
-      {/* Filters and Sort */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as typeof filter)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
-            
-          </div>
-          
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sort by</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              <option value="dueDate">Due date</option>
-              <option value="priority">Priority</option>
-              <option value="status">Status</option>
-            </select>
-            
-          </div>
-        </div>
-      </div>
+      <FiltersToolbar
+        status={filter}
+        onStatusChange={(v)=>setFilter(v as typeof filter)}
+        sortBy={sortBy}
+        onSortByChange={(v)=>setSortBy(v as typeof sortBy)}
+        query={query}
+        onQueryChange={(v)=>setQuery(v)}
+        onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setQuery(''); }}
+        right={<Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>}
+      />
 
       {/* Tasks Grid */}
       {filteredTasks.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-          <div className="mb-4 flex items-center justify-center">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No tasks found</h3>
-          <p className="text-gray-600 mb-4">
-            {filter === 'all' 
-              ? "Create your first task to get started!"
-              : `No ${filter.replace('_', ' ')} tasks at the moment.`}
-          </p>
-          {filter === 'all' && (
-            <Link
-              href="/dashboard/tasks/new"
-              className="inline-flex items-center btn btn-primary px-4 transition"
-            >
-              Create Task
-            </Link>
-          )}
-          <div className="mt-3">
-            <a href="/help" className="text-sm text-gray-600 hover:underline">Need help? Visit the Help Center</a>
-          </div>
-        </div>
+        <EmptyState
+          title="No tasks found"
+          description={filter === 'all' ? 'Create your first task to get started!' : `No ${filter.replace('_', ' ')} tasks at the moment.`}
+          cta={filter === 'all' ? { href: '/dashboard/tasks/new', label: 'Create Task' } : undefined}
+          helpHref="/help"
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTasks.map((task) => (
@@ -303,6 +264,7 @@ export default function TasksPage() {
                 <Link
                   href={`/dashboard/tasks/${task.id}`}
                   className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  aria-label={`Edit task ${task.title}`}
                 >
                   Edit
                 </Link>

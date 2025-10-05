@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { auth, db } from '@/lib/firebase/config';
 import { updateProfile, updatePassword, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import Modal from '@/components/ui/Modal';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 
@@ -14,6 +15,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [emailSaving, setEmailSaving] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const [newPwd, setNewPwd] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -107,8 +110,8 @@ export default function SettingsPage() {
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Support</h2>
         <div className="mt-4 flex gap-3">
-          <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Contact Support</a>
-          <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Report a Bug</a>
+          <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Contact support by email">Contact Support</a>
+          <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Report a bug by email">Report a Bug</a>
         </div>
       </div>
 
@@ -141,24 +144,39 @@ export default function SettingsPage() {
 
         <div className="mt-6">
           <h3 className="text-md font-semibold text-gray-900 mb-2">Change password</h3>
-          <button
-            onClick={async ()=>{
-              try {
-                if (!auth.currentUser) return;
-                // Prompt reauth via Google if available; otherwise noop
-                try { await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider()); } catch {}
-                const pwd = prompt('Enter new password (min 6 chars)');
-                if (!pwd || pwd.length < 6) return alert('Password too short');
-                await updatePassword(auth.currentUser, pwd);
-                alert('Password updated');
-              } catch (e) {
-                alert('Password update failed');
-              }
-            }}
-            className="px-4 py-2 btn btn-secondary"
-          >Update password</button>
+          <button className="px-4 py-2 btn btn-secondary" onClick={()=>setPwdOpen(true)}>Update password</button>
         </div>
       </div>
+
+      <Modal
+        open={pwdOpen}
+        onClose={()=>setPwdOpen(false)}
+        title="Update password"
+        footer={(
+          <>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setPwdOpen(false)}>Cancel</button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={async ()=>{
+                try {
+                  if (!auth.currentUser || newPwd.length < 6) return alert('Password too short');
+                  try { await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider()); } catch {}
+                  await updatePassword(auth.currentUser, newPwd);
+                  alert('Password updated');
+                  setNewPwd('');
+                  setPwdOpen(false);
+                } catch {
+                  alert('Password update failed');
+                }
+              }}
+            >Save</button>
+          </>
+        )}
+      >
+        <label className="block text-sm text-gray-600 mb-1">New password</label>
+        <input type="password" value={newPwd} onChange={(e)=>setNewPwd(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" placeholder="••••••" />
+        <p className="text-xs text-gray-500 mt-2">Minimum 6 characters.</p>
+      </Modal>
     </div>
   );
 }

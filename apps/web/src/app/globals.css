@@ -237,6 +237,25 @@ a:hover { color: #0A0A0A; }
 .btn-secondary:hover { background: #f9f9f9; }
 .btn:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
 
+/* Button variants */
+.btn-sm { min-height: 36px; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 10px; }
+.btn-danger { border: 1px solid #fecaca; color: #dc2626; background: #fff; }
+.btn-danger:hover { background: #fef2f2; }
+.btn-link { background: transparent; color: #111827; padding: 0; min-height: auto; border-radius: 8px; }
+.btn-link:hover { text-decoration: underline; }
+
+/* Layout tokens */
+.screen-container { padding-left: 1rem; padding-right: 1rem; }
+@media (min-width: 1024px) { .screen-container { padding-left: 2rem; padding-right: 2rem; } }
+
+.section-stack { display: grid; row-gap: 1.5rem; }
+.section-stack-lg { display: grid; row-gap: 2rem; }
+
+/* Card tokens */
+.card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.card-lg { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.card-xl { background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
 /* Premium badge gradient */
 .premium-gradient {
   background: linear-gradient(135deg, #FFD700, #FFA500);
