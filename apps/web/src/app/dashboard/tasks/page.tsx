@@ -17,7 +17,7 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
-  const [query, setQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadTasks();
@@ -25,7 +25,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     filterAndSortTasks();
-  }, [tasks, filter, sortBy, query]);
+  }, [tasks, filter, sortBy, searchQuery]);
 
   const loadTasks = async () => {
     try {
@@ -65,8 +65,8 @@ export default function TasksPage() {
     }
 
     // Apply text search
-    if (query.trim()) {
-      const q = query.toLowerCase();
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(t => (t.title || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
     }
 
@@ -164,9 +164,9 @@ export default function TasksPage() {
         onStatusChange={(v)=>setFilter(v as typeof filter)}
         sortBy={sortBy}
         onSortByChange={(v)=>setSortBy(v as typeof sortBy)}
-        query={query}
-        onQueryChange={(v)=>setQuery(v)}
-        onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setQuery(''); }}
+        query={searchQuery}
+        onQueryChange={(v)=>setSearchQuery(v)}
+        onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setSearchQuery(''); }}
         right={<Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>}
       />
 
