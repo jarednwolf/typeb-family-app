@@ -13,22 +13,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install deps
-        working-directory: apps/web
-        run: npm ci
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]") --activate
+      - name: Install workspace deps
+        run: pnpm -w install --no-frozen-lockfile
       - name: Build web
-        working-directory: apps/web
-        run: npm run build
+        run: pnpm -C apps/web build
       - name: Install Playwright browsers
-        working-directory: apps/web
-        run: npx playwright install --with-deps
+        run: pnpm -C apps/web exec playwright install --with-deps
       - name: Start web server
-        working-directory: apps/web
-        run: npm run start &
+        run: pnpm -C apps/web start &
+      - name: Wait for server
+        run: |
+          for i in {1..60}; do
+            if curl -sSf http://localhost:3000 > /dev/null; then
+              echo "Server is up"; break; fi; sleep 1; done
       - name: Run Playwright
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3000
-        working-directory: apps/web
-        run: npx playwright test --reporter=line
+        run: pnpm -C apps/web test:e2e --reporter=line
 
 

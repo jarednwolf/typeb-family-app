@@ -47,6 +47,7 @@ export default function ValidationQueuePage() {
             <div className="mt-2"><a href="/help" className="text-sm hover:underline">Learn how photo validation works</a></div>
           </div>
         ) : (
+          <>
           <div className="flex justify-end gap-2 mb-3">
             <button onClick={()=>markSelected('approved')} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve selected</button>
             <button onClick={()=>markSelected('rejected')} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">Reject selected</button>
@@ -68,6 +69,7 @@ export default function ValidationQueuePage() {
               </li>
             ))}
           </ul>
+          </>
         )}
       </div>
     </div>
