@@ -5,8 +5,10 @@ import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/fire
 import { db } from '@/lib/firebase/config';
 import { User } from '@typeb/types';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
+import { authAdapter } from '@/lib/firebase/auth-adapter';
 
 export default function FamilyPage() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [members, setMembers] = useState<User[]>([]);
   const [inviteCode, setInviteCode] = useState('');
   const [inviteLink, setInviteLink] = useState('');
@@ -14,6 +16,7 @@ export default function FamilyPage() {
   useEffect(() => {
     (async () => {
       const current = await authAdapter.getCurrentUser();
+      setCurrentUser(current);
       if (current?.familyId) {
         // Members
         const membersQuery = query(collection(db, 'users'), where('familyId', '==', current.familyId));
@@ -74,7 +77,7 @@ export default function FamilyPage() {
                 <button
                   className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
                   onClick={async () => {
-                    if (user?.role !== 'parent') return;
+                    if (currentUser?.role !== 'parent') return;
                     const newRole = m.role === 'parent' ? 'child' : 'parent';
                     if (!confirm(`Change ${m.displayName}'s role to ${newRole}?`)) return;
                     await updateDoc(doc(db, 'users', m.id), { role: newRole, updatedAt: new Date() });

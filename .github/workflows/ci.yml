@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install deps (no frozen)
-        run: pnpm install --no-frozen-lockfile
+      - name: Install workspace deps (recursive)
+        run: pnpm install -r --no-frozen-lockfile
       - name: Build web
         working-directory: apps/web
         run: pnpm build
