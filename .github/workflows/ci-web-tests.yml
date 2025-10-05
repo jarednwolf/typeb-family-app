@@ -21,8 +21,10 @@ jobs:
         run: pnpm install -r --no-frozen-lockfile
       - name: Build web
         run: pnpm -C apps/web build
-      - name: Install Playwright browsers
-        run: pnpm -C apps/web exec playwright install --with-deps
+      - name: Install Playwright as dev dep and browsers
+        run: |
+          pnpm -C apps/web add -D @playwright/test@1.47.2
+          npx --yes playwright install --with-deps
       - name: Start web server
         run: pnpm -C apps/web start &
       - name: Wait for server
