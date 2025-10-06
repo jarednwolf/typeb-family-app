@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import dynamic from 'next/dynamic';
-const ToastProvider = dynamic(() => import('@/components/ui/ToastProvider'), { ssr: false });
-import dynamic from 'next/dynamic';
-const ServiceWorkerRegister = dynamic(() => import('@/components/ServiceWorkerRegister'), { ssr: false });
+import ToastProvider from '@/components/ui/ToastProvider';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import Script from 'next/script';
 // Removed ThemeToggle from landing layout per usability feedback
 
