@@ -95,7 +95,7 @@ export default function SettingsPage() {
                   }
                 }}
               />
-              {uploading && <p className="text-xs text-gray-500">Uploading...</p>}
+              {uploading && <p className="text-xs text-gray-500" role="status" aria-live="polite">Uploading...</p>}
             </div>
           </div>
           <div>
