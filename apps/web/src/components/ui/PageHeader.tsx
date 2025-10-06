@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode } from 'react';
+import React from 'react';
 
 type PrimaryAction = {
   href: string;
@@ -13,7 +13,7 @@ type PageHeaderProps = {
   title: string;
   subtitle?: string;
   primaryAction?: PrimaryAction;
-  right?: ReactNode;
+  right?: React.ReactNode;
 };
 
 export default function PageHeader({ title, subtitle, primaryAction, right }: PageHeaderProps) {
