@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
@@ -87,8 +88,22 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      <div className="space-y-6 section-y">
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="h-6 w-64 bg-gray-200 animate-pulse rounded" />
+          <div className="h-4 w-80 bg-gray-200 animate-pulse rounded mt-3" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="h-5 w-40 bg-gray-200 animate-pulse rounded" />
+          <div className="h-4 w-full bg-gray-200 animate-pulse rounded mt-4" />
+          <div className="h-4 w-full bg-gray-200 animate-pulse rounded mt-2" />
+        </div>
       </div>
     );
   }

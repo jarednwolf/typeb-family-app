@@ -8,7 +8,9 @@ import Link from 'next/link';
 import PageHeader from '@/components/ui/PageHeader';
 import FiltersToolbar from '@/components/ui/FiltersToolbar';
 import EmptyState from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 import dynamic from 'next/dynamic';
+import { useToast } from '@/components/ui/ToastProvider';
 const QuickCreateTaskModal = dynamic(() => import('@/components/tasks/QuickCreateTaskModal'), { ssr: false });
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 
@@ -22,6 +24,7 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [quickOpen, setQuickOpen] = useState(false);
   const [editingDueFor, setEditingDueFor] = useState<string | null>(null);
+  const { show } = useToast();
 
   useEffect(() => {
     loadTasks();
@@ -108,8 +111,10 @@ export default function TasksPage() {
           ? { ...task, status: newStatus, updatedAt: new Date() }
           : task
       ));
+      show(newStatus === 'completed' ? 'Task completed' : 'Task updated', 'success');
     } catch (error) {
       console.error('Error updating task:', error);
+      show('Failed to update task', 'error');
     }
   };
 
@@ -126,8 +131,10 @@ export default function TasksPage() {
         updatedAt: new Date().toISOString(),
       });
       setTasks(tasks.map(t => t.id === taskId ? { ...t, dueDate: new Date(newDate) as any } : t));
+      show('Due date updated', 'success');
     } catch (error) {
       console.error('Error updating due date:', error);
+      show('Failed to update due date', 'error');
     }
   };
 
@@ -167,8 +174,28 @@ export default function TasksPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      <div className="space-y-6 section-y">
+        <div className="h-8 w-64 bg-gray-200 animate-pulse rounded" />
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="grid grid-cols-3 gap-4">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="border-2 rounded-xl p-4">
+              <Skeleton className="h-4 w-40 mb-3" />
+              <Skeleton className="h-3 w-full mb-2" />
+              <Skeleton className="h-3 w-5/6" />
+              <div className="flex gap-2 mt-4">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

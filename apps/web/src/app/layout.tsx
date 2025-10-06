@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import dynamic from 'next/dynamic';
+const ToastProvider = dynamic(() => import('@/components/ui/ToastProvider'), { ssr: false });
 import Script from 'next/script';
 // Removed ThemeToggle from landing layout per usability feedback
 
@@ -193,7 +195,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {/* ThemeToggle removed */}
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
         
         {/* Google Analytics 4 */}
         {process.env.NEXT_PUBLIC_GA4_ID && (

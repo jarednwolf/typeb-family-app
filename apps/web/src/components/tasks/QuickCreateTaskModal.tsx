@@ -6,6 +6,7 @@ import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { User } from '@typeb/types';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Props = {
   open: boolean;
@@ -19,6 +20,7 @@ export default function QuickCreateTaskModal({ open, onClose, onCreated }: Props
   const [dueDate, setDueDate] = useState('');
   const [members, setMembers] = useState<User[]>([]);
   const [saving, setSaving] = useState(false);
+  const { show } = useToast();
 
   useEffect(() => {
     (async () => {
@@ -56,6 +58,7 @@ export default function QuickCreateTaskModal({ open, onClose, onCreated }: Props
       onClose();
       onCreated?.();
       setTitle(''); setDueDate('');
+      show('Task created', 'success');
     } finally {
       setSaving(false);
     }

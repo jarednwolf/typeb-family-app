@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { User } from '@typeb/types';
@@ -16,6 +17,7 @@ export default function FamilyPage() {
   const [inviteLink, setInviteLink] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -31,8 +33,24 @@ export default function FamilyPage() {
         setInviteCode(code);
         setInviteLink(`${window.location.origin}/signup?invite=${code}`);
       }
+      setIsLoading(false);
     })();
   }, []);
+  if (isLoading) {
+    return (
+      <div className="space-y-6 section-y">
+        <div className="h-8 w-64 bg-gray-200 animate-pulse rounded" />
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <Skeleton className="h-4 w-40 mb-2" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <Skeleton className="h-4 w-40 mb-2" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   const copyInvite = async () => {
     try {
