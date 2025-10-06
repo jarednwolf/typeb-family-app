@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { requestNotificationPermission } from '@/services/push';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { auth, db } from '@/lib/firebase/config';
 import { updateProfile, updatePassword, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -96,10 +97,8 @@ export default function SettingsPage() {
         <button
           className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           onClick={async () => {
-            try {
-              const perm = await Notification.requestPermission();
-              alert(`Notifications permission: ${perm}`);
-            } catch {}
+            const perm = await requestNotificationPermission();
+            alert(`Notifications permission: ${perm}`);
           }}
         >
           Request browser notifications
