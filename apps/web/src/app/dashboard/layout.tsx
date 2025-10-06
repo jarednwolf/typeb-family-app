@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
+import dynamic from 'next/dynamic';
+const BottomTabNav = dynamic(() => import('@/components/ui/BottomTabNav'), { ssr: false });
 import { User } from '@typeb/types';
 
 export default function DashboardLayout({
@@ -137,10 +139,10 @@ export default function DashboardLayout({
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
                   title={item.name}
-                  className={`flex items-center px-3 py-2 rounded-lg transition border-l-2 ${
+                  className={`flex items-center px-3 py-2 rounded-lg transition border-l-4 ${
                     isActive
-                      ? 'bg-black text-white border-l-black'
-                      : 'text-gray-700 hover:bg-gray-100 border-l-transparent'
+                      ? 'bg-gray-100 text-gray-900 border-l-gray-900'
+                      : 'text-gray-700 hover:bg-gray-50 border-l-transparent'
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
@@ -203,6 +205,7 @@ export default function DashboardLayout({
         <main className="screen-container section-stack-lg">
           {children}
         </main>
+        <BottomTabNav />
       </div>
     </div>
   );
