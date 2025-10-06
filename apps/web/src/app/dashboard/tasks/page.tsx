@@ -8,6 +8,8 @@ import Link from 'next/link';
 import PageHeader from '@/components/ui/PageHeader';
 import FiltersToolbar from '@/components/ui/FiltersToolbar';
 import EmptyState from '@/components/ui/EmptyState';
+import dynamic from 'next/dynamic';
+const QuickCreateTaskModal = dynamic(() => import('@/components/tasks/QuickCreateTaskModal'), { ssr: false });
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 
 export default function TasksPage() {
@@ -18,6 +20,7 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickOpen, setQuickOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
@@ -157,6 +160,7 @@ export default function TasksPage() {
         title="Tasks"
         subtitle="Manage your family's tasks and responsibilities"
         primaryAction={{ href: '/dashboard/tasks/new', label: '+ New Task', analyticsId: 'cta_new_task_header' }}
+        right={<button onClick={()=>setQuickOpen(true)} className="btn btn-secondary px-3 hidden sm:inline-flex">Quick create</button>}
       />
 
       <FiltersToolbar
@@ -167,7 +171,12 @@ export default function TasksPage() {
         query={searchQuery}
         onQueryChange={(v)=>setSearchQuery(v)}
         onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setSearchQuery(''); }}
-        right={<Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>}
+        right={
+          <div className="flex gap-2">
+            <button onClick={()=>setQuickOpen(true)} className="btn btn-secondary px-3 sm:hidden" aria-label="Quick create task">Quick</button>
+            <Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>
+          </div>
+        }
       />
 
       {/* Tasks Grid */}
@@ -282,6 +291,7 @@ export default function TasksPage() {
           ))}
         </div>
       )}
+      <QuickCreateTaskModal open={quickOpen} onClose={()=>setQuickOpen(false)} onCreated={()=>loadTasks()} />
     </div>
   );
 }
