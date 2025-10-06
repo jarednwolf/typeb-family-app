@@ -19,6 +19,7 @@ export default function QuickCreateTaskModal({ open, onClose, onCreated }: Props
   const [title, setTitle] = useState('');
   const [assignee, setAssignee] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [template, setTemplate] = useState('');
   const [members, setMembers] = useState<User[]>([]);
   const [saving, setSaving] = useState(false);
   const { show } = useToast();
@@ -74,6 +75,20 @@ export default function QuickCreateTaskModal({ open, onClose, onCreated }: Props
       </>
     )}>
       <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Template</label>
+          <select value={template} onChange={(e)=>{
+            const v = e.target.value; setTemplate(v);
+            if (v === 'chore') setTitle('Clean room');
+            if (v === 'homework') setTitle('Finish homework');
+            if (v === 'routine') setTitle('Brush teeth');
+          }} className="w-full px-3 py-2 border border-gray-200 rounded-lg">
+            <option value="">Select</option>
+            <option value="chore">Chore</option>
+            <option value="homework">Homework</option>
+            <option value="routine">Routine</option>
+          </select>
+        </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">Title</label>
           <input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="e.g., Clean the kitchen" className="w-full px-3 py-2 border border-gray-200 rounded-lg" />
