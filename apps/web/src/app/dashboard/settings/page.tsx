@@ -136,6 +136,18 @@ export default function SettingsPage() {
         </button>
       </div>
 
+      {/* Subscription */}
+      <div className="bg-white rounded-xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">Subscription</h2>
+        <p className="text-sm text-gray-600 mt-1">Manage your premium plan and billing.</p>
+        <div className="mt-4">
+          <a
+            href={process.env.NEXT_PUBLIC_BILLING_PORTAL_URL || '#'}
+            className="btn btn-secondary"
+          >Manage subscription</a>
+        </div>
+      </div>
+
       {/* Support */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Support</h2>

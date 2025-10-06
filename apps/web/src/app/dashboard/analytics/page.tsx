@@ -5,6 +5,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
+import UpsellBanner from '@/components/premium/UpsellBanner';
 
 export default function AnalyticsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -31,6 +32,10 @@ export default function AnalyticsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
         <p className="text-gray-600 mt-1">Track your family's progress.</p>
       </div>
+
+      {user && !user.isPremium && (
+        <UpsellBanner />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Tasks" value={stats.total} color="text-blue-600" bg="bg-blue-100">

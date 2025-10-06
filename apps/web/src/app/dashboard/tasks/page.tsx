@@ -313,14 +313,25 @@ export default function TasksPage() {
                       fileInput.onchange = async () => {
                         const file = fileInput.files?.[0];
                         if (!file) return;
-                        // For MVP, store metadata-only submission for validation queue
-                        await setDoc(doc(db, 'task_submissions', `${task.id}`), {
-                          taskId: task.id,
-                          submittedAt: new Date().toISOString(),
-                          status: 'pending',
-                        });
-                        document.body.removeChild(fileInput);
-                        alert('Photo submitted for validation');
+                        try {
+                          const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+                          const { default: app } = await import('@/lib/firebase/config');
+                          const storage = getStorage(app);
+                          const r = ref(storage, `task-submissions/${task.id}/${Date.now()}`);
+                          await uploadBytes(r, file);
+                          const url = await getDownloadURL(r);
+                          await setDoc(doc(db, 'task_submissions', `${task.id}`), {
+                            taskId: task.id,
+                            submittedAt: new Date().toISOString(),
+                            status: 'pending',
+                            photoUrl: url,
+                          });
+                          alert('Photo submitted for validation');
+                        } catch {
+                          alert('Upload failed');
+                        } finally {
+                          document.body.removeChild(fileInput);
+                        }
                       };
                       document.body.appendChild(fileInput);
                       fileInput.click();

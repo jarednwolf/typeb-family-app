@@ -18,14 +18,14 @@ export default function ValidationQueuePage() {
     })();
   }, []);
 
-  const mark = async (id: string, status: 'approved'|'rejected') => {
-    await updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString() });
+  const mark = async (id: string, status: 'approved'|'rejected', notes?: string) => {
+    await updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString(), validationNotes: notes || '' });
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
-  const markSelected = async (status: 'approved'|'rejected') => {
+  const markSelected = async (status: 'approved'|'rejected', notes?: string) => {
     const ids = Object.keys(selected).filter(k => selected[k]);
-    await Promise.all(ids.map(id => updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString() })));
+    await Promise.all(ids.map(id => updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString(), validationNotes: notes || '' })));
     setItems(prev => prev.filter(i => !selected[i.id]));
     setSelected({});
   };
@@ -49,8 +49,8 @@ export default function ValidationQueuePage() {
         ) : (
           <>
           <div className="flex justify-end gap-2 mb-3">
-            <button onClick={()=>markSelected('approved')} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve selected</button>
-            <button onClick={()=>markSelected('rejected')} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">Reject selected</button>
+            <button onClick={()=>{ const n = prompt('Add notes (optional)'); markSelected('approved', n || undefined); }} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve selected</button>
+            <button onClick={()=>{ const n = prompt('Add notes (optional)'); markSelected('rejected', n || undefined); }} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">Reject selected</button>
           </div>
           <ul className="divide-y">
             {items.map(i => (
@@ -63,8 +63,8 @@ export default function ValidationQueuePage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={()=>mark(i.id,'approved')} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve</button>
-                  <button onClick={()=>mark(i.id,'rejected')} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">Reject</button>
+                  <button onClick={()=>{ const n = prompt('Add notes (optional)'); mark(i.id,'approved', n || undefined); }} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve</button>
+                  <button onClick={()=>{ const n = prompt('Add notes (optional)'); mark(i.id,'rejected', n || undefined); }} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">Reject</button>
                 </div>
               </li>
             ))}
