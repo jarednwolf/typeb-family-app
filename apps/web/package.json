@@ -17,6 +17,7 @@
     "@typeb/core": "workspace:*",
     "@typeb/store": "workspace:^",
     "@typeb/types": "workspace:*",
+    "@sentry/nextjs": "^8.28.0",
     "date-fns": "^3.0.0",
     "firebase": "^10.14.1",
     "next": "15.4.6",
