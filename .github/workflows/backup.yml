@@ -1,39 +1,14 @@
 name: Nightly GCP Backup
 
 on:
-  schedule:
-    - cron: '0 8 * * *' # 08:00 UTC daily
+  # Disabled by default; run manually when configured
   workflow_dispatch:
 
 jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Determine if secrets are configured
-        run: |
-          if [ -z "${{ secrets.GCP_SA_KEY_JSON }}" ] || [ -z "${{ secrets.GOOGLE_CLOUD_PROJECT }}" ]; then
-            echo "SKIP_BACKUP=true" >> $GITHUB_ENV
-          else
-            echo "SKIP_BACKUP=false" >> $GITHUB_ENV
-          fi
-      - name: Skip if secrets not configured
-        if: ${{ env.SKIP_BACKUP == 'true' }}
-        run: echo 'Skipping backup: secrets not configured.'
-      - name: Authenticate to GCP
-        if: ${{ env.SKIP_BACKUP != 'true' }}
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_JSON }}
-      - name: Setup gcloud
-        if: ${{ env.SKIP_BACKUP != 'true' }}
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: '>= 460.0.0'
-      - name: Run backup script
-        if: ${{ env.SKIP_BACKUP != 'true' }}
-        env:
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
-        run: bash scripts/firestore-backup.sh
+      - name: Placeholder
+        run: echo "Backup workflow disabled by default. Configure secrets and backup script before enabling."
 
 
