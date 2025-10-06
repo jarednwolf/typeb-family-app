@@ -5,6 +5,7 @@ import ToastProvider from '@/components/ui/ToastProvider';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import Script from 'next/script';
 // Removed ThemeToggle from landing layout per usability feedback
+import { initSentry } from '@/services/sentry';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -90,6 +91,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Initialize Sentry on the client (no-op if DSN missing)
+  if (typeof window !== 'undefined') initSentry();
   return (
     <html lang="en">
       <head>
