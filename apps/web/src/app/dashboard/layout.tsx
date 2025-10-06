@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import dynamic from 'next/dynamic';
 const BottomTabNav = dynamic(() => import('@/components/ui/BottomTabNav'), { ssr: false });
+import Avatar from '@/components/ui/Avatar';
 import { User } from '@typeb/types';
 
 export default function DashboardLayout({
@@ -192,11 +193,7 @@ export default function DashboardLayout({
               </button>
 
               {/* User avatar */}
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">
-                  {user?.displayName?.charAt(0).toUpperCase() || '?'}
-                </span>
-              </div>
+              <Avatar name={user?.displayName || 'User'} src={user?.avatarUrl} size={32} />
             </div>
           </div>
         </div>

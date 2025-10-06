@@ -6,6 +6,9 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { auth, db } from '@/lib/firebase/config';
 import { updateProfile, updatePassword, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Modal from '@/components/ui/Modal';
+import Avatar from '@/components/ui/Avatar';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { storage } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 
@@ -18,6 +21,7 @@ export default function SettingsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [pwdOpen, setPwdOpen] = useState(false);
   const [newPwd, setNewPwd] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -67,6 +71,33 @@ export default function SettingsPage() {
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
         <div className="mt-4 grid sm:grid-cols-2 gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar name={user?.displayName || 'User'} src={user?.avatarUrl} size={48} />
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !user) return;
+                  setUploading(true);
+                  try {
+                    const r = ref(storage, `avatars/${user.id}`);
+                    await uploadBytes(r, file);
+                    const url = await getDownloadURL(r);
+                    await updateDoc(doc(db, 'users', user.id), { avatarUrl: url });
+                    setUser({ ...user, avatarUrl: url });
+                  } catch (e) {
+                    console.error(e);
+                    alert('Upload failed');
+                  } finally {
+                    setUploading(false);
+                  }
+                }}
+              />
+              {uploading && <p className="text-xs text-gray-500">Uploading...</p>}
+            </div>
+          </div>
           <div>
             <label className="block text-sm text-gray-600">Name</label>
             <input value={name} onChange={(e)=>setName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" />
