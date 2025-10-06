@@ -21,6 +21,7 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status'>('dueDate');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickOpen, setQuickOpen] = useState(false);
+  const [editingDueFor, setEditingDueFor] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -112,6 +113,24 @@ export default function TasksPage() {
     }
   };
 
+  const cycleStatus = (status: Task['status']): Task['status'] => {
+    if (status === 'pending') return 'in_progress';
+    if (status === 'in_progress') return 'completed';
+    return 'pending';
+  };
+
+  const updateTaskDueDate = async (taskId: string, newDate: string) => {
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), {
+        dueDate: new Date(newDate),
+        updatedAt: new Date().toISOString(),
+      });
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, dueDate: new Date(newDate) as any } : t));
+    } catch (error) {
+      console.error('Error updating due date:', error);
+    }
+  };
+
   const deleteTask = async (taskId: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
@@ -133,14 +152,14 @@ export default function TasksPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, onClick?: () => void) => {
     switch (status) {
       case 'completed':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Completed</span>;
+        return <button onClick={onClick} className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 hover:brightness-95" title="Toggle status">Completed</button>;
       case 'in_progress':
-        return <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">In Progress</span>;
+        return <button onClick={onClick} className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 hover:brightness-95" title="Toggle status">In Progress</button>;
       case 'pending':
-        return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Pending</span>;
+        return <button onClick={onClick} className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 hover:brightness-95" title="Toggle status">Pending</button>;
       default:
         return null;
     }
@@ -196,7 +215,7 @@ export default function TasksPage() {
             >
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-semibold text-gray-900 flex-1">{task.title}</h3>
-                {getStatusBadge(task.status)}
+                {getStatusBadge(task.status, () => updateTaskStatus(task.id!, cycleStatus(task.status)))}
               </div>
               
               <p className="text-sm text-gray-600 mb-4 line-clamp-2">
@@ -213,12 +232,27 @@ export default function TasksPage() {
                   </div>
                 )}
                 
-                {task.dueDate && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                <div className="flex items-center text-sm text-gray-500">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="mr-2">Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</span>
+                  <button
+                    onClick={() => setEditingDueFor(editingDueFor === task.id ? null : task.id || null)}
+                    className="px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                    aria-label="Change due date"
+                  >
+                    Change
+                  </button>
+                </div>
+                {editingDueFor === task.id && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      defaultValue={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                      onChange={(e)=>{ updateTaskDueDate(task.id!, e.target.value); setEditingDueFor(null); }}
+                      className="px-2 py-1 text-sm border border-gray-300 rounded"
+                    />
                   </div>
                 )}
 
