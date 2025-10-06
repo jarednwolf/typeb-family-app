@@ -27,10 +27,23 @@ This app aligns web UI with the mobile design system. Key tokens live in `src/ap
 - Quick actions: rounded-xl, strong contrast for primary action.
 
 ## Deployment checklist (web)
-- Set env: NEXT_PUBLIC_FIREBASE_* and GA4/FB Pixel IDs in Vercel
+- Set env:
+  - NEXT_PUBLIC_FIREBASE_* (see lib/firebase/config.ts)
+  - NEXT_PUBLIC_GA4_ID, NEXT_PUBLIC_FB_PIXEL_ID (optional)
+  - NEXT_PUBLIC_SENTRY_DSN (optional)
+  - NEXT_PUBLIC_BILLING_PORTAL_URL (for Manage subscription)
 - Enable Firebase Firestore and Storage rules (see repo rules files)
 - Verify redirect URLs for Google SSO
 - Vercel project connected to repo; production branch main
+
+## New capabilities
+- Quick-create task modal with templates (Chore, Homework, Routine)
+- Photo upload for tasks that require validation (stored in Firebase Storage)
+- Validation queue with approve/reject notes and bulk actions
+- Premium upsell banner and Manage subscription link in Settings
+- Notifications opt-in (web push permissions prompt)
+- Analytics events for quick-create, photo submit, and validation decisions
+- Sentry error/perf monitoring (guarded by NEXT_PUBLIC_SENTRY_DSN)
 
 ## Feature flags
 - Local dev: set localStorage `featureFlags` JSON to toggle features

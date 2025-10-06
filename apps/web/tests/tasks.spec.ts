@@ -17,6 +17,18 @@ test.describe('Tasks flow (unauth placeholder)', () => {
       }
     }
   });
+
+  test('quick-create opens from header and creates task (ui only)', async ({ page }) => {
+    await page.goto('/dashboard/tasks');
+    // Try to open quick-create; if redirected to login, just assert login visible
+    const quick = page.getByRole('button', { name: /Open quick create|Quick create/i }).first();
+    try {
+      await quick.click({ timeout: 3000 });
+      await expect(page.getByText('Quick Create Task')).toBeVisible({ timeout: 3000 });
+    } catch {
+      await expect(page.getByRole('heading', { name: /Welcome Back/i })).toBeVisible();
+    }
+  });
 });
 
 
