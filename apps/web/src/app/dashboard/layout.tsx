@@ -7,6 +7,7 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 import dynamic from 'next/dynamic';
 const BottomTabNav = dynamic(() => import('@/components/ui/BottomTabNav'), { ssr: false });
 import Avatar from '@/components/ui/Avatar';
+import { analytics } from '@/services/analytics';
 import { User } from '@typeb/types';
 
 export default function DashboardLayout({
@@ -145,6 +146,7 @@ export default function DashboardLayout({
                       ? 'bg-gray-100 text-gray-900 border-l-gray-900'
                       : 'text-gray-700 hover:bg-gray-50 border-l-transparent'
                   }`}
+                  onClick={() => analytics.trackCTAClick(item.name, 'sidebar')}
                 >
                   <span className="mr-3">{item.icon}</span>
                   <span className="font-medium">{item.name}</span>

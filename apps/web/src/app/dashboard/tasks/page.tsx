@@ -206,7 +206,7 @@ export default function TasksPage() {
         title="Tasks"
         subtitle="Manage your family's tasks and responsibilities"
         primaryAction={{ href: '/dashboard/tasks/new', label: '+ New Task', analyticsId: 'cta_new_task_header' }}
-        right={<button onClick={()=>setQuickOpen(true)} className="btn btn-secondary px-3 hidden sm:inline-flex">Quick create</button>}
+        right={<button onClick={()=>{ setQuickOpen(true); show('Quick create opened'); }} className="btn btn-secondary px-3 hidden sm:inline-flex">Quick create</button>}
       />
 
       <FiltersToolbar
