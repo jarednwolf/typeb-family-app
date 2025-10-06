@@ -11,6 +11,7 @@ import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { storage } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -125,7 +126,9 @@ export default function SettingsPage() {
           <span className="text-gray-700">Enable notifications</span>
         </label>
         {/* Web push opt-in (best-effort) */}
-        <button
+        <div className="flex items-center gap-2 mt-4">
+          <span className="text-sm text-gray-600">Status: <strong>{typeof Notification !== 'undefined' ? Notification.permission : 'unknown'}</strong></span>
+          <button
           className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           onClick={async () => {
             const perm = await requestNotificationPermission();
@@ -134,17 +137,25 @@ export default function SettingsPage() {
         >
           Request browser notifications
         </button>
+          <button className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={()=>window.open('about:preferences', '_blank')}>Open browser settings</button>
+        </div>
+        <div className="mt-4">
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Subscription */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Subscription</h2>
         <p className="text-sm text-gray-600 mt-1">Manage your premium plan and billing.</p>
-        <div className="mt-4">
-          <a
-            href={process.env.NEXT_PUBLIC_BILLING_PORTAL_URL || '#'}
-            className="btn btn-secondary"
-          >Manage subscription</a>
+        <ul className="mt-3 text-sm text-gray-700 list-disc pl-5">
+          <li>Advanced analytics</li>
+          <li>Priority validation tools</li>
+          <li>Family member expansion</li>
+        </ul>
+        <div className="mt-4 flex gap-2">
+          <a href={process.env.NEXT_PUBLIC_BILLING_PORTAL_URL || '#'} className="btn btn-primary">Manage subscription</a>
+          <a href="/pricing" className="btn btn-secondary">View plans</a>
         </div>
       </div>
 
@@ -171,9 +182,9 @@ export default function SettingsPage() {
                   setEmailSaving(true);
                   try { await auth.currentUser.updateEmail?.(newEmail as any); alert('Email updated'); } catch { alert('Email update failed'); } finally { setEmailSaving(false); }
                 }}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="btn btn-secondary"
                 disabled={emailSaving}
-              >{emailSaving ? 'Saving...' : 'Update'}</button>
+              >{emailSaving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>

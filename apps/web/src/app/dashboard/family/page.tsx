@@ -93,6 +93,9 @@ export default function FamilyPage() {
         {members.length === 0 ? (
           <div className="mt-4">
             <EmptyState title="No members found" description="Invite your first family member to get started." />
+            <div className="mt-3">
+              <button className="btn btn-secondary btn-sm" onClick={()=>setIsAddOpen(true)}>Add member by email</button>
+            </div>
           </div>
         ) : (
           <div className="mt-4 overflow-auto">

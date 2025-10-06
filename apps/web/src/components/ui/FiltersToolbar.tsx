@@ -16,7 +16,7 @@ type FiltersToolbarProps = {
 export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortByChange, query, onQueryChange, onReset, right }: FiltersToolbarProps) {
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm">
-      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+      <div className="grid gap-4 sm:grid-cols-4 items-end">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
           <select
@@ -54,7 +54,7 @@ export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortB
           />
         </div>
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 justify-end">
           <button onClick={onReset} className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Reset</button>
           {right}
         </div>

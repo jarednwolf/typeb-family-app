@@ -7,6 +7,7 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 import dynamic from 'next/dynamic';
 const BottomTabNav = dynamic(() => import('@/components/ui/BottomTabNav'), { ssr: false });
 import Avatar from '@/components/ui/Avatar';
+import Icon from '@/components/ui/Icon';
 import { analytics } from '@/services/analytics';
 import { User } from '@typeb/types';
 
@@ -20,6 +21,8 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -51,24 +54,12 @@ export default function DashboardLayout({
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m-4 0h8a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" /></svg>
-    ) },
-    { name: 'Tasks', href: '/dashboard/tasks', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    ) },
-    { name: 'Family', href: '/dashboard/family', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 14a4 4 0 00-8 0M12 7a4 4 0 110-8 4 4 0 010 8zM6 22v-2a4 4 0 014-4h0a4 4 0 014 4v2M2 22v-2a6 6 0 016-6" /></svg>
-    ) },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 13l3 3 7-7" /></svg>
-    ) },
-    { name: 'Validation', href: '/dashboard/validation', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    ) },
-    { name: 'Settings', href: '/dashboard/settings', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l.7 2.154a1 1 0 00.95.69h2.262a1 1 0 01.592 1.806l-1.833 1.333a1 1 0 00-.364 1.118l.7 2.154c.3.921-.755 1.688-1.54 1.118l-1.833-1.333a1 1 0 00-1.175 0l-1.833 1.333c-.784.57-1.838-.197-1.539-1.118l.7-2.154a1 1 0 00-.364-1.118L5.54 7.577A1 1 0 016.132 5.77h2.262a1 1 0 00.95-.69l.7-2.154z" /></svg>
-    ) },
+    { name: 'Dashboard', href: '/dashboard', icon: (<Icon name="home" />) },
+    { name: 'Tasks', href: '/dashboard/tasks', icon: (<Icon name="task" />) },
+    { name: 'Family', href: '/dashboard/family', icon: (<Icon name="users" />) },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: (<Icon name="chart" />) },
+    { name: 'Validation', href: '/dashboard/validation', icon: (<Icon name="check" />) },
+    { name: 'Settings', href: '/dashboard/settings', icon: (<Icon name="cog" />) },
   ];
 
   if (isLoading) {
@@ -185,9 +176,9 @@ export default function DashboardLayout({
               </svg>
             </button>
             
-            <div className="flex items-center space-x-4">
+            <div className="relative flex items-center space-x-4">
               {/* Notification bell */}
-              <button className="relative p-2 text-gray-600 hover:text-gray-900" aria-label="Notifications">
+              <button className="relative p-2 text-gray-600 hover:text-gray-900" aria-label="Notifications" onClick={()=>{ setIsNotifOpen(!isNotifOpen); setIsUserMenuOpen(false); }}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
@@ -195,7 +186,28 @@ export default function DashboardLayout({
               </button>
 
               {/* User avatar */}
-              <Avatar name={user?.displayName || 'User'} src={user?.avatarUrl} size={32} />
+              <button aria-label="User menu" onClick={()=>{ setIsUserMenuOpen(!isUserMenuOpen); setIsNotifOpen(false); }} className="rounded-full focus:outline-none focus:ring-2 focus:ring-black">
+                <Avatar name={user?.displayName || 'User'} src={user?.avatarUrl} size={32} />
+              </button>
+
+              {/* Notifications popover */}
+              {isNotifOpen && (
+                <div className="absolute right-16 top-12 z-40 bg-white rounded-xl shadow-large border w-72 p-3">
+                  <p className="text-sm font-medium text-gray-900 mb-2">Notifications</p>
+                  <p className="text-sm text-gray-600">You're all caught up.</p>
+                  <div className="mt-3 text-right">
+                    <a href="/dashboard/settings" className="text-sm text-black hover:underline">Notification settings</a>
+                  </div>
+                </div>
+              )}
+              {/* User menu popover */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 top-12 z-40 bg-white rounded-xl shadow-large border w-56 p-2">
+                  <a href="/dashboard" className="block px-3 py-2 text-sm hover:bg-gray-50">Dashboard</a>
+                  <a href="/dashboard/settings" className="block px-3 py-2 text-sm hover:bg-gray-50">Settings</a>
+                  <button onClick={handleSignOut} className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50">Sign out</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
