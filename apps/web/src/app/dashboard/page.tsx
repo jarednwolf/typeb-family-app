@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
 import Link from 'next/link';
+import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import PageHeader from '@/components/ui/PageHeader';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 
@@ -173,6 +174,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Onboarding checklist when empty */}
+      {tasks.length === 0 && (
+        <OnboardingChecklist familyHasMembers={!!user?.familyId} />
+      )}
 
       {/* Recent Tasks */}
       <div className="bg-white rounded-xl shadow-sm">

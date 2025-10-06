@@ -9,6 +9,7 @@ import { authAdapter } from '@/lib/firebase/auth-adapter';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
+import Avatar from '@/components/ui/Avatar';
 
 export default function FamilyPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -98,7 +99,7 @@ export default function FamilyPage() {
             <table className="min-w-full text-left">
               <thead className="text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="py-2 pr-4">Name</th>
+                  <th className="py-2 pr-4">Member</th>
                   <th className="py-2 pr-4">Email</th>
                   <th className="py-2 pr-4">Role</th>
                   <th className="py-2 pr-4 text-right">Actions</th>
@@ -107,9 +108,33 @@ export default function FamilyPage() {
               <tbody className="divide-y">
                 {members.map(m => (
                   <tr key={m.id} className="align-middle">
-                    <td className="py-3 pr-4 font-medium text-gray-900">{m.displayName}</td>
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={m.displayName} src={m.avatarUrl} size={28} />
+                        <span className="font-medium text-gray-900">{m.displayName}</span>
+                      </div>
+                    </td>
                     <td className="py-3 pr-4 text-gray-600">{m.email}</td>
-                    <td className="py-3 pr-4 capitalize">{m.role}</td>
+                    <td className="py-3 pr-4 capitalize">
+                      <div className="inline-flex border rounded-lg overflow-hidden text-sm">
+                        <button
+                          className={`px-3 py-1 ${m.role === 'parent' ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                          onClick={async ()=>{
+                            if (currentUser?.role !== 'parent' || m.role === 'parent') return;
+                            await updateDoc(doc(db, 'users', m.id), { role: 'parent', updatedAt: new Date() });
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: 'parent' } : x));
+                          }}
+                        >Parent</button>
+                        <button
+                          className={`px-3 py-1 ${m.role === 'child' ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                          onClick={async ()=>{
+                            if (currentUser?.role !== 'parent' || m.role === 'child') return;
+                            await updateDoc(doc(db, 'users', m.id), { role: 'child', updatedAt: new Date() });
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: 'child' } : x));
+                          }}
+                        >Child</button>
+                      </div>
+                    </td>
                     <td className="py-3 pr-4 text-right">
                       <button
                         className="btn btn-secondary btn-sm"
