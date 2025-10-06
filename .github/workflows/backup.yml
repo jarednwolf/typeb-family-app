@@ -18,20 +18,20 @@ jobs:
             echo "SKIP_BACKUP=false" >> $GITHUB_ENV
           fi
       - name: Skip if secrets not configured
-        if: env.SKIP_BACKUP == 'true'
+        if: ${{ env.SKIP_BACKUP == 'true' }}
         run: echo 'Skipping backup: secrets not configured.'
       - name: Authenticate to GCP
-        if: env.SKIP_BACKUP != 'true'
+        if: ${{ env.SKIP_BACKUP != 'true' }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY_JSON }}
       - name: Setup gcloud
-        if: env.SKIP_BACKUP != 'true'
+        if: ${{ env.SKIP_BACKUP != 'true' }}
         uses: google-github-actions/setup-gcloud@v2
         with:
           version: '>= 460.0.0'
       - name: Run backup script
-        if: env.SKIP_BACKUP != 'true'
+        if: ${{ env.SKIP_BACKUP != 'true' }}
         env:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
         run: bash scripts/firestore-backup.sh
