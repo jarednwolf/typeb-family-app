@@ -201,7 +201,19 @@ export default function DashboardLayout({
         </div>
 
         {/* Page content */}
-        <main className="screen-container section-stack-lg">
+        <main className="screen-container section-stack-lg" onKeyDown={(e)=>{
+          if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+            window.location.href = '/dashboard/tasks/new';
+          }
+          if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            (inputs[0] as HTMLInputElement)?.focus();
+            e.preventDefault();
+          }
+          if ((e.key.toLowerCase() === 'g') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+            window.location.href = '/dashboard';
+          }
+        }} tabIndex={0}>
           {children}
         </main>
         <BottomTabNav />

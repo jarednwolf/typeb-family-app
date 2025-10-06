@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import dynamic from 'next/dynamic';
 const ToastProvider = dynamic(() => import('@/components/ui/ToastProvider'), { ssr: false });
+import { useEffect } from 'react';
 import Script from 'next/script';
 // Removed ThemeToggle from landing layout per usability feedback
 
@@ -90,6 +91,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Register service worker (best-effort)
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    // defer to next tick to avoid hydration mismatches
+    setTimeout(() => {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+      });
+    }, 0);
+  }
   return (
     <html lang="en">
       <head>

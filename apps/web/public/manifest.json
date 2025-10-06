@@ -7,6 +7,7 @@
   "background_color": "#FAF8F5",
   "theme_color": "#0A0A0A",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "/favicon-16.png",
