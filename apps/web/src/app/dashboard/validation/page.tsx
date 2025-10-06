@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { analytics } from '@/services/analytics';
 import { db } from '@/lib/firebase/config';
 
 interface Submission { id: string; taskId: string; submittedAt: string; status: 'pending'|'approved'|'rejected'; }
@@ -20,12 +21,14 @@ export default function ValidationQueuePage() {
 
   const mark = async (id: string, status: 'approved'|'rejected', notes?: string) => {
     await updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString(), validationNotes: notes || '' });
+    analytics.trackEvent({ name: `validation_${status}`, category: 'validation', label: id });
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
   const markSelected = async (status: 'approved'|'rejected', notes?: string) => {
     const ids = Object.keys(selected).filter(k => selected[k]);
     await Promise.all(ids.map(id => updateDoc(doc(db, 'task_submissions', id), { status, reviewedAt: new Date().toISOString(), validationNotes: notes || '' })));
+    analytics.trackEvent({ name: `validation_bulk_${status}`, category: 'validation', parameters: { count: ids.length } });
     setItems(prev => prev.filter(i => !selected[i.id]));
     setSelected({});
   };

@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/config';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { User } from '@typeb/types';
 import { useToast } from '@/components/ui/ToastProvider';
+import { analytics } from '@/services/analytics';
 
 type Props = {
   open: boolean;
@@ -58,6 +59,7 @@ export default function QuickCreateTaskModal({ open, onClose, onCreated }: Props
       onClose();
       onCreated?.();
       setTitle(''); setDueDate('');
+      analytics.trackEvent({ name: 'task_create_quick', category: 'task', label: 'quick_create' });
       show('Task created', 'success');
     } finally {
       setSaving(false);
