@@ -2,12 +2,7 @@
   "name": "@typeb/icons",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.tsx",
-  "types": "src/index.tsx",
-  "scripts": {},
-  "peerDependencies": {
-    "react": ">=18"
-  }
+  "main": "src/index.tsx"
 }
 
 
