@@ -77,8 +77,7 @@ export const HeroSection: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center btn btn-primary px-7 text-base font-medium shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
-                style={{ backgroundColor: '#0A0A0A' }}
+                className="inline-flex items-center justify-center px-7 py-3 rounded-lg text-base font-medium text-white bg-black hover:bg-neutral-900 shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
                 data-analytics="hero-cta-start-trial"
               >
                 <span>Start Free Trial</span>
@@ -88,13 +87,11 @@ export const HeroSection: React.FC = () => {
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center btn btn-secondary px-7 text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-                style={{ backgroundColor: '#FFFFFF', borderColor: '#D1D1D1', color: '#0A0A0A' }}
+                className="inline-flex items-center justify-center px-7 py-3 rounded-lg text-base font-medium text-black bg-white border border-gray-300 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md"
                 data-analytics="hero-cta-login"
               >
                 <span>Sign In</span>
               </Link>
-              {/* Demo button hidden until a real video is available */}
             </div>
 
             {/* Trust Indicators */}
