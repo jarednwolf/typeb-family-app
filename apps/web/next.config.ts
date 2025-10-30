@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Ensure workspace package TS is transpiled by Next
+    transpilePackages: ["@typeb/icons"],
+  },
 };
 
 export default nextConfig;
