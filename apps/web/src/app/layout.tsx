@@ -5,7 +5,6 @@ import ToastProvider from '@/components/ui/ToastProvider';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import Script from 'next/script';
 // Removed ThemeToggle from landing layout per usability feedback
-import { initSentry } from '@/services/sentry';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -91,8 +90,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Initialize Sentry on the client (no-op if DSN missing)
-  if (typeof window !== 'undefined') initSentry();
   return (
     <html lang="en">
       <head>
@@ -193,6 +190,19 @@ export default function RootLayout({
                 },
               ],
             }),
+          }}
+        />
+        {/* Apply initial theme early to avoid flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const saved = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+              } catch {}
+            `,
           }}
         />
       </head>

@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 import { db } from '@/lib/firebase/config';
 import { Task, User } from '@typeb/types';
 import Link from 'next/link';
+import Icon from '@/components/ui/Icon';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import PageHeader from '@/components/ui/PageHeader';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
@@ -258,7 +259,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/dashboard/tasks/new" className="bg-white rounded-xl p-6 hover:bg-gray-50 transition shadow-sm">
           <div className="flex items-center space-x-3">
-            <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <Icon name="task" className="w-6 h-6 text-gray-800" />
             <div>
               <h3 className="font-semibold">Create Task</h3>
               <p className="text-sm text-gray-600">Add a new task for your family</p>
@@ -268,7 +269,7 @@ export default function DashboardPage() {
 
         <Link href="/dashboard/family" className="bg-white rounded-xl p-6 hover:bg-gray-50 transition shadow-sm">
           <div className="flex items-center space-x-3">
-            <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 14a4 4 0 00-8 0M12 7a4 4 0 110-8 4 4 0 010 8zM6 22v-2a4 4 0 014-4h0a4 4 0 014 4v2M2 22v-2a6 6 0 016-6" /></svg>
+            <Icon name="users" className="w-6 h-6 text-gray-800" />
             <div>
               <h3 className="font-semibold">Manage Family</h3>
               <p className="text-sm text-gray-600">View and invite members</p>
@@ -278,7 +279,7 @@ export default function DashboardPage() {
 
         <Link href="/dashboard/analytics" className="bg-white rounded-xl p-6 hover:bg-gray-50 transition shadow-sm">
           <div className="flex items-center space-x-3">
-            <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 13l3 3 7-7" /></svg>
+            <Icon name="chart" className="w-6 h-6 text-gray-800" />
             <div>
               <h3 className="font-semibold">View Analytics</h3>
               <p className="text-sm text-gray-600">Track family progress</p>

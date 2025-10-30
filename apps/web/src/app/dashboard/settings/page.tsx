@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { requestNotificationPermission } from '@/services/push';
+import SettingsSection from '@/components/settings/SettingsSection';
+import { openSystemNotificationSettings } from '@/services/browser';
 import { authAdapter } from '@/lib/firebase/auth-adapter';
 import { auth, db } from '@/lib/firebase/config';
 import { updateProfile, updatePassword, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -63,15 +65,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 section-y">
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <SettingsSection>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage preferences and account options.</p>
-      </div>
+        <p className="text-gray-600">Manage preferences and account options.</p>
+      </SettingsSection>
 
       {/* Profile card */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
-        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+      <SettingsSection title="Profile">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-4">
             <Avatar name={user?.displayName || 'User'} src={user?.avatarUrl} size={48} />
             <div>
@@ -108,15 +109,14 @@ export default function SettingsPage() {
             <input value={user?.email || ''} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
           </div>
         </div>
-        <div className="mt-4">
+        <div>
           <button onClick={saveProfile} disabled={saving || !name} className="px-4 py-2 btn btn-primary disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Preferences card */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Preferences</h2>
-        <label className="mt-4 flex items-center">
+      <SettingsSection title="Preferences">
+        <label className="flex items-center">
           <input
             type="checkbox"
             className="rounded border-gray-300 text-black focus:ring-black mr-2"
@@ -126,7 +126,7 @@ export default function SettingsPage() {
           <span className="text-gray-700">Enable notifications</span>
         </label>
         {/* Web push opt-in (best-effort) */}
-        <div className="flex items-center gap-2 mt-4">
+        <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Status: <strong>{typeof Notification !== 'undefined' ? Notification.permission : 'unknown'}</strong></span>
           <button
           className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -137,41 +137,40 @@ export default function SettingsPage() {
         >
           Request browser notifications
         </button>
-          <button className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={()=>window.open('about:preferences', '_blank')}>Open browser settings</button>
+          <button className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={()=>openSystemNotificationSettings()}>Open browser settings</button>
         </div>
-        <div className="mt-4">
+        <div>
           <ThemeToggle />
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Subscription */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Subscription</h2>
-        <p className="text-sm text-gray-600 mt-1">Manage your premium plan and billing.</p>
-        <ul className="mt-3 text-sm text-gray-700 list-disc pl-5">
+      <SettingsSection title="Subscription" subtitle="Manage your premium plan and billing.">
+        <ul className="text-sm text-gray-700 list-disc pl-5">
           <li>Advanced analytics</li>
           <li>Priority validation tools</li>
           <li>Family member expansion</li>
         </ul>
-        <div className="mt-4 flex gap-2">
-          <a href={process.env.NEXT_PUBLIC_BILLING_PORTAL_URL || '#'} className="btn btn-primary">Manage subscription</a>
+        <div className="flex gap-2">
+          <button
+            onClick={async ()=>{ const { openBillingPortal } = await import('@/services/billing'); openBillingPortal(); }}
+            className="btn btn-primary"
+          >Manage subscription</button>
           <a href="/pricing" className="btn btn-secondary">View plans</a>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Support */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Support</h2>
-        <div className="mt-4 flex gap-3">
+      <SettingsSection title="Support">
+        <div className="flex gap-3">
           <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Contact support by email">Contact Support</a>
           <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Report a bug by email">Report a Bug</a>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Account */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Account</h2>
-        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+      <SettingsSection title="Account">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600">Change email</label>
             <div className="flex gap-2">
@@ -188,18 +187,18 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-        <div className="mt-4">
+        <div>
           <button
             onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); alert('Account deleted'); location.href='/'; } catch { alert('Delete failed'); } } }}
             className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
           >Delete account</button>
         </div>
 
-        <div className="mt-6">
+        <div>
           <h3 className="text-md font-semibold text-gray-900 mb-2">Change password</h3>
           <button className="px-4 py-2 btn btn-secondary" onClick={()=>setPwdOpen(true)}>Update password</button>
         </div>
-      </div>
+      </SettingsSection>
 
       <Modal
         open={pwdOpen}

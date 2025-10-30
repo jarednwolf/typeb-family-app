@@ -1,10 +1,31 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 type IconName = 'home' | 'users' | 'check' | 'chart' | 'cog' | 'bell' | 'task';
 
 export default function Icon({ name, className = 'w-5 h-5' }: { name: IconName; className?: string }) {
+  // Lazily try to use shared icons if available; fallback to local inline SVGs
+  const SharedIcon = useMemo(() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require('@typeb/icons');
+      return mod?.Icon as React.ComponentType<{ name: string; className?: string }>;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  if (SharedIcon && name !== 'bell') {
+    return <SharedIcon name={name} className={className} />;
+  }
+
+  if (name === 'bell') {
+    return (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    );
+  }
+  // Local fallback set
   switch (name) {
     case 'home':
       return (
@@ -24,11 +45,7 @@ export default function Icon({ name, className = 'w-5 h-5' }: { name: IconName; 
       );
     case 'cog':
       return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 10v2M4 12h2m12 0h2"/></svg>
-      );
-    case 'bell':
-      return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l.7 2.154a1 1 0 00.95.69h2.262a1 1 0 01.592 1.806l-1.833 1.333a1 1 0 00-.364 1.118l.7 2.154c.3.921-.755 1.688-1.54 1.118l-1.833-1.333a1 1 0 00-1.175 0l-1.833 1.333c-.784.57-1.838-.197-1.539-1.118l.7-2.154a1 1 0 00-.364-1.118L6.432 7.577A1 1 0 016.132 5.77h2.262a1 1 0 00.95-.69l.7-2.154z"/></svg>
       );
     case 'task':
       return (
@@ -38,5 +55,6 @@ export default function Icon({ name, className = 'w-5 h-5' }: { name: IconName; 
       return null;
   }
 }
+
 
 

@@ -1,0 +1,21 @@
+{
+  "name": "@typeb/icons",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.tsx --dts --format cjs,esm"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "5.9.2",
+    "react": "19.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  }
+}
+
+
