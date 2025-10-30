@@ -73,6 +73,7 @@ export default function LandingPage() {
                   href="/signup"
                   className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium bg-black text-white rounded-lg hover:bg-neutral-900 transition-colors duration-200 shadow-lg hover:shadow-xl"
                   data-analytics="footer-cta-start-trial"
+                  style={{ color: '#FFFFFF' }}
                 >
                   Start Your Free Trial
                 </a>

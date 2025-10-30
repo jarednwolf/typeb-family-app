@@ -22,16 +22,6 @@ export const HeroSection: React.FC = () => {
 
   return (
     <section className="relative flex items-center overflow-hidden py-12 sm:py-16" style={{ backgroundColor: '#FAF8F5' }}>
-      {/* Subtle background texture */}
-      <div className="absolute inset-0 opacity-5">
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, #0A0A0A 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }}
-        />
-      </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -78,6 +68,7 @@ export const HeroSection: React.FC = () => {
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center px-7 py-3 rounded-lg text-base font-medium text-white bg-black hover:bg-neutral-900 shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
+                style={{ color: '#FFFFFF' }}
                 data-analytics="hero-cta-start-trial"
               >
                 <span>Start Free Trial</span>
