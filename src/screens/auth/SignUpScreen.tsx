@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
 export const SignUpScreen = () => {
+  const SHOW_SOCIAL_AUTH = (process.env.EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN as string) === 'true';
   const navigation = useNavigation();
   const { theme, isDarkMode } = useTheme();
   const [email, setEmail] = useState('');
@@ -31,7 +32,9 @@ export const SignUpScreen = () => {
 
   useEffect(() => {
     // Configure Google Sign-In when component mounts
-    configureGoogleSignIn();
+    if (SHOW_SOCIAL_AUTH) {
+      configureGoogleSignIn();
+    }
   }, []);
 
   const checkAge = (year: string) => {
@@ -203,20 +206,23 @@ export const SignUpScreen = () => {
         )}
       </TouchableOpacity>
 
-      <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      <GoogleSignInButton
-        variant="signup"
-        onSuccess={() => {
-          // Navigation will be handled by auth state change
-          console.log('Google Sign-Up successful');
-        }}
-        disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
-      />
+      {SHOW_SOCIAL_AUTH && (
+        <>
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          <GoogleSignInButton
+            variant="signup"
+            onSuccess={() => {
+              // Navigation will be handled by auth state change
+              console.log('Google Sign-Up successful');
+            }}
+            disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
+          />
+        </>
+      )}
 
       <TouchableOpacity onPress={() => (navigation as any).navigate('SignIn' as never)} disabled={isLoading}>
         <Text style={styles.link}>Already have an account? Log in</Text>

@@ -1,0 +1,24 @@
+0 verbose cli /opt/homebrew/Cellar/node@20/20.19.5/bin/node /opt/homebrew/Cellar/node@20/20.19.5/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.8.2
+2 info using node@v20.19.5
+3 silly config load:file:/opt/homebrew/Cellar/node@20/20.19.5/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/jaredwolf/Projects/tybeb_b/typeb-family-app/.npmrc
+5 silly config load:file:/Users/jaredwolf/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm exec eas-cli@latest build --platform ios --profile production --non-interactive
+8 verbose argv "exec" "--yes" "--" "eas-cli@latest" "build" "--platform" "ios" "--profile" "production" "--non-interactive"
+9 verbose logfile logs-max:10 dir:/Users/jaredwolf/Projects/tybeb_b/typeb-family-app/.npm-cache/_logs/2025-10-30T00_43_03_655Z-
+10 verbose logfile /Users/jaredwolf/Projects/tybeb_b/typeb-family-app/.npm-cache/_logs/2025-10-30T00_43_03_655Z-debug-0.log
+11 silly logfile start cleaning logs, removing 1 files
+12 silly logfile done cleaning log files
+13 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+14 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+15 http fetch GET 200 https://registry.npmjs.org/eas-cli 194ms (cache revalidated)
+16 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+17 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+18 verbose cwd /Users/jaredwolf/Projects/tybeb_b/typeb-family-app
+19 verbose os Darwin 24.6.0
+20 verbose node v20.19.5
+21 verbose npm  v10.8.2
+22 verbose exit 0
+23 info ok

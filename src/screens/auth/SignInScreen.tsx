@@ -26,6 +26,7 @@ import VerificationBanner from '../../components/VerificationBanner';
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
 const SignInScreen: React.FC = () => {
+  const SHOW_SOCIAL_AUTH = (process.env.EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN as string) === 'true';
   const navigation = useNavigation<SignInScreenNavigationProp>();
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectIsLoading);
@@ -48,7 +49,9 @@ const SignInScreen: React.FC = () => {
 
   useEffect(() => {
     // Configure Google Sign-In when component mounts
-    configureGoogleSignIn();
+    if (SHOW_SOCIAL_AUTH) {
+      configureGoogleSignIn();
+    }
   }, []);
 
   const handleSignIn = async () => {
@@ -178,20 +181,23 @@ const SignInScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <GoogleSignInButton
-              variant="signin"
-              onSuccess={() => {
-                // Navigation will be handled by auth state change
-                console.log('Google Sign-In successful');
-              }}
-              disabled={isLoading}
-            />
+            {SHOW_SOCIAL_AUTH && (
+              <>
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+                <GoogleSignInButton
+                  variant="signin"
+                  onSuccess={() => {
+                    // Navigation will be handled by auth state change
+                    console.log('Google Sign-In successful');
+                  }}
+                  disabled={isLoading}
+                />
+              </>
+            )}
 
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>

@@ -35,6 +35,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^7.6.2",
     "@expo/vector-icons": "^14.0.0",
     "@gorhom/bottom-sheet": "^4.5.1",
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -46,7 +47,7 @@
     "@react-navigation/native-stack": "^6.9.17",
     "@react-navigation/stack": "^6.4.1",
     "@reduxjs/toolkit": "^2.0.1",
-    "@sentry/react-native": "^5.20.0",
+    "@sentry/react-native": "~5.24.3",
     "date-fns": "^3.0.6",
     "expo": "~51.0.17",
     "expo-av": "~14.0.6",
@@ -88,7 +89,8 @@
     "react-native-svg": "15.4.0",
     "react-native-vector-icons": "^10.0.3",
     "react-redux": "^9.0.4",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -112,6 +114,7 @@
     "patch-package": "^8.0.0",
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "^1.5.5",
+    "sentry-expo": "~7.0.0",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.3.3"

@@ -24,13 +24,14 @@
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": true,
-        "image": "latest"
+        "image": "sdk-51"
       },
       "android": {
         "autoIncrement": true
       },
       "env": {
-        "EXPO_PUBLIC_ENVIRONMENT": "production"
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "USE_FRAMEWORKS": "static"
       }
     }
   },

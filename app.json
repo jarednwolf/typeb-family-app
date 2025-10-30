@@ -54,11 +54,7 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "plugins": [
-      "expo-notifications",
-      "expo-camera",
-      "expo-image-picker"
-    ],
+    "plugins": [],
     "owner": "wolfjn1"
   }
 }
