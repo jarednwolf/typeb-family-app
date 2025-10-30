@@ -151,15 +151,7 @@ export const FeatureGrid: React.FC = () => {
                       {feature.description}
                     </p>
                     
-                    {/* Learn more link (subtle) */}
-                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className={`text-sm font-medium ${colors.text} flex items-center gap-1`}>
-                        Learn more
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </span>
-                    </div>
+                    {/* Hover CTA removed until destination links are available */}
                   </div>
                 </div>
               );

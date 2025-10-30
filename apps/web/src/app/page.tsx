@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { FeatureGrid } from '@/components/landing/FeatureGrid';
-import { SocialProof } from '@/components/landing/SocialProof';
 import { EmailCaptureModal } from '@/components/modals/EmailCaptureModal';
 import { useConversionTracking } from '@/hooks/useConversionTracking';
 
@@ -49,10 +48,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <HeroSection />
 
-        {/* Social Proof Bar */}
-        <div className="mt-4 sm:mt-6">
-          <SocialProof />
-        </div>
+        {/* Social Proof Bar — temporarily hidden */}
 
         {/* Features Grid */}
         <FeatureGrid />
