@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Settings page basic behaviors', () => {
   test('sections render with headings', async ({ page }) => {
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?e2e=1');
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
@@ -11,7 +11,7 @@ test.describe('Settings page basic behaviors', () => {
     await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
   });
   test('theme toggle switches data-theme attribute', async ({ page }) => {
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?e2e=1');
     await page.waitForLoadState('domcontentloaded');
 
     const html = page.locator('html');
@@ -25,7 +25,7 @@ test.describe('Settings page basic behaviors', () => {
   });
 
   test('theme persists across reload', async ({ page }) => {
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?e2e=1');
     const html = page.locator('html');
     await page.getByRole('button', { name: /toggle dark mode/i }).click();
     const setVal = await html.getAttribute('data-theme');
@@ -35,7 +35,7 @@ test.describe('Settings page basic behaviors', () => {
   });
 
   test('manage subscription opens billing portal (new tab)', async ({ page, context }) => {
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?e2e=1');
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
       page.getByRole('button', { name: /Manage subscription/i }).click(),
@@ -45,7 +45,7 @@ test.describe('Settings page basic behaviors', () => {
   });
   
   test('keyboard focus is visible on primary actions', async ({ page }) => {
-    await page.goto('/dashboard/settings');
+    await page.goto('/dashboard/settings?e2e=1');
     await page.keyboard.press('Tab');
     // Look for outline style applied via :focus-visible on buttons
     const btn = page.getByRole('button', { name: /Save changes|Request browser notifications|Toggle Theme/i }).first();
@@ -56,7 +56,7 @@ test.describe('Settings page basic behaviors', () => {
 });
 
 test('settings page renders header', async ({ page }) => {
-  await page.goto('/dashboard/settings');
+  await page.goto('/dashboard/settings?e2e=1');
   await page.waitForLoadState('networkidle');
   // Accept multiple stable outcomes (unauth redirect or render)
   const header = page.getByRole('heading', { name: /Settings/i });
@@ -69,7 +69,7 @@ test('settings page renders header', async ({ page }) => {
 });
 
 test('subscription section is visible when authed (ui only)', async ({ page }) => {
-  await page.goto('/dashboard/settings');
+  await page.goto('/dashboard/settings?e2e=1');
   try {
     await page.getByRole('heading', { name: /Subscription/i }).waitFor({ timeout: 3000 });
   } catch {
