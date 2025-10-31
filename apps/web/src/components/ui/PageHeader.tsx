@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
+import Button from '@/components/ui/Button';
 
 type PrimaryAction = {
   href: string;
@@ -26,13 +27,11 @@ export default function PageHeader({ title, subtitle, primaryAction, right }: Pa
       <div className="flex items-center gap-2">
         {right}
         {primaryAction && (
-          <Link
-            href={primaryAction.href}
-            data-analytics={primaryAction.analyticsId}
-            className="btn btn-primary px-4 transition hidden sm:inline-flex"
-          >
-            {primaryAction.label}
-          </Link>
+          <Button asChild variant="primary" size="md" className="hidden sm:inline-flex">
+            <Link href={primaryAction.href} data-analytics={primaryAction.analyticsId}>
+              {primaryAction.label}
+            </Link>
+          </Button>
         )}
       </div>
     </div>

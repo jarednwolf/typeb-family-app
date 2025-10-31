@@ -8,11 +8,17 @@ export default function UpsellBanner({ className = '' }: Props) {
     openBillingPortal();
   };
   return (
-    <div className={`rounded-xl border border-yellow-200 bg-yellow-50 p-4 ${className}`}>
-        <div className="flex items-start justify-between gap-3">
+    <div
+      className={`rounded-xl p-4 ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 149, 0, 0.10)', // subtle warning background
+        border: '1px solid rgba(255, 149, 0, 0.30)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-medium text-yellow-800">Unlock Premium</p>
-          <p className="text-sm text-yellow-800/90">Get full analytics, priority validation tools, and more.</p>
+          <p className="font-medium" style={{ color: 'var(--color-warning)' }}>Unlock Premium</p>
+          <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Get full analytics, priority validation tools, and more.</p>
         </div>
         <button onClick={handleManage} className="btn btn-primary btn-sm" aria-label="Manage subscription in billing portal">Manage</button>
       </div>

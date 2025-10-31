@@ -14,6 +14,8 @@ import { storage } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -102,15 +104,15 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-sm text-gray-600">Name</label>
-            <input value={name} onChange={(e)=>setName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" />
+            <Input value={name} onChange={(e)=>setName(e.target.value)} />
           </div>
           <div>
             <label className="block text-sm text-gray-600">Email</label>
-            <input value={user?.email || ''} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
+            <Input value={user?.email || ''} readOnly />
           </div>
         </div>
         <div>
-          <button onClick={saveProfile} disabled={saving || !name} className="px-4 py-2 btn btn-primary disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
+          <Button onClick={saveProfile} disabled={saving || !name}>{saving ? 'Saving...' : 'Save changes'}</Button>
         </div>
       </SettingsSection>
 
@@ -128,16 +130,11 @@ export default function SettingsPage() {
         {/* Web push opt-in (best-effort) */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Status: <strong>{typeof Notification !== 'undefined' ? Notification.permission : 'unknown'}</strong></span>
-          <button
-          className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          onClick={async () => {
+          <Button variant="secondary" size="sm" className="mt-4" onClick={async () => {
             const perm = await requestNotificationPermission();
             alert(`Notifications permission: ${perm}`);
-          }}
-        >
-          Request browser notifications
-        </button>
-          <button className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={()=>openSystemNotificationSettings()}>Open browser settings</button>
+          }}>Request browser notifications</Button>
+          <Button variant="secondary" size="sm" className="mt-4" onClick={()=>openSystemNotificationSettings()}>Open browser settings</Button>
         </div>
         <div>
           <ThemeToggle />
@@ -152,19 +149,22 @@ export default function SettingsPage() {
           <li>Family member expansion</li>
         </ul>
         <div className="flex gap-2">
-          <button
-            onClick={async ()=>{ const { openBillingPortal } = await import('@/services/billing'); openBillingPortal(); }}
-            className="btn btn-primary"
-          >Manage subscription</button>
-          <a href="/pricing" className="btn btn-secondary">View plans</a>
+          <Button onClick={async ()=>{ const { openBillingPortal } = await import('@/services/billing'); openBillingPortal(); }}>Manage subscription</Button>
+          <Button asChild variant="secondary">
+            <a href="/pricing">View plans</a>
+          </Button>
         </div>
       </SettingsSection>
 
       {/* Support */}
       <SettingsSection title="Support">
         <div className="flex gap-3">
-          <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Contact support by email">Contact Support</a>
-          <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Report a bug by email">Report a Bug</a>
+          <Button asChild variant="secondary">
+            <a href="mailto:support@typeb.app" aria-label="Contact support by email">Contact Support</a>
+          </Button>
+          <Button asChild variant="secondary">
+            <a href="mailto:bugs@typeb.app?subject=Bug%20Report" aria-label="Report a bug by email">Report a Bug</a>
+          </Button>
         </div>
       </SettingsSection>
 
@@ -174,29 +174,29 @@ export default function SettingsPage() {
           <div>
             <label className="block text-sm text-gray-600">Change email</label>
             <div className="flex gap-2">
-              <input value={newEmail} onChange={(e)=>setNewEmail(e.target.value)} placeholder="new@email.com" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg" />
-              <button
+              <Input value={newEmail} onChange={(e)=>setNewEmail(e.target.value)} placeholder="new@email.com" className="flex-1" />
+              <Button
                 onClick={async ()=>{
                   if (!auth.currentUser || !newEmail) return;
                   setEmailSaving(true);
                   try { await auth.currentUser.updateEmail?.(newEmail as any); alert('Email updated'); } catch { alert('Email update failed'); } finally { setEmailSaving(false); }
                 }}
-                className="btn btn-secondary"
+                variant="secondary"
                 disabled={emailSaving}
-              >{emailSaving ? 'Saving...' : 'Save'}</button>
+              >{emailSaving ? 'Saving...' : 'Save'}</Button>
             </div>
           </div>
         </div>
         <div>
-          <button
+          <Button
+            variant="danger"
             onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); alert('Account deleted'); location.href='/'; } catch { alert('Delete failed'); } } }}
-            className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-          >Delete account</button>
+          >Delete account</Button>
         </div>
 
         <div>
           <h3 className="text-md font-semibold text-gray-900 mb-2">Change password</h3>
-          <button className="px-4 py-2 btn btn-secondary" onClick={()=>setPwdOpen(true)}>Update password</button>
+          <Button variant="secondary" onClick={()=>setPwdOpen(true)}>Update password</Button>
         </div>
       </SettingsSection>
 
@@ -206,9 +206,9 @@ export default function SettingsPage() {
         title="Update password"
         footer={(
           <>
-            <button className="btn btn-secondary btn-sm" onClick={()=>setPwdOpen(false)}>Cancel</button>
-            <button
-              className="btn btn-primary btn-sm"
+            <Button variant="secondary" size="sm" onClick={()=>setPwdOpen(false)}>Cancel</Button>
+            <Button
+              size="sm"
               onClick={async ()=>{
                 try {
                   if (!auth.currentUser || newPwd.length < 6) return alert('Password too short');
@@ -221,12 +221,12 @@ export default function SettingsPage() {
                   alert('Password update failed');
                 }
               }}
-            >Save</button>
+            >Save</Button>
           </>
         )}
       >
         <label className="block text-sm text-gray-600 mb-1">New password</label>
-        <input type="password" value={newPwd} onChange={(e)=>setNewPwd(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" placeholder="••••••" />
+        <Input type="password" value={newPwd} onChange={(e)=>setNewPwd(e.target.value)} placeholder="••••••" />
         <p className="text-xs text-gray-500 mt-2">Minimum 6 characters.</p>
       </Modal>
     </div>
