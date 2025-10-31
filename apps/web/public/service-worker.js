@@ -78,6 +78,13 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(networkFirst(req));
 });
 
+// Allow the page to tell the SW to skip waiting immediately
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 
 
 
