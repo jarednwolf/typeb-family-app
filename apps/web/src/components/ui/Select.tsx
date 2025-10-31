@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React from 'react';
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
@@ -14,10 +14,7 @@ function cx(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { label, helperText, errorText, className, id, children, ...rest },
-  ref
-) {
+function Select({ label, helperText, errorText, className, id, children, ...rest }: SelectProps) {
   const selectId = id || React.useId();
   const describedBy = errorText ? `${selectId}-error` : helperText ? `${selectId}-help` : undefined;
 
@@ -30,7 +27,6 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
       )}
       <select
         id={selectId}
-        ref={ref}
         aria-describedby={describedBy}
         aria-invalid={!!errorText || undefined}
         className={cx(
@@ -56,7 +52,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
       )}
     </div>
   );
-});
+}
 
 export default Select;
 

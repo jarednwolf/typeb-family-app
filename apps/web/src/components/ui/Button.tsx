@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'link';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -45,10 +45,7 @@ function sizeClasses(size: ButtonSize) {
   }
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', fullWidth, loading, asChild, className, children, disabled, ...rest },
-  ref
-) {
+function Button({ variant = 'primary', size = 'md', fullWidth, loading, asChild, className, children, disabled, ...rest }: ButtonProps) {
   const base = cx(
     'btn btn-hover-lift',
     variantClasses(variant),
@@ -67,11 +64,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   }
 
   return (
-    <button ref={ref} className={base} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
+    <button className={base} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
       {children}
     </button>
   );
-});
+}
 
 export default Button;
 

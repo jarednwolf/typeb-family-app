@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React from 'react';
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
@@ -13,10 +13,7 @@ function cx(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, helperText, errorText, className, id, ...rest },
-  ref
-) {
+function Input({ label, helperText, errorText, className, id, ...rest }: InputProps) {
   const inputId = id || React.useId();
   const describedBy = errorText ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined;
 
@@ -29,7 +26,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       <input
         id={inputId}
-        ref={ref}
         aria-describedby={describedBy}
         aria-invalid={!!errorText || undefined}
         className={cx(
@@ -53,7 +49,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
     </div>
   );
-});
+}
 
 export default Input;
 
