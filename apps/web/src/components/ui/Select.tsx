@@ -1,10 +1,6 @@
 'use client';
 
-<<<<<<< HEAD
-import React, { forwardRef } from 'react';
-=======
 import React from 'react';
->>>>>>> origin/chore-sw-format-XYSon
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
@@ -18,14 +14,7 @@ function cx(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-<<<<<<< HEAD
-const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { label, helperText, errorText, className, id, children, ...rest },
-  ref
-) {
-=======
 function Select({ label, helperText, errorText, className, id, children, ...rest }: SelectProps) {
->>>>>>> origin/chore-sw-format-XYSon
   const selectId = id || React.useId();
   const describedBy = errorText ? `${selectId}-error` : helperText ? `${selectId}-help` : undefined;
 
@@ -38,10 +27,6 @@ function Select({ label, helperText, errorText, className, id, children, ...rest
       )}
       <select
         id={selectId}
-<<<<<<< HEAD
-        ref={ref}
-=======
->>>>>>> origin/chore-sw-format-XYSon
         aria-describedby={describedBy}
         aria-invalid={!!errorText || undefined}
         className={cx(
@@ -67,11 +52,7 @@ function Select({ label, helperText, errorText, className, id, children, ...rest
       )}
     </div>
   );
-<<<<<<< HEAD
-});
-=======
 }
->>>>>>> origin/chore-sw-format-XYSon
 
 export default Select;
 
