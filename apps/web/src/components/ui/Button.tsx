@@ -1,6 +1,10 @@
 'use client';
 
+<<<<<<< HEAD
 import React, { forwardRef } from 'react';
+=======
+import React from 'react';
+>>>>>>> origin/chore-sw-format-XYSon
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'link';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -45,10 +49,14 @@ function sizeClasses(size: ButtonSize) {
   }
 }
 
+<<<<<<< HEAD
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = 'primary', size = 'md', fullWidth, loading, asChild, className, children, disabled, ...rest },
   ref
 ) {
+=======
+function Button({ variant = 'primary', size = 'md', fullWidth, loading, asChild, className, children, disabled, ...rest }: ButtonProps) {
+>>>>>>> origin/chore-sw-format-XYSon
   const base = cx(
     'btn btn-hover-lift',
     variantClasses(variant),
@@ -67,11 +75,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   }
 
   return (
+<<<<<<< HEAD
     <button ref={ref} className={base} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
       {children}
     </button>
   );
 });
+=======
+    <button className={base} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
+      {children}
+    </button>
+  );
+}
+>>>>>>> origin/chore-sw-format-XYSon
 
 export default Button;
 

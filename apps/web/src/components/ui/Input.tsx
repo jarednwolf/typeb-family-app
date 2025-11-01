@@ -1,6 +1,10 @@
 'use client';
 
+<<<<<<< HEAD
 import React, { forwardRef } from 'react';
+=======
+import React from 'react';
+>>>>>>> origin/chore-sw-format-XYSon
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
@@ -13,10 +17,14 @@ function cx(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
+<<<<<<< HEAD
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, helperText, errorText, className, id, ...rest },
   ref
 ) {
+=======
+function Input({ label, helperText, errorText, className, id, ...rest }: InputProps) {
+>>>>>>> origin/chore-sw-format-XYSon
   const inputId = id || React.useId();
   const describedBy = errorText ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined;
 
@@ -29,7 +37,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       <input
         id={inputId}
+<<<<<<< HEAD
         ref={ref}
+=======
+>>>>>>> origin/chore-sw-format-XYSon
         aria-describedby={describedBy}
         aria-invalid={!!errorText || undefined}
         className={cx(
@@ -53,7 +64,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
     </div>
   );
+<<<<<<< HEAD
 });
+=======
+}
+>>>>>>> origin/chore-sw-format-XYSon
 
 export default Input;
 
