@@ -36,6 +36,7 @@ export default function ServiceWorkerRegister() {
         navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
       };
     }
+    return undefined;
   }, []);
   return null;
 }
