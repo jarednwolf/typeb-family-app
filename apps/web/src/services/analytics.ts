@@ -44,7 +44,6 @@ export interface UserProperties {
 }
 
 class AnalyticsService {
-  private userId: string | null = null;
   private sessionId: string;
   private pageViewStart: number = Date.now();
 
@@ -323,8 +322,6 @@ class AnalyticsService {
    * Set user properties
    */
   public setUserProperties(properties: UserProperties): void {
-    this.userId = properties.userId || null;
-
     // Google Analytics user properties
     if (window.gtag) {
       window.gtag('set', 'user_properties', properties);
