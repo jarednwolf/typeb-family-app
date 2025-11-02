@@ -122,7 +122,7 @@ export abstract class BaseService {
     action: string,
     entityType: string,
     entityId: string,
-    metadata?: Record<string, any>
+    _metadata?: Record<string, any>
   ): Promise<void> {
     // Implementation will be in specific adapters
     console.log(`Activity: ${action} on ${entityType}:${entityId} by ${userId}`);
