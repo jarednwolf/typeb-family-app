@@ -39,7 +39,6 @@ export const validateEmail = (email: string): ValidationResult => {
   }
 
   // Check for common typos
-  const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
   const domain = trimmedEmail.split('@')[1];
   const suspiciousDomains = ['gmial.com', 'gmai.com', 'yahooo.com', 'hotmial.com'];
   
