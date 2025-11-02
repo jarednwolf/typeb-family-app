@@ -298,9 +298,4 @@ export const Testimonials: React.FC = () => {
   );
 };
 
-// TypeB Design System Colors
-const colors = {
-  primary: '#4A90E2',
-  secondary: '#7ED321',
-  accent: '#F5A623',
-};
+// Colors are defined in globals.css tokens
