@@ -170,11 +170,4 @@ export default function LandingPage() {
   );
 }
 
-// TypeB Design System Colors (Matching Mobile App)
-const colors = {
-  primary: '#0A0A0A',    // Premium black
-  success: '#34C759',    // Apple green
-  info: '#007AFF',       // Apple blue
-  warning: '#FF9500',    // Apple amber
-  background: '#FAF8F5', // Warm background
-};
+// Colors centralized in globals.css and components; keep design tokens there.
