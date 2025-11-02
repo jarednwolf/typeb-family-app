@@ -1,6 +1,11 @@
 'use client';
+import { useEffect } from 'react';
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  useEffect(() => {
+    // Log error for diagnostics without exposing details in UI
+    console.error('Global error boundary:', error);
+  }, [error]);
   return (
     <html>
       <body>
