@@ -25,35 +25,34 @@ export default function DashboardLayout({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      // E2E/test bypass: allow unauthenticated render when ?e2e=1 is present
-      try {
-        if (typeof window !== 'undefined') {
-          const params = new URLSearchParams(window.location.search);
-          if (params.get('e2e') === '1') {
-            setUser({ id: 'e2e', displayName: 'E2E Tester', email: 'e2e@example.com' } as unknown as User);
-            setIsLoading(false);
-            return;
-          }
+    // E2E/test bypass: allow unauthenticated render when ?e2e=1 is present
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('e2e') === '1') {
+          setUser({ id: 'e2e', displayName: 'E2E Tester', email: 'e2e@example.com' } as unknown as User);
+          setIsLoading(false);
+          return;
         }
-      } catch {}
-
-      try {
-        const currentUser = await authAdapter.getCurrentUser();
-        if (!currentUser) {
-          router.push('/login');
-        } else {
-          setUser(currentUser);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch {}
 
-    checkAuth();
+    let firstResolved = false;
+    const unsubscribe = authAdapter.onAuthStateChanged((u) => {
+      firstResolved = true;
+      setUser(u);
+      setIsLoading(false);
+      if (!u) router.replace('/login');
+    });
+
+    const hydrationGuard = setTimeout(() => {
+      if (!firstResolved) setIsLoading(true);
+    }, 1200);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(hydrationGuard);
+    };
   }, [router]);
 
   const handleSignOut = async () => {

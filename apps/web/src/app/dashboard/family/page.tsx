@@ -10,10 +10,10 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
 import Avatar from '@/components/ui/Avatar';
-import Input from '@/components/ui/Input';
-import SegmentedControl from '@/components/ui/SegmentedControl';
+import { useToast } from '@/components/ui/ToastProvider';
 
 export default function FamilyPage() {
+  const { show } = useToast();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [members, setMembers] = useState<User[]>([]);
   const [inviteCode, setInviteCode] = useState('');
@@ -58,14 +58,14 @@ export default function FamilyPage() {
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(inviteCode);
-      alert('Invite code copied');
+      show('Invite code copied', 'success');
     } catch {}
   };
 
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(inviteLink);
-      alert('Invite link copied');
+      show('Invite link copied', 'success');
     } catch {}
   };
 
@@ -81,11 +81,11 @@ export default function FamilyPage() {
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-900">
             <span className="font-mono tracking-widest">{inviteCode || '------'}</span>
           </div>
-          <button className="btn btn-secondary btn-sm" onClick={copyInvite}>Copy code</button>
+          <button onClick={copyInvite} className="btn btn-secondary btn-sm">Copy code</button>
         </div>
         <div className="mt-3 flex items-center gap-3">
-          <Input value={inviteLink} readOnly className="flex-1" />
-          <button className="btn btn-secondary btn-sm whitespace-nowrap" onClick={copyLink}>Copy link</button>
+          <input value={inviteLink} readOnly className="form-control bg-gray-50" />
+          <button onClick={copyLink} className="btn btn-secondary btn-sm whitespace-nowrap">Copy link</button>
         </div>
       </div>
 
@@ -121,16 +121,24 @@ export default function FamilyPage() {
                     </td>
                     <td className="py-3 pr-4 text-gray-600">{m.email}</td>
                     <td className="py-3 pr-4 capitalize">
-                      <SegmentedControl
-                        aria-label={`Change role for ${m.displayName}`}
-                        value={m.role}
-                        options={[{ label: 'Parent', value: 'parent' }, { label: 'Child', value: 'child' }]}
-                        onChange={async (val)=>{
-                          if (currentUser?.role !== 'parent' || m.role === val) return;
-                          await updateDoc(doc(db, 'users', m.id), { role: val, updatedAt: new Date() });
-                          setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: val as any } : x));
-                        }}
-                      />
+                      <div className="inline-flex border rounded-lg overflow-hidden text-sm">
+                        <button
+                          className={`px-3 py-1 ${m.role === 'parent' ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                          onClick={async ()=>{
+                            if (currentUser?.role !== 'parent' || m.role === 'parent') return;
+                            await updateDoc(doc(db, 'users', m.id), { role: 'parent', updatedAt: new Date() });
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: 'parent' } : x));
+                          }}
+                        >Parent</button>
+                        <button
+                          className={`px-3 py-1 ${m.role === 'child' ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                          onClick={async ()=>{
+                            if (currentUser?.role !== 'parent' || m.role === 'child') return;
+                            await updateDoc(doc(db, 'users', m.id), { role: 'child', updatedAt: new Date() });
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: 'child' } : x));
+                          }}
+                        >Child</button>
+                      </div>
                     </td>
                     <td className="py-3 pr-4 text-right">
                       <button
@@ -163,7 +171,7 @@ export default function FamilyPage() {
             onClick={async ()=>{
               if (!newMemberEmail || !currentUser?.familyId) return;
               // Placeholder: In production, create invite doc and send email.
-              alert(`Invite sent to ${newMemberEmail}`);
+              show(`Invite sent to ${newMemberEmail}`, 'success');
               setNewMemberEmail('');
               setIsAddOpen(false);
             }}
@@ -171,7 +179,7 @@ export default function FamilyPage() {
         </>
       )}>
         <label className="block text-sm text-gray-600 mb-1">Email</label>
-        <Input value={newMemberEmail} onChange={(e)=>setNewMemberEmail(e.target.value)} placeholder="name@example.com" />
+        <input value={newMemberEmail} onChange={(e)=>setNewMemberEmail(e.target.value)} placeholder="name@example.com" className="form-control" />
         <p className="text-xs text-gray-500 mt-2">We’ll send an email with a join link tied to your invite code.</p>
       </Modal>
     </div>

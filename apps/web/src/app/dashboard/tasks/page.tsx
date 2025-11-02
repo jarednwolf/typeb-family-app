@@ -300,7 +300,7 @@ export default function TasksPage() {
                     onClick={() => updateTaskStatus(task.id!, 
                       task.status === 'pending' ? 'in_progress' : 'completed'
                     )}
-                    className="flex-1 px-3 py-1.5 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition"
+                    className="btn btn-primary btn-sm flex-1"
                   >
                     {task.status === 'pending' ? 'Start' : 'Complete'}
                   </button>
@@ -328,9 +328,9 @@ export default function TasksPage() {
                             photoUrl: url,
                           });
                           analytics.trackEvent({ name: 'photo_submit', category: 'task', label: task.id });
-                          alert('Photo submitted for validation');
+                          show('Photo submitted for validation', 'success');
                         } catch {
-                          alert('Upload failed');
+                          show('Upload failed', 'error');
                         } finally {
                           document.body.removeChild(fileInput);
                         }
@@ -338,7 +338,7 @@ export default function TasksPage() {
                       document.body.appendChild(fileInput);
                       fileInput.click();
                     }}
-                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="btn btn-secondary btn-sm"
                   >
                     Upload Photo
                   </button>
@@ -346,7 +346,7 @@ export default function TasksPage() {
                 
                 <Link
                   href={`/dashboard/tasks/${task.id}`}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  className="btn btn-secondary btn-sm"
                   aria-label={`Edit task ${task.title}`}
                 >
                   Edit
@@ -355,7 +355,7 @@ export default function TasksPage() {
                 {user?.role === 'parent' && (
                   <button
                     onClick={() => deleteTask(task.id!)}
-                    className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition"
+                    className="btn btn-danger btn-sm"
                   >
                     Delete
                   </button>

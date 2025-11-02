@@ -34,14 +34,11 @@ test.describe('Settings page basic behaviors', () => {
     expect(afterReload).toBe(setVal);
   });
 
-  test('manage subscription opens billing portal (new tab)', async ({ page, context }) => {
+  test('Upgrade opens in-app modal (non-premium)', async ({ page }) => {
     await page.goto('/dashboard/settings?e2e=1');
-    const [newPage] = await Promise.all([
-      context.waitForEvent('page'),
-      page.getByRole('button', { name: /Manage subscription/i }).click(),
-    ]);
-    await newPage.waitForLoadState('domcontentloaded');
-    expect(newPage.url()).toContain(process.env.NEXT_PUBLIC_BILLING_PORTAL_URL || '/dashboard/settings');
+    await page.getByRole('button', { name: /Upgrade/i }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Upgrade to Premium/i })).toBeVisible();
   });
   
   test('keyboard focus is visible on primary actions', async ({ page }) => {

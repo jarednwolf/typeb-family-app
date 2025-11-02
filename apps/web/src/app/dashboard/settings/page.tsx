@@ -14,8 +14,11 @@ import { storage } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { User } from '@typeb/types';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useToast } from '@/components/ui/ToastProvider';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 
 export default function SettingsPage() {
+  const { show } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [name, setName] = useState('');
@@ -25,6 +28,7 @@ export default function SettingsPage() {
   const [pwdOpen, setPwdOpen] = useState(false);
   const [newPwd, setNewPwd] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -44,10 +48,10 @@ export default function SettingsPage() {
       await updateProfile(auth.currentUser, { displayName: name });
       await updateDoc(doc(db, 'users', user.id), { displayName: name });
       setUser({ ...user, displayName: name });
-      alert('Profile updated');
+      show('Profile updated', 'success');
     } catch (e) {
       console.error(e);
-      alert('Failed to update profile');
+      show('Failed to update profile', 'error');
     } finally {
       setSaving(false);
     }
@@ -91,7 +95,7 @@ export default function SettingsPage() {
                     setUser({ ...user, avatarUrl: url });
                   } catch (e) {
                     console.error(e);
-                    alert('Upload failed');
+                    show('Upload failed', 'error');
                   } finally {
                     setUploading(false);
                   }
@@ -102,11 +106,11 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-sm text-gray-600">Name</label>
-            <input value={name} onChange={(e)=>setName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" />
+            <input value={name} onChange={(e)=>setName(e.target.value)} className="form-control" />
           </div>
           <div>
             <label className="block text-sm text-gray-600">Email</label>
-            <input value={user?.email || ''} readOnly className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" />
+            <input value={user?.email || ''} readOnly className="form-control bg-gray-50" />
           </div>
         </div>
         <div>
@@ -129,15 +133,15 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Status: <strong>{typeof Notification !== 'undefined' ? Notification.permission : 'unknown'}</strong></span>
           <button
-          className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="mt-4 btn btn-secondary"
           onClick={async () => {
             const perm = await requestNotificationPermission();
-            alert(`Notifications permission: ${perm}`);
+            show(`Notifications permission: ${perm}`, 'info');
           }}
         >
           Request browser notifications
         </button>
-          <button className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={()=>openSystemNotificationSettings()}>Open browser settings</button>
+          <button className="mt-4 btn btn-secondary" onClick={()=>openSystemNotificationSettings()}>Open browser settings</button>
         </div>
         <div>
           <ThemeToggle />
@@ -152,19 +156,33 @@ export default function SettingsPage() {
           <li>Family member expansion</li>
         </ul>
         <div className="flex gap-2">
-          <button
-            onClick={async ()=>{ const { openBillingPortal } = await import('@/services/billing'); openBillingPortal(); }}
-            className="btn btn-primary"
-          >Manage subscription</button>
-          <a href="/pricing" className="btn btn-secondary">View plans</a>
+          {user && !user.isPremium ? (
+            <>
+              <button
+                onClick={()=>setUpgradeOpen(true)}
+                className="btn btn-primary"
+                aria-label="Open upgrade modal"
+              >Upgrade</button>
+              <a href="/pricing" className="btn btn-secondary">View plans</a>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={async ()=>{ const { openBillingPortal } = await import('@/services/billing'); openBillingPortal(); }}
+                className="btn btn-primary"
+              >Manage subscription</button>
+              <a href="/pricing" className="btn btn-secondary">View plans</a>
+            </>
+          )}
         </div>
+        <UpgradeModal open={upgradeOpen} onClose={()=>setUpgradeOpen(false)} />
       </SettingsSection>
 
       {/* Support */}
       <SettingsSection title="Support">
         <div className="flex gap-3">
-          <a href="mailto:support@typeb.app" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Contact support by email">Contact Support</a>
-          <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Report a bug by email">Report a Bug</a>
+          <a href="mailto:support@typeb.app" className="btn btn-secondary" aria-label="Contact support by email">Contact Support</a>
+          <a href="mailto:bugs@typeb.app?subject=Bug%20Report" className="btn btn-secondary" aria-label="Report a bug by email">Report a Bug</a>
         </div>
       </SettingsSection>
 
@@ -174,12 +192,12 @@ export default function SettingsPage() {
           <div>
             <label className="block text-sm text-gray-600">Change email</label>
             <div className="flex gap-2">
-              <input value={newEmail} onChange={(e)=>setNewEmail(e.target.value)} placeholder="new@email.com" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg" />
+              <input value={newEmail} onChange={(e)=>setNewEmail(e.target.value)} placeholder="new@email.com" className="form-control flex-1" />
               <button
                 onClick={async ()=>{
                   if (!auth.currentUser || !newEmail) return;
                   setEmailSaving(true);
-                  try { await auth.currentUser.updateEmail?.(newEmail as any); alert('Email updated'); } catch { alert('Email update failed'); } finally { setEmailSaving(false); }
+                  try { await auth.currentUser.updateEmail?.(newEmail as any); show('Email updated', 'success'); } catch { show('Email update failed', 'error'); } finally { setEmailSaving(false); }
                 }}
                 className="btn btn-secondary"
                 disabled={emailSaving}
@@ -189,7 +207,7 @@ export default function SettingsPage() {
         </div>
         <div>
           <button
-            onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); alert('Account deleted'); location.href='/'; } catch { alert('Delete failed'); } } }}
+            onClick={async ()=>{ if (confirm('Delete account permanently?')) { try { await auth.currentUser?.delete?.(); show('Account deleted', 'success'); location.href='/'; } catch { show('Delete failed', 'error'); } } }}
             className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
           >Delete account</button>
         </div>
@@ -211,14 +229,14 @@ export default function SettingsPage() {
               className="btn btn-primary btn-sm"
               onClick={async ()=>{
                 try {
-                  if (!auth.currentUser || newPwd.length < 6) return alert('Password too short');
+                  if (!auth.currentUser || newPwd.length < 6) { show('Password too short', 'error'); return; }
                   try { await reauthenticateWithPopup(auth.currentUser, new GoogleAuthProvider()); } catch {}
                   await updatePassword(auth.currentUser, newPwd);
-                  alert('Password updated');
+                  show('Password updated', 'success');
                   setNewPwd('');
                   setPwdOpen(false);
                 } catch {
-                  alert('Password update failed');
+                  show('Password update failed', 'error');
                 }
               }}
             >Save</button>
@@ -226,7 +244,7 @@ export default function SettingsPage() {
         )}
       >
         <label className="block text-sm text-gray-600 mb-1">New password</label>
-        <input type="password" value={newPwd} onChange={(e)=>setNewPwd(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg" placeholder="••••••" />
+        <input type="password" value={newPwd} onChange={(e)=>setNewPwd(e.target.value)} className="form-control" placeholder="••••••" />
         <p className="text-xs text-gray-500 mt-2">Minimum 6 characters.</p>
       </Modal>
     </div>
