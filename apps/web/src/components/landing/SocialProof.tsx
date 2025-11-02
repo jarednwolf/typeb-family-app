@@ -26,7 +26,7 @@ export const SocialProof: React.FC = () => {
   const isSocialProofEnabled = useFeatureFlag('enableSocialProof');
   const [familyCount, setFamilyCount] = useState(527); // Start with base count
   const [currentActivity, setCurrentActivity] = useState<ActivityItem | null>(null);
-  const [activityIndex, setActivityIndex] = useState(0);
+  const [, setActivityIndex] = useState(0);
 
   // Simulated activity feed - in production, this would come from Firestore
   const activities: ActivityItem[] = [
