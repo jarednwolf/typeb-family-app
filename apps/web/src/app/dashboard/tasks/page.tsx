@@ -14,7 +14,6 @@ import dynamic from 'next/dynamic';
 import { useToast } from '@/components/ui/ToastProvider';
 const QuickCreateTaskModal = dynamic(() => import('@/components/tasks/QuickCreateTaskModal'), { ssr: false });
 import { authAdapter } from '@/lib/firebase/auth-adapter';
-import Button from '@/components/ui/Button';
 
 export default function TasksPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -208,17 +207,7 @@ export default function TasksPage() {
         title="Tasks"
         subtitle="Manage your family's tasks and responsibilities"
         primaryAction={{ href: '/dashboard/tasks/new', label: '+ New Task', analyticsId: 'cta_new_task_header' }}
-        right={
-          <Button
-            variant="secondary"
-            size="md"
-            className="hidden sm:inline-flex"
-            onClick={()=>{ setQuickOpen(true); show('Quick create opened'); analytics.trackCTAClick('quick_create_open','tasks_header'); }}
-            aria-label="Open quick create"
-          >
-            Quick create
-          </Button>
-        }
+        right={<button onClick={()=>{ setQuickOpen(true); show('Quick create opened'); analytics.trackCTAClick('quick_create_open','tasks_header'); }} className="btn btn-secondary px-3 hidden sm:inline-flex" aria-label="Open quick create">Quick create</button>}
       />
 
       <FiltersToolbar
@@ -231,10 +220,8 @@ export default function TasksPage() {
         onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setSearchQuery(''); }}
         right={
           <div className="flex gap-2">
-            <Button variant="secondary" size="md" className="sm:hidden" onClick={()=>{ setQuickOpen(true); analytics.trackCTAClick('quick_create_open','tasks_toolbar'); }} aria-label="Quick create task">Quick</Button>
-            <Button asChild variant="primary" size="md" className="sm:hidden">
-              <Link href="/dashboard/tasks/new" aria-label="Create new task">+ New Task</Link>
-            </Button>
+            <button onClick={()=>{ setQuickOpen(true); analytics.trackCTAClick('quick_create_open','tasks_toolbar'); }} className="btn btn-secondary px-3 sm:hidden" aria-label="Quick create task">Quick</button>
+            <Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>
           </div>
         }
       />
@@ -278,14 +265,13 @@ export default function TasksPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <span className="mr-2">Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</span>
-                  <Button
-                    variant="link"
-                    size="sm"
+                  <button
                     onClick={() => setEditingDueFor(editingDueFor === task.id ? null : task.id || null)}
+                    className="px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-gray-50"
                     aria-label="Change due date"
                   >
                     Change
-                  </Button>
+                  </button>
                 </div>
                 {editingDueFor === task.id && (
                   <div className="mt-2">
@@ -310,16 +296,17 @@ export default function TasksPage() {
 
               <div className="flex gap-2">
                 {task.status !== 'completed' && (
-                  <Button
-                    onClick={() => updateTaskStatus(task.id!, task.status === 'pending' ? 'in_progress' : 'completed')}
-                    className="flex-1"
-                    size="sm"
+                  <button
+                    onClick={() => updateTaskStatus(task.id!, 
+                      task.status === 'pending' ? 'in_progress' : 'completed'
+                    )}
+                    className="flex-1 px-3 py-1.5 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition"
                   >
                     {task.status === 'pending' ? 'Start' : 'Complete'}
-                  </Button>
+                  </button>
                 )}
                 {task.requiresPhoto && (
-                  <Button
+                  <button
                     onClick={async () => {
                       const fileInput = document.createElement('input');
                       fileInput.type = 'file';
@@ -351,23 +338,27 @@ export default function TasksPage() {
                       document.body.appendChild(fileInput);
                       fileInput.click();
                     }}
-                    variant="secondary"
-                    size="sm"
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                   >
                     Upload Photo
-                  </Button>
+                  </button>
                 )}
                 
-                <Button asChild variant="secondary" size="sm">
-                  <Link href={`/dashboard/tasks/${task.id}`} aria-label={`Edit task ${task.title}`}>
-                    Edit
-                  </Link>
-                </Button>
+                <Link
+                  href={`/dashboard/tasks/${task.id}`}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  aria-label={`Edit task ${task.title}`}
+                >
+                  Edit
+                </Link>
                 
                 {user?.role === 'parent' && (
-                  <Button variant="danger" size="sm" onClick={() => deleteTask(task.id!)}>
+                  <button
+                    onClick={() => deleteTask(task.id!)}
+                    className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition"
+                  >
                     Delete
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
