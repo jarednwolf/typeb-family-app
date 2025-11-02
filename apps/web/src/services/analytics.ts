@@ -44,7 +44,6 @@ export interface UserProperties {
 }
 
 class AnalyticsService {
-  private initialized = false;
   private userId: string | null = null;
   private sessionId: string;
   private pageViewStart: number = Date.now();
@@ -74,8 +73,6 @@ class AnalyticsService {
 
     // Set up UTM tracking
     this.trackUTMParameters();
-
-    this.initialized = true;
   }
 
   /**
