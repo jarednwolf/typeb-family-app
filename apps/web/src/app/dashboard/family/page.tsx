@@ -10,7 +10,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
 import Avatar from '@/components/ui/Avatar';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 
