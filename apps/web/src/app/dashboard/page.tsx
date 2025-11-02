@@ -79,15 +79,6 @@ export default function DashboardPage() {
     }
   };
 
-  const getTaskStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return '✅';
-      case 'in_progress': return '🔄';
-      case 'pending': return '⏰';
-      default: return '📝';
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-6 section-y">
