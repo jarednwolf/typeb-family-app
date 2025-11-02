@@ -40,6 +40,13 @@ test.describe('Settings page basic behaviors', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Upgrade to Premium/i })).toBeVisible();
   });
+
+  test('visible text on Settings CTAs', async ({ page }) => {
+    await page.goto('/dashboard/settings?e2e=1');
+    await expect(page.getByRole('button', { name: /Request browser notifications/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Open browser settings/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Upgrade|Manage subscription/i })).toBeVisible();
+  });
   
   test('keyboard focus is visible on primary actions', async ({ page }) => {
     await page.goto('/dashboard/settings?e2e=1');

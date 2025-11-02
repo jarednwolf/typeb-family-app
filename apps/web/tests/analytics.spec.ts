@@ -12,6 +12,11 @@ test.describe('Analytics page auth guard and upsell', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Upgrade to Premium/i })).toBeVisible();
   });
+
+  test('visible text on Upsell CTA', async ({ page }) => {
+    await page.goto('/dashboard/analytics?e2e=1');
+    await expect(page.getByRole('button', { name: /Upgrade/i })).toBeVisible();
+  });
 });
 
 

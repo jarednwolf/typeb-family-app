@@ -89,7 +89,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => { setError(''); setEmail(e.target.value); }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="form-control"
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => { setError(''); setPassword(e.target.value); }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition"
+                className="form-control"
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"

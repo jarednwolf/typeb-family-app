@@ -166,7 +166,7 @@ export default function SettingsPage() {
           <li>Priority validation tools</li>
           <li>Family member expansion</li>
         </ul>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-3">
           {(isE2E || (user && !user.isPremium)) ? (
             <>
               <button
