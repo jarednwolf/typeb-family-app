@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
