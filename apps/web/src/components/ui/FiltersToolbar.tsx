@@ -20,7 +20,7 @@ export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortB
           <select
             value={status}
             onChange={(e)=>onStatusChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+            className="form-control"
           >
             <option value="all">All</option>
             <option value="pending">Pending</option>
@@ -34,7 +34,7 @@ export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortB
           <select
             value={sortBy}
             onChange={(e)=>onSortByChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+            className="form-control"
           >
             <option value="dueDate">Due date</option>
             <option value="priority">Priority</option>
@@ -48,7 +48,7 @@ export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortB
             value={query}
             onChange={(e)=>onQueryChange(e.target.value)}
             placeholder="Search tasks"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+            className="form-control"
           />
         </div>
 
