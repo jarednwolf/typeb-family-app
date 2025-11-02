@@ -81,11 +81,11 @@ export default function FamilyPage() {
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-900">
             <span className="font-mono tracking-widest">{inviteCode || '------'}</span>
           </div>
-          <Button variant="secondary" size="sm" onClick={copyInvite}>Copy code</Button>
+          <button className="btn btn-secondary btn-sm" onClick={copyInvite}>Copy code</button>
         </div>
         <div className="mt-3 flex items-center gap-3">
           <Input value={inviteLink} readOnly className="flex-1" />
-          <Button variant="secondary" size="sm" className="whitespace-nowrap" onClick={copyLink}>Copy link</Button>
+          <button className="btn btn-secondary btn-sm whitespace-nowrap" onClick={copyLink}>Copy link</button>
         </div>
       </div>
 
@@ -151,7 +151,7 @@ export default function FamilyPage() {
           </div>
         )}
         <div className="mt-4">
-          <Button variant="secondary" size="sm" onClick={()=>setIsAddOpen(true)} aria-label="Add member by email">Add member by email</Button>
+          <button className="btn btn-secondary btn-sm" onClick={()=>setIsAddOpen(true)} aria-label="Add member by email">Add member by email</button>
         </div>
       </div>
 
