@@ -207,7 +207,7 @@ export default function TasksPage() {
         title="Tasks"
         subtitle="Manage your family's tasks and responsibilities"
         primaryAction={{ href: '/dashboard/tasks/new', label: '+ New Task', analyticsId: 'cta_new_task_header' }}
-        right={<button onClick={()=>{ setQuickOpen(true); show('Quick create opened'); analytics.trackCTAClick('quick_create_open','tasks_header'); }} className="btn btn-secondary px-3 hidden sm:inline-flex" aria-label="Open quick create">Quick create</button>}
+        right={<button onClick={()=>{ setQuickOpen(true); show('Quick create opened'); analytics.trackCTAClick('quick_create_open','tasks_header'); }} className="btn btn-secondary hidden sm:inline-flex" aria-label="Open quick create">Quick create</button>}
       />
 
       <FiltersToolbar
@@ -220,8 +220,8 @@ export default function TasksPage() {
         onReset={()=>{ setFilter('all'); setSortBy('dueDate'); setSearchQuery(''); }}
         right={
           <div className="flex gap-2">
-            <button onClick={()=>{ setQuickOpen(true); analytics.trackCTAClick('quick_create_open','tasks_toolbar'); }} className="btn btn-secondary px-3 sm:hidden" aria-label="Quick create task">Quick</button>
-            <Link href="/dashboard/tasks/new" className="btn btn-primary px-4 transition sm:hidden" aria-label="Create new task">+ New Task</Link>
+            <button onClick={()=>{ setQuickOpen(true); analytics.trackCTAClick('quick_create_open','tasks_toolbar'); }} className="btn btn-secondary sm:hidden" aria-label="Quick create task">Quick</button>
+            <Link href="/dashboard/tasks/new" className="btn btn-primary transition sm:hidden" aria-label="Create new task">+ New Task</Link>
           </div>
         }
       />

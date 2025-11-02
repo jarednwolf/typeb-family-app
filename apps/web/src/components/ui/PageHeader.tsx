@@ -29,7 +29,7 @@ export default function PageHeader({ title, subtitle, primaryAction, right }: Pa
           <Link
             href={primaryAction.href}
             data-analytics={primaryAction.analyticsId}
-            className="btn btn-primary px-4 transition hidden sm:inline-flex"
+            className="btn btn-primary transition hidden sm:inline-flex"
           >
             {primaryAction.label}
           </Link>

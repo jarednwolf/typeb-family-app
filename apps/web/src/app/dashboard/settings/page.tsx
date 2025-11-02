@@ -111,6 +111,7 @@ export default function SettingsPage() {
                     setUploading(false);
                   }
                 }}
+              className="form-control"
               />
               {uploading && <p className="text-xs text-gray-500" role="status" aria-live="polite">Uploading...</p>}
             </div>
