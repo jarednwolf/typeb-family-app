@@ -24,7 +24,7 @@ interface VideoAnalytics {
  */
 export const DemoVideo: React.FC = () => {
   const isDemoVideoEnabled = useFeatureFlag('enableDemoVideo');
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -254,9 +254,4 @@ export const DemoVideo: React.FC = () => {
   );
 };
 
-// TypeB Design System Colors
-const colors = {
-  primary: '#4A90E2',
-  secondary: '#7ED321',
-  accent: '#F5A623',
-};
+// Colors are defined in globals.css tokens
