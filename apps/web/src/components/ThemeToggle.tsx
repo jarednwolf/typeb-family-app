@@ -32,14 +32,7 @@ export function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle dark mode"
-      style={{
-        padding: '8px 12px',
-        borderRadius: 9999,
-        border: '1px solid var(--color-separator)',
-        background: 'var(--color-surface)',
-        color: 'var(--color-text-primary)',
-        fontSize: 12,
-      }}
+      className="btn btn-secondary btn-sm"
     >
       Toggle Theme
     </button>

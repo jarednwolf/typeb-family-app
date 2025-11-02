@@ -98,6 +98,8 @@ class AnalyticsService {
    * Initialize Facebook Pixel
    */
   private initializeFacebookPixel(): void {
+    const pixelId = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+    if (!pixelId) return; // Skip when not configured
     if (!window.fbq) {
       // Load Facebook Pixel script dynamically in production
       const script = document.createElement('script');
@@ -113,7 +115,7 @@ class AnalyticsService {
       `;
       document.head.appendChild(script);
 
-      window.fbq!('init', process.env.NEXT_PUBLIC_FB_PIXEL_ID || 'XXXXXXXXXX');
+      window.fbq!('init', pixelId);
       window.fbq!('track', 'PageView');
     }
   }

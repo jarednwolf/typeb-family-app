@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_SW !== 'true') return undefined;
     if ('serviceWorker' in navigator) {
       let reloaded = false;
       const onControllerChange = () => {

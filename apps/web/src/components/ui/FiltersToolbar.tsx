@@ -53,7 +53,7 @@ export default function FiltersToolbar({ status, onStatusChange, sortBy, onSortB
         </div>
 
         <div className="flex items-end gap-2 justify-end">
-          <button onClick={onReset} className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Reset</button>
+          <button onClick={onReset} className="btn btn-secondary btn-sm">Reset</button>
           {right}
         </div>
       </div>
