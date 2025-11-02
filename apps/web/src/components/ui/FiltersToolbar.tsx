@@ -1,7 +1,5 @@
 'use client';
 
-type Option = { value: string; label: string };
-
 type FiltersToolbarProps = {
   status: string;
   onStatusChange: (v: string) => void;
