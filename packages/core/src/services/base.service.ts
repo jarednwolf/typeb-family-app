@@ -106,9 +106,9 @@ export abstract class BaseService {
    * Check if user has permission for an action
    */
   protected async checkPermission(
-    userId: string,
-    resource: string,
-    action: string
+    _userId: string,
+    _resource: string,
+    _action: string
   ): Promise<boolean> {
     // Override in specific services
     return true;
