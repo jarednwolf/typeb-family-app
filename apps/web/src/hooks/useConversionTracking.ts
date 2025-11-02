@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { analytics, ConversionEvent } from '@/services/analytics';
+import { analytics } from '@/services/analytics';
 
 /**
  * Conversion Tracking Hook
