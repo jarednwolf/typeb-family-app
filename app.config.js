@@ -125,9 +125,6 @@ export default ({ config }) => {
       }
     },
     plugins: [
-      '@react-native-firebase/app',
-      '@react-native-firebase/auth',
-      '@react-native-firebase/firestore',
       // Push notifications (ensures iOS capabilities/entitlements)
       'expo-notifications',
       // Media and camera
