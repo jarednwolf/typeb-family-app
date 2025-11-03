@@ -31,9 +31,9 @@
     "@expo/vector-icons": "^14.0.0",
     "@gorhom/bottom-sheet": "^4.5.1",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/datetimepicker": "^7.7.0",
     "@react-native-community/netinfo": "11.3.1",
     "@react-native-google-signin/google-signin": "^11.0.0",
-    "@react-native-community/datetimepicker": "^7.7.0",
     "@react-native-picker/picker": "2.7.5",
     "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
@@ -83,7 +83,8 @@
     "react-native-vector-icons": "^10.0.3",
     "react-redux": "^9.0.4",
     "redux-persist": "^6.0.0",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
