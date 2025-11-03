@@ -123,28 +123,6 @@ export default ({ config }) => {
       eas: {
         projectId: process.env.EAS_PROJECT_ID
       }
-    },
-    plugins: [
-      // Push notifications (ensures iOS capabilities/entitlements)
-      'expo-notifications',
-      // Media and camera
-      [
-        'expo-camera',
-        {
-          cameraPermission: 'Allow TypeB to access your camera to take task completion photos.'
-        }
-      ],
-      [
-        'expo-media-library',
-        {
-          photosPermission: 'Allow TypeB to access your photos for task completion verification.',
-          savePhotosPermission: 'Allow TypeB to save photos to your photo library.',
-          isAccessMediaLocationEnabled: false
-        }
-      ],
-      // Keep image picker support consistent with app.json
-      'expo-image-picker',
-      'sentry-expo'
-    ]
+    }
   };
 };
