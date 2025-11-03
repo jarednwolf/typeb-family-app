@@ -54,6 +54,7 @@ export default ({ config }) => {
     name: appName,
     slug: 'typeb-family-app',
     version: config.version || '1.0.0',
+    runtimeVersion: { policy: 'appVersion' },
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
