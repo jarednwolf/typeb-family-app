@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -50,8 +51,12 @@ const SignInScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
 
   useEffect(() => {
-    // Configure Google Sign-In when component mounts
-    configureGoogleSignIn();
+    // Configure Google Sign-In when component mounts (disabled on iOS for v1)
+    const features = (Constants as any)?.expoConfig?.extra?.features || {};
+    const enableGoogleSso = features.googleSSO === true && Platform.OS !== 'ios';
+    if (enableGoogleSso) {
+      configureGoogleSignIn();
+    }
   }, []);
 
   const handleSignIn = async () => {
@@ -197,20 +202,24 @@ const SignInScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
+          {((Constants as any)?.expoConfig?.extra?.features?.googleSSO === true && Platform.OS !== 'ios') && (
+            <>
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-            <GoogleSignInButton
-              variant="signin"
-              onSuccess={() => {
-                // Navigation will be handled by auth state change
-                console.log('Google Sign-In successful');
-              }}
-              disabled={isLoading}
-            />
+              <GoogleSignInButton
+                variant="signin"
+                onSuccess={() => {
+                  // Navigation will be handled by auth state change
+                  console.log('Google Sign-In successful');
+                }}
+                disabled={isLoading}
+              />
+            </>
+          )}
 
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>

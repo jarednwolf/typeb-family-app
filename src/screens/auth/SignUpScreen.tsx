@@ -9,6 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { auth, db as firestore } from '../../services/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -35,8 +37,12 @@ export const SignUpScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Configure Google Sign-In when component mounts
-    configureGoogleSignIn();
+    // Configure Google Sign-In when component mounts (disabled on iOS for v1)
+    const features = (Constants as any)?.expoConfig?.extra?.features || {};
+    const enableGoogleSso = features.googleSSO === true && Platform.OS !== 'ios';
+    if (enableGoogleSso) {
+      configureGoogleSignIn();
+    }
   }, []);
 
   const checkAge = (year: string) => {
@@ -216,20 +222,24 @@ export const SignUpScreen = () => {
         )}
       </TouchableOpacity>
 
-      <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.dividerLine} />
-      </View>
+      {((Constants as any)?.expoConfig?.extra?.features?.googleSSO === true && Platform.OS !== 'ios') && (
+        <>
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-      <GoogleSignInButton
-        variant="signup"
-        onSuccess={() => {
-          // Navigation will be handled by auth state change
-          console.log('Google Sign-Up successful');
-        }}
-        disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
-      />
+          <GoogleSignInButton
+            variant="signup"
+            onSuccess={() => {
+              // Navigation will be handled by auth state change
+              console.log('Google Sign-Up successful');
+            }}
+            disabled={isLoading || !birthYear || (isUnder13 && !parentConsent)}
+          />
+        </>
+      )}
 
       <TouchableOpacity onPress={() => (navigation as any).navigate('SignIn' as never)} disabled={isLoading}>
         <Text style={styles.link}>Already have an account? Log in</Text>

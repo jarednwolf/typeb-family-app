@@ -128,6 +128,9 @@ export default ({ config }) => {
       '@react-native-firebase/app',
       '@react-native-firebase/auth',
       '@react-native-firebase/firestore',
+      // Push notifications (ensures iOS capabilities/entitlements)
+      'expo-notifications',
+      // Media and camera
       [
         'expo-camera',
         {
@@ -142,6 +145,8 @@ export default ({ config }) => {
           isAccessMediaLocationEnabled: false
         }
       ],
+      // Keep image picker support consistent with app.json
+      'expo-image-picker',
       'sentry-expo'
     ]
   };

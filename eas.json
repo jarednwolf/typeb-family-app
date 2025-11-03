@@ -32,6 +32,19 @@
       "env": {
         "EXPO_PUBLIC_ENVIRONMENT": "production"
       }
+    },
+    "production-ios": {
+      "ios": {
+        "resourceClass": "m-medium",
+        "autoIncrement": true,
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_FEATURE_GOOGLE_SSO": "false",
+        "EXPO_PUBLIC_FEATURE_APPLE_SIGNIN": "false",
+        "EXPO_PUBLIC_FEATURE_PUSH_NOTIFICATIONS": "true"
+      }
     }
   },
   "submit": {

@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { Provider, useSelector } from 'react-redux';
 import { store, RootState } from './src/store/store';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -29,8 +31,12 @@ function AppContent() {
         // Initialize error monitoring (Sentry)
         errorMonitoring.initialize();
         
-        // Configure Google Sign-In
-        configureGoogleSignIn();
+        // Configure Google Sign-In (disabled on iOS for v1 via feature flag)
+        const features = (Constants as any)?.expoConfig?.extra?.features || {};
+        const enableGoogleSso = features.googleSSO === true && Platform.OS !== 'ios';
+        if (enableGoogleSso) {
+          configureGoogleSignIn();
+        }
         
         // Initialize local and push notifications
         await notificationService.initialize();

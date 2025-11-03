@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { db } from './firebase';
+import Constants from 'expo-constants';
+import { db, auth } from './firebase';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 
 // Storage keys
@@ -22,21 +23,57 @@ export interface PushNotificationData {
 }
 
 class PushNotificationService {
-  private fcmToken: string | null = null;
+  private fcmToken: string | null = null; // Stores Expo push token in production builds
   private isInitialized = false;
 
   async initialize() {
     if (this.isInitialized) return;
 
     try {
-      console.log('Push notifications using React Native Firebase are not supported in Expo Go');
-      console.log('Using Expo Notifications for local notifications only');
-      
-      // For Expo Go, we'll only use local notifications
-      // Push notifications require a development build
-      
+      // Request permissions (handled via expo-notifications service as well)
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        const req = await Notifications.requestPermissionsAsync();
+        if (req.status !== 'granted') {
+          console.warn('Push permission not granted');
+          this.isInitialized = true;
+          return;
+        }
+      }
+
+      // Retrieve Expo push token in EAS dev/prod builds
+      try {
+        const projectId = (Constants as any)?.expoConfig?.extra?.eas?.projectId
+          || (Constants as any)?.easConfig?.projectId
+          || undefined;
+        const tokenResponse = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined as any);
+        const expoPushToken = tokenResponse?.data;
+        if (expoPushToken) {
+          this.fcmToken = expoPushToken;
+          await AsyncStorage.setItem(FCM_TOKEN_KEY, expoPushToken);
+
+          // Persist token for current user if logged in
+          const currentUser = auth.currentUser;
+          if (currentUser?.uid) {
+            await this.updateUserToken(currentUser.uid);
+          }
+        } else {
+          console.warn('Failed to obtain Expo push token');
+        }
+      } catch (tokenError) {
+        console.warn('Expo push token retrieval failed, continuing without push:', tokenError);
+      }
+
+      // For Expo Go, still operate in limited/local mode (token will be mock)
+      if (!this.fcmToken) {
+        const mockToken = 'expo-go-mock-token-' + Math.random().toString(36).substr(2, 9);
+        this.fcmToken = mockToken;
+        await AsyncStorage.setItem(FCM_TOKEN_KEY, mockToken);
+        console.log('Mock push token set for Expo Go/dev:', mockToken);
+      }
+
       this.isInitialized = true;
-      console.log('Push notification service initialized (limited mode for Expo Go)');
+      console.log('Push notification service initialized');
     } catch (error) {
       console.error('Error initializing push notifications:', error);
     }
@@ -68,29 +105,23 @@ class PushNotificationService {
   }
 
   async getFCMToken(): Promise<string | null> {
-    // In Expo Go, we can't get a real FCM token
-    // Return a mock token for development
-    const mockToken = 'expo-go-mock-token-' + Math.random().toString(36).substr(2, 9);
-    this.fcmToken = mockToken;
-    await AsyncStorage.setItem(FCM_TOKEN_KEY, mockToken);
-    console.log('Mock FCM token for Expo Go:', mockToken);
-    return mockToken;
+    return this.fcmToken;
   }
 
   async updateUserToken(userId: string) {
     if (!this.fcmToken || !userId) return;
 
     try {
-      // Update user document with mock FCM token
+      // Update user document with current push token
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
-        fcmToken: this.fcmToken,
+        expoPushToken: this.fcmToken,
         fcmTokenUpdatedAt: new Date(),
         platform: Platform.OS,
-        isExpoGo: true, // Flag to indicate this is from Expo Go
+        isExpoGo: !__DEV__ ? false : true,
       });
 
-      console.log('User mock FCM token updated in Firestore');
+      console.log('User push token updated in Firestore');
     } catch (error) {
       console.error('Error updating user FCM token:', error);
     }
