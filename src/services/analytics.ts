@@ -1,29 +1,3 @@
-/* Lightweight analytics wrapper to avoid scattering vendor code */
-type AnalyticsEvent =
-  | 'auth_sign_in'
-  | 'auth_sign_up'
-  | 'onboarding_complete'
-  | 'task_create'
-  | 'task_complete'
-  | 'paywall_view'
-  | 'purchase_success'
-  | 'purchase_restore'
-  | 'notifications_enable'
-  | 'validation_approve'
-  | 'validation_reject';
-
-export function track(event: AnalyticsEvent, props?: Record<string, any>) {
-  try {
-    // Example: forward to GA4 if present
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = (globalThis as any) as { gtag?: Function };
-    if (typeof w?.gtag === 'function') {
-      w.gtag('event', event, props || {});
-    }
-  } catch {}
-}
-
-export default { track };
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -445,3 +419,4 @@ export const analyticsService = new AnalyticsService();
 
 // Export types
 export type { RevenueData, UserProperties };
+export default analyticsService;
