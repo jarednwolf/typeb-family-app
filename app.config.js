@@ -121,7 +121,7 @@ export default ({ config }) => {
         minAge: parseInt(process.env.COPPA_MIN_AGE || '13')
       },
       eas: {
-        projectId: process.env.EAS_PROJECT_ID
+        projectId: process.env.EAS_PROJECT_ID || '0b1cab38-fdeb-4b64-a3bb-874e84c9d5c9'
       }
     }
   };
